@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — Chriss Dashboard</title>
+  <style>
+    :root {
+      --text-primary: #FAFAFA;
+      --text-secondary: #B8B6B0;
+      --text-tertiary: #76746E;
+      --success: #6BE3A4;
+      --warning: #F2C063;
+      --danger: #FF6B6B;
+      --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #050506;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: max(32px, env(safe-area-inset-top, 32px)) 24px 56px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 75% 12%, rgba(107,227,164,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 20% 85%, rgba(180,180,200,0.06) 0%, transparent 60%);
+      filter: blur(40px);
+      pointer-events: none; z-index: 0;
+      animation: wash-drift 36s ease-in-out infinite alternate;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.014)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      pointer-events: none; z-index: 0;
+    }
+    @keyframes wash-drift {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(2%,2%) scale(1.04); }
+    }
+
+    .container {
+      max-width: 1100px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+
+    /* ===== NAV ===== */
+    .site-nav {
+      display: flex; gap: 4px; margin-bottom: 22px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 4px;
+      width: fit-content;
+    }
+    .nav-link {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+      color: var(--text-tertiary); padding: 7px 16px; border-radius: 9px;
+      transition: background 0.2s, color 0.2s; white-space: nowrap;
+    }
+    .nav-link:hover    { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+    .nav-link.is-active { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* ===== TITLE ===== */
+    .dash-title {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .dash-sub {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+      letter-spacing: 0.06em; margin-bottom: 24px;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px; padding: 20px 22px;
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ===== PERIOD FILTER ===== */
+    .period-bar {
+      display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .period-btn {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .period-btn.is-active { background: var(--success); border-color: var(--success); color: #050506; }
+    .period-btn:hover:not(.is-active) { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* ===== TAB BAR ===== */
+    .tab-bar {
+      display: flex; gap: 0; margin-bottom: 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-btn {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 10px 20px; background: none; border: none;
+      color: var(--text-tertiary); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s; white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.is-active.wk { color: var(--success);  border-color: var(--success); }
+    .tab-btn.is-active.hb { color: var(--warning);  border-color: var(--warning); }
+    .tab-btn.is-active.rv { color: #7EB8F7;          border-color: #7EB8F7; }
+    .tab-btn.is-active.gl { color: #C084FC;          border-color: #C084FC; }
+
+    /* ===== TAB PANELS ===== */
+    .tab-panel { display: none; }
+    .tab-panel.is-active { display: block; }
+
+    /* ===== METRIC GRID ===== */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px; margin-bottom: 20px;
+    }
+    .metric-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      transition: background 0.15s;
+    }
+    .metric-card:hover { background: rgba(255,255,255,0.055); }
+    .metric-icon  { font-size: 18px; line-height: 1; margin-bottom: 2px; }
+    .metric-num   { font-family: var(--font-mono); font-size: 22px; font-weight: 800; line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); }
+    .metric-sub   { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .metric-delta { font-family: var(--font-mono); font-size: 10px; font-weight: 700; margin-top: 2px; }
+    .delta-up   { color: var(--success); }
+    .delta-down { color: var(--danger); }
+
+    /* ===== CHART ===== */
+    .chart-section { margin-bottom: 20px; }
+    .chart-title { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+    .chart-canvas-wrap { width: 100%; position: relative; }
+
+    /* ===== INSIGHT ===== */
+    .insights { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .insight {
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
+      padding: 9px 13px; border-radius: 10px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      color: var(--text-secondary);
+    }
+    .insight.good { background: rgba(107,227,164,0.06); border-color: rgba(107,227,164,0.22); color: var(--success); }
+    .insight.warn { background: rgba(242,192,99,0.06);  border-color: rgba(242,192,99,0.22);  color: var(--warning); }
+    .insight.info { background: rgba(126,184,247,0.06); border-color: rgba(126,184,247,0.22); color: #7EB8F7; }
+
+    /* ===== HEATMAP ===== */
+    .heatmap { display: flex; flex-direction: column; gap: 5px; }
+    .heatmap-row { display: flex; gap: 4px; align-items: center; }
+    .heatmap-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); min-width: 88px; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .heatmap-cell { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
+    .heatmap-cell.done { background: var(--success); }
+    .heatmap-cell.miss { background: rgba(255,107,107,0.25); }
+    .heatmap-cell.none { background: rgba(255,255,255,0.05); }
+    .heatmap-day-labels { display: flex; gap: 4px; padding-left: 92px; margin-bottom: 3px; }
+    .heatmap-day-label  { font-family: var(--font-mono); font-size: 8px; color: var(--text-tertiary); width: 18px; text-align: center; flex-shrink: 0; }
+
+    /* ===== TABLE ===== */
+    .an-table { width: 100%; border-collapse: collapse; }
+    .an-table td {
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 7px 8px; color: var(--text-secondary);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .an-table td:first-child { color: var(--text-primary); font-weight: 600; }
+    .an-table td:last-child  { text-align: right; font-weight: 700; }
+    .rank { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; font-size: 8px; font-weight: 800; background: rgba(255,255,255,0.07); color: var(--text-tertiary); margin-right: 6px; vertical-align: middle; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty { font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 32px 0; line-height: 1.6; }
+
+    /* ===== PROGRESS BAR ===== */
+    .prog-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; margin-top: 4px; }
+    .prog-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+    /* ===== SECTION DIVIDER ===== */
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 20px 0; }
+
+    /* ===== EXPORT BTN ===== */
+    .export-btn {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 7px 14px; border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+      cursor: pointer; transition: all 0.15s; float: right; margin-top: -2px;
+    }
+    .export-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    @media (max-width: 520px) {
+      body { padding: 20px 14px 48px; }
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      .metric-num  { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav class="site-nav">
+    <a href="index.html"    class="nav-link">Dashboard</a>
+    <a href="workout.html"  class="nav-link">Workouts</a>
+    <a href="analytics.html" class="nav-link is-active">Analytics</a>
+  </nav>
+
+  <h1 class="dash-title">Analytics</h1>
+  <div class="dash-sub" id="dashSub">Loading your data…</div>
+
+  <!-- Period filter -->
+  <div class="period-bar">
+    <button class="period-btn is-active" data-days="7">This Week</button>
+    <button class="period-btn" data-days="30">Last Month</button>
+    <button class="period-btn" data-days="0">All Time</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn wk is-active" data-tab="workouts">💪 Workouts</button>
+    <button class="tab-btn hb"           data-tab="habits">🔥 Habits</button>
+    <button class="tab-btn rv"           data-tab="recovery">😴 Recovery</button>
+    <button class="tab-btn gl"           data-tab="goals">🏆 Goals</button>
+  </div>
+
+  <!-- ══════════════ WORKOUTS TAB ══════════════ -->
+  <div class="tab-panel is-active" id="panel-workouts">
+    <div class="card">
+      <button class="export-btn" id="exportWorkouts">↓ Export</button>
+      <div class="metric-grid" id="wk-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-section">
+        <div class="chart-title">Workouts per day — last 7 days</div>
+        <div class="chart-canvas-wrap"><canvas id="wk-chart" height="72" style="width:100%;display:block"></canvas></div>
+      </div>
+      <div class="divider"></div>
+      <div id="wk-top-wrap" style="display:none">
+        <div class="chart-title">Top Exercises (Personal Record)</div>
+        <table class="an-table" id="wk-top-table" style="margin-bottom:16px"></table>
+        <div class="divider"></div>
+      </div>
+      <div class="insights" id="wk-insights"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ HABITS TAB ══════════════ -->
+  <div class="tab-panel" id="panel-habits">
+    <div class="card">
+      <div class="metric-grid" id="hb-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-section">
+        <div class="chart-title">Last 7 Days — Habit Heatmap</div>
+        <div class="heatmap-day-labels" id="hb-day-labels"></div>
+        <div class="heatmap" id="hb-heatmap"></div>
+      </div>
+      <div class="divider"></div>
+      <div id="hb-streak-wrap" style="display:none">
+        <div class="chart-title">Habit Streaks</div>
+        <table class="an-table" id="hb-streak-table" style="margin-bottom:16px"></table>
+        <div class="divider"></div>
+      </div>
+      <div class="insights" id="hb-insights"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ RECOVERY TAB ══════════════ -->
+  <div class="tab-panel" id="panel-recovery">
+    <div class="card">
+      <div class="metric-grid" id="rv-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-section">
+        <div class="chart-title">Recovery Score — last 7 days</div>
+        <div class="chart-canvas-wrap"><canvas id="rv-score-chart" height="72" style="width:100%;display:block"></canvas></div>
+      </div>
+      <div class="chart-section" style="margin-top:14px">
+        <div class="chart-title">Sleep — last 7 days</div>
+        <div class="chart-canvas-wrap"><canvas id="rv-sleep-chart" height="72" style="width:100%;display:block"></canvas></div>
+      </div>
+      <div class="divider"></div>
+      <div class="insights" id="rv-insights"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ GOALS TAB ══════════════ -->
+  <div class="tab-panel" id="panel-goals">
+    <div class="card">
+      <div class="metric-grid" id="gl-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-title">Goals by Progress</div>
+      <div id="gl-goal-list" style="margin-bottom:16px"></div>
+      <div class="divider"></div>
+      <div class="insights" id="gl-insights"></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ==================== HELPERS ====================
+function storeGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+
+function dateToStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function getActiveDateString() {
+  const now = new Date();
+  if (now.getHours() < 6) now.setDate(now.getDate()-1);
+  return dateToStr(now);
+}
+
+function formatDate(ds) {
+  return new Date(ds+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric'});
+}
+
+function getPeriodStart(days) {
+  if (days === 0) return '2000-01-01';
+  const d = new Date(); d.setDate(d.getDate()-(days-1)); return dateToStr(d);
+}
+
+function last7Labels() {
+  const labels = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate()-i); labels.push(d.toLocaleDateString('en',{weekday:'short'})); }
+  return labels;
+}
+
+// ==================== STATE ====================
+let activePeriod = 7;
+let activeTab    = 'workouts';
+
+// ==================== LOAD DATA ====================
+function loadAnalyticsData() {
+  return {
+    workouts: storeGet('lifeos_workouts') || [],
+    habits:   storeGet('lifeos_habits')   || [],
+    recovery: storeGet('lifeos_recovery') || [],
+    goals:    storeGet('lifeos_goals')    || []
+  };
+}
+
+// ==================== WORKOUT STATS ====================
+function calculateWorkoutStats(days) {
+  const all      = storeGet('lifeos_workouts') || [];
+  const start    = getPeriodStart(days);
+  const filtered = all.filter(w => w.date >= start);
+  const total    = filtered.length;
+  const avgDur   = total > 0 ? Math.round(filtered.reduce((s,w)=>s+(w.duration||0),0)/total) : 0;
+  const totalVol = filtered.reduce((s,w) => {
+    const sets = (w.exercises||[]).flatMap(e => e.sets||[]);
+    return s + sets.reduce((sv,set)=>sv+(set.weight||0)*(set.reps||0),0);
+  }, 0);
+  const weeklyFreq = days > 0 ? (total/Math.max(1,days/7)).toFixed(1) : total;
+
+  // Prev period delta
+  let delta = null;
+  if (days > 0) {
+    const d1 = new Date(); d1.setDate(d1.getDate()-days*2);
+    const d2 = new Date(); d2.setDate(d2.getDate()-days);
+    const prev = all.filter(w => w.date >= dateToStr(d1) && w.date < dateToStr(d2));
+    if (prev.length > 0) delta = Math.round((total-prev.length)/prev.length*100);
+  }
+
+  // 7-day trend (always last 7 days for chart)
+  const trend7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    trend7.push(all.filter(w => w.date === dateToStr(d)).length);
+  }
+
+  // Top exercises by 1RM (max weight × set)
+  const exMap = {};
+  all.forEach(w => (w.exercises||[]).forEach(ex => {
+    const maxW = Math.max(0, ...(ex.sets||[]).map(s=>s.weight||0));
+    if (maxW > 0) exMap[ex.name] = Math.max(exMap[ex.name]||0, maxW);
+  }));
+  const topEx = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  return { total, avgDur, totalVol: Math.round(totalVol), weeklyFreq, delta, trend7, topEx };
+}
+
+// ==================== HABIT STATS ====================
+function calculateHabitStats(days) {
+  const habits = storeGet('lifeos_habits') || [];
+  if (!habits.length) return { habits:[], overallPct:0, best:null, worst:null };
+  const start = getPeriodStart(days);
+  const today = getActiveDateString();
+
+  const stats = habits.map(h => {
+    const done     = (h.completedDates||[]).filter(d=>d>=start).length;
+    const fromDate = h.createdDate > start ? h.createdDate : start;
+    let possible   = 0;
+    for (let d=new Date(fromDate+'T12:00:00'); dateToStr(d)<=today; d.setDate(d.getDate()+1)) possible++;
+    if (days > 0) possible = Math.min(possible, days);
+    return { ...h, done, possible, pct: possible>0?Math.round(done/possible*100):0, streak: h.currentStreak||0 };
+  });
+
+  const totalDone = stats.reduce((s,h)=>s+h.done, 0);
+  const totalPoss = stats.reduce((s,h)=>s+h.possible, 0);
+  const overallPct = totalPoss>0 ? Math.round(totalDone/totalPoss*100) : 0;
+  const sorted = [...stats].sort((a,b)=>b.pct-a.pct);
+  return { habits: stats, overallPct, best: sorted[0]||null, worst: sorted[sorted.length-1]||null };
+}
+
+// ==================== RECOVERY STATS ====================
+function calculateRecoveryStats(days) {
+  const all    = storeGet('lifeos_recovery') || [];
+  const start  = getPeriodStart(days);
+  const filtered = all.filter(r=>r.date>=start);
+  if (!filtered.length) return { avgSleep:null, avgScore:null, avgTemp:null, avgStress:null, bestDay:null, delta:null, trend7:{scores:[],sleeps:[]} };
+
+  const ws = filtered.filter(r=>r.sleep!=null);
+  const wc = filtered.filter(r=>r.recoveryScore!=null);
+  const wt = filtered.filter(r=>r.bodyTemp!=null);
+  const wst= filtered.filter(r=>r.stressLevel);
+  const stressNum = {'Low':2,'Medium':5,'High':7,'Very High':9};
+  const avgSleep  = ws.length ? (ws.reduce((s,r)=>s+r.sleep,0)/ws.length).toFixed(1) : null;
+  const avgScore  = wc.length ? Math.round(wc.reduce((s,r)=>s+r.recoveryScore,0)/wc.length) : null;
+  const avgTemp   = wt.length ? (wt.reduce((s,r)=>s+r.bodyTemp,0)/wt.length).toFixed(1) : null;
+  const avgStress = wst.length ? (wst.reduce((s,r)=>s+(stressNum[r.stressLevel]||5),0)/wst.length).toFixed(1) : null;
+  const bestDay   = [...filtered].sort((a,b)=>(b.recoveryScore||0)-(a.recoveryScore||0))[0];
+
+  // Delta vs prev
+  let delta = null;
+  if (days > 0 && avgScore) {
+    const d1=new Date(); d1.setDate(d1.getDate()-days*2);
+    const d2=new Date(); d2.setDate(d2.getDate()-days);
+    const prev=all.filter(r=>r.date>=dateToStr(d1)&&r.date<dateToStr(d2));
+    const prevAvg=prev.length?Math.round(prev.reduce((s,r)=>s+(r.recoveryScore||0),0)/prev.length):null;
+    if (prevAvg) delta = avgScore - prevAvg;
+  }
+
+  // 7-day trends
+  const scores=[], sleeps=[];
+  for (let i=6;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i); const ds=dateToStr(d);
+    const r=all.find(x=>x.date===ds);
+    scores.push(r?r.recoveryScore:null);
+    sleeps.push(r?r.sleep:null);
+  }
+  return { avgSleep, avgScore, avgTemp, avgStress, bestDay, delta, trend7:{scores, sleeps} };
+}
+
+// ==================== GOAL STATS ====================
+function calculateGoalStats() {
+  const goals = storeGet('lifeos_goals') || [];
+  if (!goals.length) return { total:0, avgProgress:0, onTrack:0, goals:[] };
+  const total       = goals.length;
+  const avgProgress = Math.round(goals.reduce((s,g)=>s+(g.progress||0),0)/total);
+  const onTrack     = goals.filter(g=>(g.progress||0)>=50).length;
+  const sorted      = [...goals].sort((a,b)=>(b.progress||0)-(a.progress||0));
+  return { total, avgProgress, onTrack, goals: sorted };
+}
+
+// ==================== CHARTS ====================
+function drawChart(canvas, labels, values, color, type) {
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio||1;
+  const W   = canvas.parentElement.clientWidth||360;
+  const H   = 72;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+  const valid=values.filter(v=>v!=null);
+  if (!valid.length) {
+    ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.font='10px var(--font-mono,monospace)';
+    ctx.textAlign='center'; ctx.fillText('No data yet', W/2, H/2); return;
+  }
+  const pL=4,pR=4,pT=6,pB=18,gW=W-pL-pR,gH=H-pT-pB;
+  const n=values.length, step=gW/Math.max(1,n-1);
+  const minV=Math.min(...valid)*0.85, maxV=Math.max(...valid)*1.08||1;
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  [0,50,100].forEach(pct=>{
+    const y=pT+gH-(pct/100)*gH;
+    ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();
+  });
+  // labels
+  ctx.fillStyle='rgba(180,178,172,0.4)'; ctx.font='600 8px ui-monospace,monospace'; ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,pL+i*(gW/(n-1||1)),H-3));
+
+  if (type==='bar') {
+    const bw=Math.max(5,gW/n*0.55);
+    values.forEach((v,i)=>{
+      if (v==null) return;
+      const barH=Math.max(2,((v-minV)/(maxV-minV))*gH);
+      ctx.fillStyle=color+'BB';
+      ctx.fillRect(pL+i*(gW/(n-1||1))-bw/2, pT+gH-barH, bw, barH);
+    });
+  } else {
+    const pts=values.map((v,i)=>({x:pL+i*step,y:v!=null?pT+gH-((v-minV)/(maxV-minV))*gH:null}));
+    const vpts=pts.filter(p=>p.y!=null);
+    if (vpts.length>1) {
+      ctx.beginPath(); let f=true;
+      pts.forEach(p=>{if(p.y==null)return;if(f){ctx.moveTo(p.x,p.y);f=false;}else ctx.lineTo(p.x,p.y);});
+      ctx.lineTo(vpts[vpts.length-1].x,pT+gH); ctx.lineTo(vpts[0].x,pT+gH); ctx.closePath();
+      const g2=ctx.createLinearGradient(0,pT,0,pT+gH);
+      g2.addColorStop(0,color+'2A'); g2.addColorStop(1,color+'04');
+      ctx.fillStyle=g2; ctx.fill();
+      ctx.beginPath(); f=true;
+      pts.forEach(p=>{if(p.y==null)return;if(f){ctx.moveTo(p.x,p.y);f=false;}else ctx.lineTo(p.x,p.y);});
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+      vpts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+    }
+  }
+}
+
+// ==================== RENDER HELPERS ====================
+function mkMetric(icon, num, label, sub, delta) {
+  const c=document.createElement('div'); c.className='metric-card';
+  const ic=document.createElement('div');ic.className='metric-icon';ic.textContent=icon;
+  const n=document.createElement('div');n.className='metric-num';n.textContent=num;
+  const l=document.createElement('div');l.className='metric-label';l.textContent=label;
+  c.appendChild(ic);c.appendChild(n);c.appendChild(l);
+  if (sub) {const s=document.createElement('div');s.className='metric-sub';s.textContent=sub;c.appendChild(s);}
+  if (delta!=null) {
+    const d=document.createElement('div');
+    d.className='metric-delta '+(delta>0?'delta-up':'delta-down');
+    d.textContent=(delta>0?'↑':'↓')+Math.abs(delta)+'% vs prev';
+    c.appendChild(d);
+  }
+  return c;
+}
+
+function mkInsight(text, type) {
+  const el=document.createElement('div'); el.className='insight '+(type||'');
+  el.textContent=text; return el;
+}
+
+function getInsights(tab) {
+  const insights = [];
+  if (tab==='workouts') {
+    const wm=calculateWorkoutStats(activePeriod);
+    if (wm.total===0) insights.push({text:'No workouts logged yet — start tracking to see analytics.',type:''});
+    else {
+      if (wm.delta!=null&&wm.delta>0) insights.push({text:'You\'re '+wm.delta+'% more active than last period — keep it up! 💪',type:'good'});
+      else if (wm.delta!=null&&wm.delta<0) insights.push({text:Math.abs(wm.delta)+'% fewer workouts than last period — time to push harder.',type:'warn'});
+      if (wm.total>=3) insights.push({text:'Solid consistency! '+wm.total+' sessions logged this period. 🔥',type:'good'});
+      if (wm.avgDur>0) insights.push({text:'Average session: '+wm.avgDur+' minutes. Aim for 45–60 min for best results.',type:'info'});
+    }
+  } else if (tab==='habits') {
+    const hm=calculateHabitStats(activePeriod);
+    if (!hm.habits.length) insights.push({text:'No habits yet — add some habits on the Dashboard.',type:''});
+    else {
+      if (hm.overallPct>=80) insights.push({text:'Incredible discipline — '+hm.overallPct+'% completion rate! 🔥',type:'good'});
+      else if (hm.overallPct>=60) insights.push({text:'Good consistency at '+hm.overallPct+'% — push for 80%+ for compounding gains.',type:'info'});
+      else insights.push({text:''+hm.overallPct+'% completion — habits compound over time, focus on showing up daily.',type:'warn'});
+      if (hm.best&&hm.best.streak>0) insights.push({text:'Keep your "'+hm.best.name+'" streak going — '+hm.best.streak+' days and counting!',type:'good'});
+    }
+  } else if (tab==='recovery') {
+    const rm=calculateRecoveryStats(activePeriod);
+    if (!rm.avgScore) insights.push({text:'No recovery data yet — log sleep, temperature and stress on the Dashboard.',type:''});
+    else {
+      if (rm.avgScore>=80) insights.push({text:'Excellent recovery average of '+rm.avgScore+'% — your body is performing well! 💪',type:'good'});
+      else if (rm.avgScore>=60) insights.push({text:'Moderate recovery at '+rm.avgScore+'% — focus on consistent sleep to improve.',type:'info'});
+      else insights.push({text:'Low recovery average ('+rm.avgScore+'%) — prioritize sleep and reduce stress.',type:'warn'});
+      if (rm.avgSleep) {
+        const slp=parseFloat(rm.avgSleep);
+        if (slp>=8) insights.push({text:'Great sleep average: '+rm.avgSleep+'h — keep it up!',type:'good'});
+        else if (slp>=7) insights.push({text:'Sleep average: '+rm.avgSleep+'h — aim for 8+ hours for peak recovery.',type:'info'});
+        else insights.push({text:'Low sleep average ('+rm.avgSleep+'h) — prioritize going to bed earlier.',type:'warn'});
+      }
+      if (rm.delta!=null) insights.push({text:rm.delta>=0?'Recovery improved '+rm.delta+'% vs last period!':'Recovery down '+Math.abs(rm.delta)+'% — check your sleep.',type:rm.delta>=0?'good':'warn'});
+    }
+  } else if (tab==='goals') {
+    const gm=calculateGoalStats();
+    if (!gm.total) insights.push({text:'No goals yet — add goals on the Dashboard to track progress.',type:''});
+    else {
+      if (gm.avgProgress>=70) insights.push({text:'Amazing progress — '+gm.avgProgress+'% average across all goals! 🏆',type:'good'});
+      else if (gm.avgProgress>=40) insights.push({text:'Good progress at '+gm.avgProgress+'% average — keep the momentum going.',type:'info'});
+      else insights.push({text:''+gm.avgProgress+'% average progress — time to accelerate your efforts.',type:'warn'});
+      if (gm.onTrack>0) insights.push({text:gm.onTrack+' of '+gm.total+' goals are on track (≥50%) — solid execution!',type:'good'});
+    }
+  }
+  return insights;
+}
+
+// ==================== RENDER TABS ====================
+function renderWorkouts() {
+  const wm = calculateWorkoutStats(activePeriod);
+  const mg = document.getElementById('wk-metrics'); mg.innerHTML='';
+  const vol = wm.totalVol>9999?Math.round(wm.totalVol/1000)+'t':wm.totalVol>0?wm.totalVol+'kg':'—';
+  mg.appendChild(mkMetric('💪', wm.total,           'Workouts',    null, wm.delta));
+  mg.appendChild(mkMetric('⏱', wm.avgDur?wm.avgDur+'m':'—', 'Avg Duration', null, null));
+  mg.appendChild(mkMetric('🏋️', vol,                'Total Volume', null, null));
+  mg.appendChild(mkMetric('📅', wm.weeklyFreq+'/wk','Frequency',   null, null));
+
+  setTimeout(()=>drawChart(document.getElementById('wk-chart'), last7Labels(), wm.trend7, '#6BE3A4','bar'),0);
+
+  const topWrap = document.getElementById('wk-top-wrap');
+  if (wm.topEx.length>0) {
+    topWrap.style.display='';
+    const tb=document.getElementById('wk-top-table'); tb.innerHTML='';
+    wm.topEx.forEach(([name,kg],i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><span class="rank">'+(i+1)+'</span>'+name+'</td><td>'+kg+'kg</td>';
+      tb.appendChild(tr);
+    });
+  } else topWrap.style.display='none';
+
+  const ig=document.getElementById('wk-insights'); ig.innerHTML='';
+  getInsights('workouts').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
+}
+
+function renderHabits() {
+  const hm = calculateHabitStats(activePeriod);
+  const mg = document.getElementById('hb-metrics'); mg.innerHTML='';
+  mg.appendChild(mkMetric('📊', hm.overallPct+'%', 'Completion Rate', null, null));
+  mg.appendChild(mkMetric('🔢', hm.habits.length,  'Total Habits',    null, null));
+  if (hm.best)  mg.appendChild(mkMetric('🏆', hm.best.pct+'%',  'Best Habit',  hm.best.name,  null));
+  if (hm.worst&&hm.worst.name!==hm.best?.name) mg.appendChild(mkMetric('📍', hm.worst.pct+'%', 'Needs Work', hm.worst.name, null));
+
+  // Day labels
+  const dl=document.getElementById('hb-day-labels'); dl.innerHTML='';
+  last7Labels().forEach(l=>{const el=document.createElement('div');el.className='heatmap-day-label';el.textContent=l;dl.appendChild(el);});
+
+  // Heatmap
+  const hmap=document.getElementById('hb-heatmap'); hmap.innerHTML='';
+  const today=getActiveDateString();
+  hm.habits.slice(0,8).forEach(h=>{
+    const row=document.createElement('div'); row.className='heatmap-row';
+    const lbl=document.createElement('div'); lbl.className='heatmap-label'; lbl.textContent=h.name; lbl.title=h.name;
+    row.appendChild(lbl);
+    for (let i=6;i>=0;i--) {
+      const d=new Date(); d.setDate(d.getDate()-i); const ds=dateToStr(d);
+      const inRange=ds>=h.createdDate;
+      const done=inRange&&(h.completedDates||[]).includes(ds);
+      const cell=document.createElement('div');
+      cell.className='heatmap-cell '+(inRange?(done?'done':'miss'):'none');
+      cell.title=ds+(done?' ✓':inRange?' ✗':' —');
+      row.appendChild(cell);
+    }
+    hmap.appendChild(row);
+  });
+
+  // Streak table
+  const sw=document.getElementById('hb-streak-wrap');
+  if (hm.habits.length>0) {
+    sw.style.display='';
+    const tb=document.getElementById('hb-streak-table'); tb.innerHTML='';
+    [...hm.habits].sort((a,b)=>(b.streak||0)-(a.streak||0)).slice(0,6).forEach((h,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><span class="rank">'+(i+1)+'</span>'+h.name+'</td><td>'+(h.streak||0)+' day streak</td>';
+      tb.appendChild(tr);
+    });
+  } else sw.style.display='none';
+
+  const ig=document.getElementById('hb-insights'); ig.innerHTML='';
+  getInsights('habits').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
+}
+
+function renderRecovery() {
+  const rm = calculateRecoveryStats(activePeriod);
+  const mg = document.getElementById('rv-metrics'); mg.innerHTML='';
+  mg.appendChild(mkMetric('😴', rm.avgSleep!=null?rm.avgSleep+'h':'—', 'Avg Sleep',     null, null));
+  mg.appendChild(mkMetric('💚', rm.avgScore!=null?rm.avgScore+'%':'—', 'Avg Recovery',  null, rm.delta));
+  mg.appendChild(mkMetric('🌡', rm.avgTemp!=null?rm.avgTemp+'°C':'—',  'Avg Temp',      null, null));
+  mg.appendChild(mkMetric('🧠', rm.avgStress!=null?rm.avgStress+'/10':'—','Avg Stress', null, null));
+  if (rm.bestDay) mg.appendChild(mkMetric('🏅', rm.bestDay.recoveryScore+'%','Best Day', formatDate(rm.bestDay.date), null));
+
+  const labs=last7Labels();
+  setTimeout(()=>{
+    drawChart(document.getElementById('rv-score-chart'), labs, rm.trend7.scores, '#7EB8F7','line');
+    drawChart(document.getElementById('rv-sleep-chart'), labs, rm.trend7.sleeps, '#C084FC','line');
+  },0);
+
+  const ig=document.getElementById('rv-insights'); ig.innerHTML='';
+  getInsights('recovery').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
+}
+
+function renderGoals() {
+  const gm = calculateGoalStats();
+  const mg = document.getElementById('gl-metrics'); mg.innerHTML='';
+  mg.appendChild(mkMetric('🎯', gm.total,           'Total Goals',    null, null));
+  mg.appendChild(mkMetric('📈', gm.avgProgress+'%', 'Avg Progress',   null, null));
+  mg.appendChild(mkMetric('✅', gm.onTrack+'/'+gm.total,'On Track',   '≥50% progress', null));
+
+  const gl=document.getElementById('gl-goal-list'); gl.innerHTML='';
+  if (!gm.goals.length) {
+    gl.innerHTML='<div class="empty">No goals yet.<br>Add goals on the Dashboard to track progress here.</div>';
+  } else {
+    gm.goals.forEach((g,i)=>{
+      const pct=g.progress||0;
+      const color=pct>=80?'#6BE3A4':pct>=50?'#F2C063':'#FF6B6B';
+      const wrap=document.createElement('div'); wrap.style.cssText='margin-bottom:12px';
+      const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px';
+      row.innerHTML='<span style="font-size:13px;font-weight:600;color:#FAFAFA"><span class="rank">'+(i+1)+'</span>'+g.name+'</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:'+color+'">'+pct+'%</span>';
+      const pb=document.createElement('div'); pb.className='prog-bar';
+      const pf=document.createElement('div'); pf.className='prog-fill'; pf.style.cssText='width:'+pct+'%;background:'+color;
+      pb.appendChild(pf); wrap.appendChild(row); wrap.appendChild(pb);
+      gl.appendChild(wrap);
+    });
+  }
+
+  const ig=document.getElementById('gl-insights'); ig.innerHTML='';
+  getInsights('goals').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
+}
+
+function renderTab(tab) {
+  activeTab = tab;
+  if (tab==='workouts') renderWorkouts();
+  else if (tab==='habits')   renderHabits();
+  else if (tab==='recovery') renderRecovery();
+  else if (tab==='goals')    renderGoals();
+}
+
+function filterByPeriod(days) {
+  activePeriod = days;
+  renderTab(activeTab);
+}
+
+// ==================== DASH SUB ====================
+function updateDashSub() {
+  const d = loadAnalyticsData();
+  const parts = [];
+  if (d.workouts.length) parts.push(d.workouts.length+' workouts');
+  if (d.habits.length)   parts.push(d.habits.length+' habits');
+  if (d.recovery.length) parts.push(d.recovery.length+' recovery logs');
+  if (d.goals.length)    parts.push(d.goals.length+' goals');
+  document.getElementById('dashSub').textContent = parts.length ? parts.join(' · ') : 'No data yet — start tracking on the Dashboard';
+}
+
+// ==================== EXPORT ====================
+function exportWorkouts() {
+  const data = { exported: new Date().toISOString(), period: activePeriod===0?'all-time':activePeriod+'d', stats: calculateWorkoutStats(activePeriod), raw: storeGet('lifeos_workouts')||[] };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'),{href:url,download:'workouts-'+getActiveDateString()+'.json'}).click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== INIT ====================
+// Period buttons
+document.querySelectorAll('.period-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    filterByPeriod(parseInt(btn.dataset.days));
+  });
+});
+
+// Tab buttons
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('is-active'));
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('is-active');
+    renderTab(btn.dataset.tab);
+  });
+});
+
+document.getElementById('exportWorkouts').addEventListener('click', exportWorkouts);
+
+// Resize redraw
+window.addEventListener('resize', ()=>{ renderTab(activeTab); });
+
+// Initial render
+updateDashSub();
+renderTab('workouts');
+</script>
+</body>
+</html>
