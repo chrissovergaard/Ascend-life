@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker</title>
+  <style>
+    :root {
+      --text-primary: #FAFAFA;
+      --text-secondary: #B8B6B0;
+      --text-tertiary: #76746E;
+      --success: #6BE3A4;
+      --warning: #F2C063;
+      --danger: #FF6B6B;
+      --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #050506;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: max(32px, env(safe-area-inset-top, 32px)) 24px 48px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(107,227,164,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 80%, rgba(180,180,200,0.06) 0%, transparent 60%);
+      filter: blur(40px);
+      pointer-events: none; z-index: 0;
+      animation: wash-drift 36s ease-in-out infinite alternate;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.014)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      pointer-events: none; z-index: 0;
+    }
+
+    @keyframes wash-drift {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(2%,2%) scale(1.04); }
+    }
+
+    .container {
+      max-width: 1100px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .site-nav {
+      display: flex; gap: 4px; margin-bottom: 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 4px;
+      width: fit-content;
+    }
+    .nav-link {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+      color: var(--text-tertiary); padding: 7px 16px; border-radius: 9px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+    .nav-link.is-active { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* ===== PAGE TITLE ===== */
+    .dash-title {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 22px;
+    }
+
+    /* ===== SECTION ===== */
+    .section { margin-bottom: 18px; }
+
+    .section-title {
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .section-title::before {
+      content: ''; width: 18px; height: 1px;
+      background: var(--text-tertiary); opacity: 0.6; flex-shrink: 0;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+    }
+
+    /* ===== CARDS ===== */
+    .gm-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px; padding: 20px 22px;
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      margin-bottom: 12px;
+    }
+
+    .gm-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; flex-wrap: wrap;
+      gap: 8px; margin-bottom: 14px;
+    }
+    .gm-header-left { display: flex; flex-direction: column; }
+
+    .gm-eyebrow {
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 6px;
+    }
+
+    .gs-counter {
+      font-family: var(--font-mono); font-size: 11px;
+      text-transform: uppercase; font-variant-numeric: tabular-nums;
+      color: var(--text-tertiary); letter-spacing: 0.04em;
+      align-self: flex-start;
+    }
+
+    .empty-state {
+      font-size: 12px; color: var(--text-tertiary);
+      font-style: italic; padding: 14px 0; text-align: center;
+    }
+
+    /* ===== GOAL INPUT / ADD BTN (shared) ===== */
+    .goal-input {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 11px 14px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .goal-input:focus { border-color: rgba(255,255,255,0.25); }
+    .goal-input::placeholder { color: var(--text-tertiary); }
+
+    .goal-add-btn {
+      background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+      color: #0A0A0B; font-weight: 700; font-size: 13px;
+      font-family: var(--font-body);
+      padding: 11px 20px; border-radius: 12px; border: none;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .goal-add-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    /* ===== GOALS SYSTEM SHARED (for PR cards) ===== */
+    .gs-item {
+      padding: 14px 16px; margin-bottom: 8px;
+      background: rgba(255,255,255,0.035);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: background 0.2s;
+    }
+    .gs-item:hover { background: rgba(255,255,255,0.055); }
+    .gs-item-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 8px;
+    }
+    .gs-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .gs-progress-track {
+      height: 5px; border-radius: 3px;
+      background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .gs-progress-fill {
+      height: 100%; border-radius: 3px;
+      background: #639922;
+      transition: width 0.5s cubic-bezier(0.22,1,0.36,1);
+    }
+    .gs-progress-fill.is-complete {
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(107,227,164,0.4);
+    }
+
+    /* ===== WORKOUT TRACKER ===== */
+    .wt-start-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .wt-quick-btns, .wt-quick-exercises { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .wt-quick-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 8px; padding: 6px 12px; color: var(--text-secondary);
+      font-size: 12px; cursor: pointer; font-family: var(--font-body);
+      transition: background 0.15s, color 0.15s;
+    }
+    .wt-quick-btn:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+    .wt-active-title {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary);
+    }
+    .wt-timer {
+      font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+      font-variant-numeric: tabular-nums; color: var(--text-tertiary); letter-spacing: -0.02em;
+    }
+    .wt-exercise {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .wt-ex-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .wt-ex-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .wt-pr-badge {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      background: rgba(107,227,164,0.12); color: var(--success);
+      border-radius: 6px; padding: 2px 7px; letter-spacing: 0.04em;
+    }
+    .wt-pr-badge-gold { background: rgba(242,192,99,0.12); color: var(--warning); }
+    .wt-ex-delete {
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text-tertiary); padding: 2px 6px; border-radius: 6px;
+      opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+    }
+    .wt-ex-delete:hover { color: var(--danger); opacity: 1; }
+    .wt-sets-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .wt-set-row { display: flex; align-items: center; gap: 8px; }
+    .wt-set-num {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+      width: 16px; flex-shrink: 0; text-align: right;
+    }
+    .wt-weight-input, .wt-reps-input {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 8px; padding: 7px 10px; color: var(--text-primary);
+      font-family: var(--font-mono); font-size: 13px; outline: none;
+      text-align: center; transition: border-color 0.2s;
+    }
+    .wt-weight-input { width: 72px; }
+    .wt-reps-input { width: 60px; -moz-appearance: textfield; appearance: textfield; }
+    .wt-reps-input::-webkit-outer-spin-button,
+    .wt-reps-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .wt-weight-input:focus, .wt-reps-input:focus { border-color: rgba(255,255,255,0.3); }
+    .wt-weight-input::placeholder, .wt-reps-input::placeholder { color: var(--text-tertiary); font-size: 11px; }
+    .wt-x { color: var(--text-tertiary); font-size: 14px; flex-shrink: 0; }
+    .wt-set-actions { display: flex; gap: 8px; }
+    .wt-add-set-btn, .wt-remove-set-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 8px; padding: 5px 12px; font-size: 12px;
+      font-family: var(--font-body); cursor: pointer;
+      color: var(--text-secondary); transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .wt-add-set-btn:hover { background: rgba(107,227,164,0.10); color: var(--success); border-color: rgba(107,227,164,0.3); }
+    .wt-remove-set-btn:hover { background: rgba(255,107,107,0.10); color: var(--danger); border-color: rgba(255,107,107,0.3); }
+    .wt-remove-set-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .wt-add-exercise-row { display: flex; gap: 8px; margin: 14px 0 8px; }
+    .wt-notes {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+      padding: 10px 14px; color: var(--text-secondary); font-family: var(--font-body);
+      font-size: 13px; outline: none; resize: vertical; min-height: 60px; margin-top: 12px;
+      transition: border-color 0.2s;
+    }
+    .wt-notes:focus { border-color: rgba(255,255,255,0.2); }
+    .wt-notes::placeholder { color: var(--text-tertiary); }
+    .wt-action-row { display: flex; gap: 10px; margin-top: 16px; }
+    .wt-save-btn {
+      flex: 1; background: linear-gradient(180deg,#6BE3A4 0%,#4AC98A 100%);
+      color: #050506; font-weight: 700; font-size: 13px; font-family: var(--font-body);
+      padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 4px 12px rgba(107,227,164,0.2);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .wt-save-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 6px 16px rgba(107,227,164,0.3); }
+    .wt-cancel-btn {
+      background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+      font-weight: 600; font-size: 13px; font-family: var(--font-body);
+      padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10);
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .wt-cancel-btn:hover { background: rgba(255,107,107,0.10); color: var(--danger); border-color: rgba(255,107,107,0.3); }
+    .wt-history-item { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .wt-history-item:last-child { border-bottom: none; }
+    .wt-history-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; cursor: pointer; transition: opacity 0.15s;
+    }
+    .wt-history-header:hover { opacity: 0.85; }
+    .wt-history-left { flex: 1; }
+    .wt-history-date {
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px;
+    }
+    .wt-history-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .wt-history-meta { font-size: 11px; color: var(--text-tertiary); }
+    .wt-history-right { display: flex; align-items: center; gap: 8px; }
+    .wt-expand-icon { color: var(--text-tertiary); font-size: 14px; }
+    .wt-history-delete {
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      color: var(--text-tertiary); padding: 2px 6px; border-radius: 6px;
+      opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+    }
+    .wt-history-delete:hover { opacity: 1; color: var(--danger); }
+    .wt-history-edit {
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text-tertiary); padding: 2px 6px; border-radius: 6px;
+      opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+    }
+    .wt-history-edit:hover { opacity: 1; color: var(--warning); }
+    .wt-history-detail { padding: 0 0 12px; }
+    .wt-detail { display: flex; flex-direction: column; gap: 10px; }
+    .wt-detail-notes {
+      font-size: 12px; color: var(--text-tertiary); font-style: italic;
+      padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;
+    }
+    .wt-detail-ex-name { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+    .wt-1rm { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); font-weight: 400; }
+    .wt-detail-sets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .wt-detail-set {
+      font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.04);
+      border-radius: 6px; padding: 3px 8px; color: var(--text-secondary);
+    }
+    .wt-pr-stats { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin: 4px 0 8px; }
+    .wt-progression { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; flex-wrap: wrap; }
+    .wt-prog-dot {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+      padding: 2px 6px; background: rgba(255,255,255,0.04); border-radius: 5px;
+    }
+    .wt-prog-dot.is-latest { color: var(--success); background: rgba(107,227,164,0.12); }
+    .wt-prog-arrow { color: var(--text-tertiary); font-size: 10px; }
+    .wt-goal-label { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+    .wt-duration-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .wt-duration-row { display: flex; align-items: center; gap: 5px; }
+    .wt-duration-input {
+      width: 52px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+      padding: 5px 8px; color: var(--text-primary); font-family: var(--font-mono);
+      font-size: 13px; outline: none; text-align: center; transition: border-color 0.2s;
+      -moz-appearance: textfield; appearance: textfield;
+    }
+    .wt-duration-input::-webkit-outer-spin-button,
+    .wt-duration-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .wt-duration-input:focus { border-color: rgba(255,255,255,0.3); }
+    .wt-duration-input::placeholder { color: var(--text-tertiary); }
+    .wt-duration-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+    .wt-editing-badge {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      background: rgba(242,192,99,0.12); color: var(--warning);
+      border-radius: 6px; padding: 2px 8px; letter-spacing: 0.04em;
+      align-self: flex-start; margin-top: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .dash-title { font-size: 22px; }
+      .wt-start-form { flex-direction: column; align-items: stretch; }
+      .wt-action-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav class="site-nav">
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="workout.html" class="nav-link is-active">Workout</a>
+  </nav>
+
+  <h1 class="dash-title">Workout Tracker</h1>
+
+  <div class="section">
+    <div class="section-title">Log a Workout</div>
+
+    <!-- Start / Active Workout Card -->
+    <div class="gm-card" id="wtActiveCard">
+      <div id="wtStartState">
+        <div class="gm-header">
+          <div class="gm-header-left">
+            <div class="gm-eyebrow">New Workout</div>
+          </div>
+        </div>
+        <div class="wt-start-form">
+          <input type="text" class="goal-input" id="wtWorkoutName" placeholder="Workout name… (e.g. Chest Day)">
+          <button class="goal-add-btn" id="wtStartBtn">▶ Start</button>
+        </div>
+        <div class="wt-quick-btns" id="wtQuickNames"></div>
+      </div>
+
+      <div id="wtActiveState" style="display:none">
+        <div class="gm-header">
+          <div class="gm-header-left">
+            <div class="gm-eyebrow" id="wtActiveDate"></div>
+            <div class="wt-active-title" id="wtActiveName"></div>
+          </div>
+          <div class="wt-duration-wrap">
+            <div class="wt-timer" id="wtTimer">0:00</div>
+            <div class="wt-duration-row">
+              <input type="number" class="wt-duration-input" id="wtDurationInput" placeholder="–" min="0" step="1">
+              <span class="wt-duration-label">min</span>
+            </div>
+          </div>
+        </div>
+        <div id="wtExerciseList"></div>
+        <div class="wt-add-exercise-row">
+          <input type="text" class="goal-input" id="wtExerciseName" placeholder="Add exercise…">
+          <button class="goal-add-btn" id="wtAddExerciseBtn">+ Exercise</button>
+        </div>
+        <div class="wt-quick-exercises" id="wtQuickExercises"></div>
+        <textarea class="wt-notes" id="wtNotes" placeholder="Notes (optional)…"></textarea>
+        <div class="wt-action-row">
+          <button class="wt-save-btn" id="wtSaveBtn">✓ Save Workout</button>
+          <button class="wt-cancel-btn" id="wtCancelBtn">✕ Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Personal Records</div>
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left"><div class="gm-eyebrow">Best Lifts</div></div>
+        <div class="gs-counter" id="wtPRCount">—</div>
+      </div>
+      <div id="wtPRList"></div>
+      <div id="wtPREmpty" class="empty-state">No workouts logged yet — start one above.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Workout History</div>
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left"><div class="gm-eyebrow">Recent Sessions</div></div>
+        <div class="gs-counter" id="wtHistoryCount">0 workouts</div>
+      </div>
+      <div id="wtHistoryList"></div>
+      <div id="wtHistoryEmpty" class="empty-state">No workouts logged yet.</div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ==================== STORAGE ====================
+function storeGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+}
+function storeSet(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+function storeDelete(key) { localStorage.removeItem(key); }
+
+// ==================== DATE HELPERS ====================
+function pad2(n) { return String(n).padStart(2, '0'); }
+function dateToStr(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function formatDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${DAYS[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${d}`;
+}
+
+// ==================== PROFILE (shared) ====================
+function loadProfile() { return storeGet('lifeos_profile'); }
+
+function convertBWtoKg(weightStr) {
+  if (String(weightStr).trim().toUpperCase() !== 'BW') return weightStr;
+  const p = loadProfile();
+  return (p && p.weight) ? String(p.weight) : weightStr;
+}
+
+// ==================== WORKOUT TRACKER ====================
+let currentWorkout  = null;
+let wtTimerInterval = null;
+
+const WT_QUICK_NAMES     = ['Chest Day','Back Day','Leg Day','Shoulder Day','Push Day','Pull Day','Full Body'];
+const WT_QUICK_EXERCISES = ['Bench Press','Squat','Deadlift','Pull-ups','OHP','Dips','Rows','Lunges'];
+
+function wtEscHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function wtFormatDate(isoStr) {
+  const d = new Date(isoStr);
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function calc1RM(weight, reps) {
+  if (reps <= 0 || reps === 1) return weight;
+  return Math.round(weight * (1 + reps / 30));
+}
+
+// ---- Active workout state ----
+function startWorkout(name) {
+  const n = (name || document.getElementById('wtWorkoutName').value).trim();
+  if (!n) return;
+  currentWorkout = { name: n, startTime: Date.now(), exercises: [], notes: '', manualDuration: null, editingId: null };
+  document.getElementById('wtWorkoutName').value = '';
+  wtRenderActive();
+}
+
+function addExercise(name) {
+  if (!currentWorkout) return;
+  const n = (name || document.getElementById('wtExerciseName').value).trim();
+  if (!n) return;
+  wtReadBack();
+  currentWorkout.exercises.push({ id: Date.now(), name: n, sets: [{ weight: '', reps: '' }] });
+  document.getElementById('wtExerciseName').value = '';
+  wtRenderActive();
+}
+
+function addSet(exId) {
+  if (!currentWorkout) return;
+  wtReadBack();
+  const ex = currentWorkout.exercises.find(e => e.id === exId);
+  if (ex) { ex.sets.push({ weight: '', reps: '' }); wtRenderActive(); }
+}
+
+function removeSet(exId) {
+  if (!currentWorkout) return;
+  wtReadBack();
+  const ex = currentWorkout.exercises.find(e => e.id === exId);
+  if (ex && ex.sets.length > 1) { ex.sets.pop(); wtRenderActive(); }
+}
+
+function deleteExercise(exId) {
+  if (!currentWorkout) return;
+  wtReadBack();
+  currentWorkout.exercises = currentWorkout.exercises.filter(e => e.id !== exId);
+  wtRenderActive();
+}
+
+function saveWorkout() {
+  wtReadBack();
+  const validSet = s => {
+    const r = parseInt(s.reps);
+    if (isNaN(r) || r <= 0) return false;
+    const w = String(s.weight).trim().toUpperCase();
+    return w === 'BW' || (!isNaN(parseFloat(w)) && parseFloat(w) >= 0);
+  };
+  const exercises = currentWorkout.exercises.map(ex => ({
+    ...ex, sets: ex.sets.filter(validSet).map(s => ({ ...s, weight: convertBWtoKg(s.weight) }))
+  })).filter(ex => ex.sets.length > 0);
+  if (exercises.length === 0) { alert('Add at least one exercise with a valid set.'); return; }
+
+  const dur = currentWorkout.manualDuration != null
+    ? currentWorkout.manualDuration
+    : Math.round((Date.now() - currentWorkout.startTime) / 60000);
+
+  const workouts = storeGet('lifeos_workouts') || [];
+
+  if (currentWorkout.editingId) {
+    const idx = workouts.findIndex(w => w.id === currentWorkout.editingId);
+    const originalDate = idx >= 0 ? workouts[idx].date : new Date().toISOString();
+    const workout = { id: currentWorkout.editingId, name: currentWorkout.name, date: originalDate, notes: currentWorkout.notes || '', duration: dur, exercises };
+    if (idx >= 0) workouts[idx] = workout; else workouts.unshift(workout);
+  } else {
+    workouts.unshift({ id: Date.now(), name: currentWorkout.name, date: new Date().toISOString(), notes: currentWorkout.notes || '', duration: dur, exercises });
+  }
+
+  storeSet('lifeos_workouts', workouts);
+  currentWorkout = null;
+  clearInterval(wtTimerInterval); wtTimerInterval = null;
+  wtRenderActive();
+  renderWorkoutHistory();
+  renderPersonalRecords();
+}
+
+function cancelWorkout() {
+  if (!confirm('Discard this workout?')) return;
+  currentWorkout = null;
+  clearInterval(wtTimerInterval); wtTimerInterval = null;
+  wtRenderActive();
+}
+
+function wtReadBack() {
+  if (!currentWorkout) return;
+  currentWorkout.exercises.forEach(ex => {
+    ex.sets.forEach((set, si) => {
+      const w = document.querySelector(`[data-wex="${ex.id}"][data-si="${si}"][data-field="weight"]`);
+      const r = document.querySelector(`[data-wex="${ex.id}"][data-si="${si}"][data-field="reps"]`);
+      if (w) set.weight = w.value;
+      if (r) set.reps   = r.value;
+    });
+  });
+  const n = document.getElementById('wtNotes');
+  if (n) currentWorkout.notes = n.value;
+  const d = document.getElementById('wtDurationInput');
+  if (d) currentWorkout.manualDuration = d.value !== '' ? parseInt(d.value) : null;
+}
+
+// ---- Render functions ----
+function wtRenderActive() {
+  const startEl  = document.getElementById('wtStartState');
+  const activeEl = document.getElementById('wtActiveState');
+  if (!currentWorkout) {
+    startEl.style.display  = '';
+    activeEl.style.display = 'none';
+    clearInterval(wtTimerInterval); wtTimerInterval = null;
+    return;
+  }
+  startEl.style.display  = 'none';
+  activeEl.style.display = '';
+
+  const nameEl = document.getElementById('wtActiveName');
+  nameEl.textContent = currentWorkout.name;
+  let badge = nameEl.parentElement.querySelector('.wt-editing-badge');
+  if (currentWorkout.editingId) {
+    if (!badge) { badge = document.createElement('span'); badge.className = 'wt-editing-badge'; nameEl.parentElement.appendChild(badge); }
+    badge.textContent = 'EDITING';
+  } else {
+    if (badge) badge.remove();
+  }
+
+  document.getElementById('wtActiveDate').textContent = formatDate(dateToStr(new Date()));
+
+  const timerEl = document.getElementById('wtTimer');
+  if (currentWorkout.editingId) {
+    timerEl.style.display = 'none';
+    clearInterval(wtTimerInterval); wtTimerInterval = null;
+  } else {
+    timerEl.style.display = '';
+    if (!wtTimerInterval) wtTimerInterval = setInterval(wtUpdateTimer, 1000);
+  }
+
+  const durEl = document.getElementById('wtDurationInput');
+  if (durEl) durEl.value = currentWorkout.manualDuration != null ? currentWorkout.manualDuration : '';
+
+  const exList = document.getElementById('wtExerciseList');
+  exList.innerHTML = '';
+  currentWorkout.exercises.forEach(ex => exList.appendChild(wtBuildExBlock(ex)));
+  document.getElementById('wtNotes').value = currentWorkout.notes || '';
+}
+
+function wtUpdateTimer() {
+  if (!currentWorkout) return;
+  const s = Math.floor((Date.now() - currentWorkout.startTime) / 1000);
+  const el = document.getElementById('wtTimer');
+  if (el) el.textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+function wtBuildExBlock(ex) {
+  const pr = getPersonalRecord(ex.name);
+  const div = document.createElement('div');
+  div.className = 'wt-exercise';
+
+  const header = document.createElement('div');
+  header.className = 'wt-ex-header';
+  const nameEl = document.createElement('span');
+  nameEl.className = 'wt-ex-name';
+  nameEl.textContent = ex.name;
+  header.appendChild(nameEl);
+  if (pr !== null) {
+    const badge = document.createElement('span');
+    badge.className = 'wt-pr-badge';
+    badge.textContent = `PR: ${pr}kg`;
+    header.appendChild(badge);
+  }
+  const delBtn = document.createElement('button');
+  delBtn.className = 'wt-ex-delete'; delBtn.textContent = '✕';
+  delBtn.addEventListener('click', () => deleteExercise(ex.id));
+  header.appendChild(delBtn);
+  div.appendChild(header);
+
+  const setsList = document.createElement('div');
+  setsList.className = 'wt-sets-list';
+  ex.sets.forEach((set, si) => {
+    const row = document.createElement('div');
+    row.className = 'wt-set-row';
+    const num = document.createElement('span');
+    num.className = 'wt-set-num'; num.textContent = si + 1;
+    const wIn = document.createElement('input');
+    wIn.type = 'text'; wIn.className = 'wt-weight-input';
+    wIn.placeholder = 'kg / BW'; wIn.value = set.weight;
+    wIn.dataset.wex = ex.id; wIn.dataset.si = si; wIn.dataset.field = 'weight';
+    wIn.addEventListener('blur', () => {
+      if (wIn.value.trim().toUpperCase() === 'BW') {
+        const prof = loadProfile();
+        if (!prof || !prof.weight) {
+          wIn.style.borderColor = 'var(--warning)';
+          wIn.title = 'Set your weight in Profile first!';
+        } else {
+          wIn.style.borderColor = 'rgba(107,227,164,0.4)';
+          wIn.title = `BW = ${prof.weight}kg`;
+        }
+      } else {
+        wIn.style.borderColor = '';
+        wIn.title = '';
+      }
+    });
+    const xEl = document.createElement('span');
+    xEl.className = 'wt-x'; xEl.textContent = '×';
+    const rIn = document.createElement('input');
+    rIn.type = 'number'; rIn.className = 'wt-reps-input';
+    rIn.placeholder = 'Reps'; rIn.min = '1'; rIn.value = set.reps;
+    rIn.dataset.wex = ex.id; rIn.dataset.si = si; rIn.dataset.field = 'reps';
+    row.appendChild(num); row.appendChild(wIn);
+    row.appendChild(xEl); row.appendChild(rIn);
+    setsList.appendChild(row);
+  });
+  div.appendChild(setsList);
+
+  const acts = document.createElement('div');
+  acts.className = 'wt-set-actions';
+  const addS = document.createElement('button');
+  addS.className = 'wt-add-set-btn'; addS.textContent = '+ Set';
+  addS.addEventListener('click', () => addSet(ex.id));
+  const remS = document.createElement('button');
+  remS.className = 'wt-remove-set-btn'; remS.textContent = '− Last Set';
+  remS.disabled = ex.sets.length <= 1;
+  remS.addEventListener('click', () => removeSet(ex.id));
+  acts.appendChild(addS); acts.appendChild(remS);
+  div.appendChild(acts);
+  return div;
+}
+
+// ---- History ----
+function loadWorkouts() { return storeGet('lifeos_workouts') || []; }
+
+function renderWorkoutHistory() {
+  const workouts = loadWorkouts();
+  const listEl   = document.getElementById('wtHistoryList');
+  const emptyEl  = document.getElementById('wtHistoryEmpty');
+  const counter  = document.getElementById('wtHistoryCount');
+  counter.textContent = `${workouts.length} workout${workouts.length !== 1 ? 's' : ''}`;
+  emptyEl.style.display = workouts.length === 0 ? '' : 'none';
+  listEl.innerHTML = '';
+  workouts.slice(0, 10).forEach(w => {
+    const totalSets = w.exercises.reduce((s, ex) => s + ex.sets.length, 0);
+    const vol = w.exercises.reduce((s, ex) => s + ex.sets.reduce((sv, set) => {
+      const wt = parseFloat(set.weight); const r = parseInt(set.reps);
+      return !isNaN(wt) && !isNaN(r) ? sv + wt * r : sv;
+    }, 0), 0);
+    const item = document.createElement('div');
+    item.className = 'wt-history-item';
+    const hdr = document.createElement('div');
+    hdr.className = 'wt-history-header';
+    hdr.addEventListener('click', () => {
+      const det = item.querySelector('.wt-history-detail');
+      const ico = item.querySelector('.wt-expand-icon');
+      const open = det.style.display !== 'none';
+      det.style.display = open ? 'none' : '';
+      ico.textContent = open ? '▾' : '▴';
+    });
+    const left = document.createElement('div'); left.className = 'wt-history-left';
+    const dateEl = document.createElement('div'); dateEl.className = 'wt-history-date';
+    dateEl.textContent = wtFormatDate(w.date);
+    const nameEl = document.createElement('div'); nameEl.className = 'wt-history-name';
+    nameEl.textContent = w.name;
+    const metaEl = document.createElement('div'); metaEl.className = 'wt-history-meta';
+    metaEl.textContent = `${w.exercises.length} exercise${w.exercises.length !== 1 ? 's' : ''} · ${totalSets} sets${vol > 0 ? ` · ${Math.round(vol).toLocaleString()}kg vol` : ''}${w.duration ? ` · ${w.duration}m` : ''}`;
+    left.appendChild(dateEl); left.appendChild(nameEl); left.appendChild(metaEl);
+    const right = document.createElement('div'); right.className = 'wt-history-right';
+    const ico = document.createElement('span'); ico.className = 'wt-expand-icon'; ico.textContent = '▾';
+    const editBtn = document.createElement('button'); editBtn.className = 'wt-history-edit'; editBtn.textContent = '✎'; editBtn.title = 'Edit workout';
+    editBtn.addEventListener('click', e => { e.stopPropagation(); editWorkout(w.id); });
+    const del = document.createElement('button'); del.className = 'wt-history-delete'; del.textContent = '×'; del.title = 'Delete';
+    del.addEventListener('click', e => { e.stopPropagation(); deleteWorkout(w.id); });
+    right.appendChild(ico); right.appendChild(editBtn); right.appendChild(del);
+    hdr.appendChild(left); hdr.appendChild(right);
+    const det = document.createElement('div'); det.className = 'wt-history-detail'; det.style.display = 'none';
+    det.innerHTML = wtBuildDetail(w);
+    item.appendChild(hdr); item.appendChild(det);
+    listEl.appendChild(item);
+  });
+}
+
+function wtBuildDetail(w) {
+  let h = '<div class="wt-detail">';
+  if (w.notes) h += `<div class="wt-detail-notes">${wtEscHtml(w.notes)}</div>`;
+  w.exercises.forEach(ex => {
+    const best = ex.sets.filter(s => {
+      const wt = parseFloat(s.weight); return !isNaN(wt);
+    }).sort((a,b) => parseFloat(b.weight) - parseFloat(a.weight))[0];
+    const e1rm = best ? calc1RM(parseFloat(best.weight), parseInt(best.reps)) : null;
+    h += `<div><div class="wt-detail-ex-name">${wtEscHtml(ex.name)}`;
+    if (e1rm && !isNaN(e1rm)) h += ` <span class="wt-1rm">~${e1rm}kg est. 1RM</span>`;
+    h += `</div><div class="wt-detail-sets">`;
+    ex.sets.forEach((s, i) => {
+      const wl = String(s.weight).toUpperCase() === 'BW' ? 'BW' : `${s.weight}kg`;
+      h += `<span class="wt-detail-set">Set ${i+1}: ${wtEscHtml(wl)} × ${wtEscHtml(String(s.reps))}</span>`;
+    });
+    h += `</div></div>`;
+  });
+  h += '</div>';
+  return h;
+}
+
+function deleteWorkout(id) {
+  if (!confirm('Delete this workout?')) return;
+  const ws = (storeGet('lifeos_workouts') || []).filter(w => w.id !== id);
+  storeSet('lifeos_workouts', ws);
+  renderWorkoutHistory();
+  renderPersonalRecords();
+}
+
+function editWorkout(id) {
+  if (currentWorkout && !confirm('You have an active workout. Discard it and edit this one instead?')) return;
+  const w = loadWorkouts().find(wk => wk.id === id);
+  if (!w) return;
+  clearInterval(wtTimerInterval); wtTimerInterval = null;
+  currentWorkout = {
+    editingId: w.id,
+    name: w.name,
+    startTime: Date.now(),
+    notes: w.notes || '',
+    manualDuration: w.duration || null,
+    exercises: w.exercises.map(ex => ({
+      id: ex.id || (Date.now() + Math.random()),
+      name: ex.name,
+      sets: ex.sets.map(s => ({ weight: s.weight, reps: s.reps }))
+    }))
+  };
+  wtRenderActive();
+  document.getElementById('wtActiveCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- Personal Records ----
+function getPersonalRecord(exerciseName) {
+  let pr = null;
+  loadWorkouts().forEach(w => w.exercises.forEach(ex => {
+    if (ex.name.toLowerCase() !== exerciseName.toLowerCase()) return;
+    ex.sets.forEach(s => {
+      const wt = parseFloat(s.weight);
+      if (!isNaN(wt) && (pr === null || wt > pr)) pr = wt;
+    });
+  }));
+  return pr;
+}
+
+function calculateProgression(exerciseName) {
+  const hist = [];
+  loadWorkouts().forEach(w => {
+    const ex = w.exercises.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+    if (!ex) return;
+    const weights = ex.sets.map(s => parseFloat(s.weight)).filter(n => !isNaN(n));
+    if (weights.length) hist.push({ date: w.date, max: Math.max(...weights) });
+  });
+  return hist.slice(0, 5);
+}
+
+function renderPersonalRecords() {
+  const workouts = loadWorkouts();
+  const prMap    = {};
+  workouts.forEach(w => w.exercises.forEach(ex => {
+    const key = ex.name.toLowerCase();
+    ex.sets.forEach(s => {
+      const wt = parseFloat(s.weight); const r = parseInt(s.reps);
+      if (isNaN(wt)) return;
+      if (!prMap[key]) prMap[key] = { name: ex.name, weight: wt, reps: r };
+      else if (wt > prMap[key].weight) { prMap[key].weight = wt; prMap[key].reps = r; }
+    });
+  }));
+  const entries  = Object.values(prMap).sort((a,b) => a.name.localeCompare(b.name));
+  const listEl   = document.getElementById('wtPRList');
+  const emptyEl  = document.getElementById('wtPREmpty');
+  const counter  = document.getElementById('wtPRCount');
+  counter.textContent = `${entries.length} exercise${entries.length !== 1 ? 's' : ''}`;
+  emptyEl.style.display = entries.length === 0 ? '' : 'none';
+  listEl.innerHTML = '';
+  entries.forEach(pr => {
+    const e1rm      = calc1RM(pr.weight, pr.reps);
+    const prog      = calculateProgression(pr.name);
+    const goals     = storeGet('lifeos_goals') || [];
+    const matchGoal = goals.find(g => {
+      const gn = g.name.toLowerCase(); const pn = pr.name.toLowerCase();
+      return gn.includes(pn) || pn.includes(gn);
+    });
+    const item = document.createElement('div');
+    item.className = 'gs-item';
+    const hdr = document.createElement('div'); hdr.className = 'gs-item-header';
+    const nameEl = document.createElement('span'); nameEl.className = 'gs-item-name'; nameEl.textContent = pr.name;
+    const badge  = document.createElement('span'); badge.className = 'wt-pr-badge wt-pr-badge-gold';
+    badge.textContent = `${pr.weight}kg × ${pr.reps}`;
+    hdr.appendChild(nameEl); hdr.appendChild(badge);
+    item.appendChild(hdr);
+    const stats = document.createElement('div'); stats.className = 'wt-pr-stats';
+    stats.textContent = `~${e1rm}kg est. 1RM`;
+    item.appendChild(stats);
+    if (prog.length > 1) {
+      const progEl = document.createElement('div'); progEl.className = 'wt-progression';
+      [...prog].reverse().forEach((p, i, arr) => {
+        const dot = document.createElement('span');
+        dot.className = 'wt-prog-dot' + (i === arr.length - 1 ? ' is-latest' : '');
+        dot.textContent = `${p.max}`; dot.title = `${wtFormatDate(p.date)}: ${p.max}kg`;
+        progEl.appendChild(dot);
+        if (i < arr.length - 1) {
+          const arr2 = document.createElement('span'); arr2.className = 'wt-prog-arrow'; arr2.textContent = '→';
+          progEl.appendChild(arr2);
+        }
+      });
+      item.appendChild(progEl);
+    }
+    if (matchGoal) {
+      const pct   = Math.min(Math.round(pr.weight / matchGoal.target * 100), 100);
+      const track = document.createElement('div'); track.className = 'gs-progress-track'; track.style.marginTop = '8px';
+      const fill  = document.createElement('div'); fill.className = 'gs-progress-fill' + (pct >= 100 ? ' is-complete' : '');
+      fill.style.width = `${pct}%`; track.appendChild(fill);
+      const lbl = document.createElement('div'); lbl.className = 'wt-goal-label';
+      lbl.textContent = `Goal: ${matchGoal.target}kg — ${pct >= 100 ? '✓ Achieved!' : pct + '%'}`;
+      item.appendChild(track); item.appendChild(lbl);
+    }
+    listEl.appendChild(item);
+  });
+}
+
+// ==================== INIT ====================
+(function initWorkoutTracker() {
+  const qn = document.getElementById('wtQuickNames');
+  WT_QUICK_NAMES.forEach(n => {
+    const b = document.createElement('button'); b.className = 'wt-quick-btn'; b.textContent = n;
+    b.addEventListener('click', () => startWorkout(n)); qn.appendChild(b);
+  });
+  const qe = document.getElementById('wtQuickExercises');
+  WT_QUICK_EXERCISES.forEach(n => {
+    const b = document.createElement('button'); b.className = 'wt-quick-btn'; b.textContent = n;
+    b.addEventListener('click', () => addExercise(n)); qe.appendChild(b);
+  });
+  document.getElementById('wtStartBtn').addEventListener('click', () => startWorkout());
+  document.getElementById('wtWorkoutName').addEventListener('keydown', e => { if (e.key === 'Enter') startWorkout(); });
+  document.getElementById('wtAddExerciseBtn').addEventListener('click', () => addExercise());
+  document.getElementById('wtExerciseName').addEventListener('keydown', e => { if (e.key === 'Enter') addExercise(); });
+  document.getElementById('wtSaveBtn').addEventListener('click', saveWorkout);
+  document.getElementById('wtCancelBtn').addEventListener('click', cancelWorkout);
+  renderWorkoutHistory();
+  renderPersonalRecords();
+})();
+</script>
+</body>
+</html>
