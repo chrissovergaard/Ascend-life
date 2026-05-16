@@ -1168,6 +1168,48 @@
     .cal-up-info { flex:1; min-width:0; }
     .cal-up-name { font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cal-up-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:1px; }
+
+    /* ===== ANALYTICS DASHBOARD ===== */
+    .an-period-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .an-period-btn { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:5px 12px; border-radius:99px; border:1px solid rgba(255,255,255,0.10); background:rgba(255,255,255,0.04); color:var(--text-tertiary); cursor:pointer; transition:all 0.15s; }
+    .an-period-btn.is-active { background:#6BE3A4; border-color:#6BE3A4; color:#050506; }
+    .an-period-btn:hover:not(.is-active) { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+    .an-export-btn { margin-left:auto; font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:5px 12px; border-radius:99px; border:1px solid rgba(255,255,255,0.10); background:rgba(255,255,255,0.04); color:var(--text-tertiary); cursor:pointer; transition:all 0.15s; }
+    .an-export-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+
+    .an-sections { display:flex; flex-direction:column; gap:20px; }
+    .an-section-title { font-family:var(--font-mono); font-size:10px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .an-section-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.06); }
+
+    .an-stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-bottom:12px; }
+    .an-stat { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 14px; }
+    .an-stat-num   { font-family:var(--font-mono); font-size:20px; font-weight:800; line-height:1; color:var(--text-primary); }
+    .an-stat-label { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:3px; }
+    .an-stat-sub   { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .an-stat-delta { font-family:var(--font-mono); font-size:10px; font-weight:700; margin-top:3px; }
+    .an-delta-up   { color:#6BE3A4; }
+    .an-delta-down { color:#FF6B6B; }
+
+    .an-chart-wrap  { margin-bottom:10px; }
+    .an-chart-label { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:5px; }
+
+    .an-insight { font-family:var(--font-mono); font-size:11px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); color:var(--text-secondary); line-height:1.4; margin-top:6px; }
+    .an-insight.good { border-color:rgba(107,227,164,0.22); color:#6BE3A4; background:rgba(107,227,164,0.06); }
+    .an-insight.warn { border-color:rgba(242,192,99,0.22);  color:#F2C063; background:rgba(242,192,99,0.06); }
+
+    .an-table { width:100%; border-collapse:collapse; }
+    .an-table td { font-family:var(--font-mono); font-size:10px; padding:5px 6px; color:var(--text-secondary); border-bottom:1px solid rgba(255,255,255,0.04); }
+    .an-table td:first-child { color:var(--text-primary); font-weight:600; }
+    .an-table td:last-child  { text-align:right; color:var(--text-primary); font-weight:700; }
+    .an-rank { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:4px; font-size:8px; font-weight:800; margin-right:6px; background:rgba(255,255,255,0.07); color:var(--text-tertiary); vertical-align:middle; }
+
+    .an-heatmap       { display:flex; flex-direction:column; gap:4px; }
+    .an-heatmap-row   { display:flex; gap:3px; align-items:center; }
+    .an-heatmap-label { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); min-width:82px; max-width:82px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .an-heatmap-cell  { width:16px; height:16px; border-radius:3px; background:rgba(255,255,255,0.06); flex-shrink:0; }
+    .an-heatmap-cell.done { background:#6BE3A4; }
+    .an-heatmap-cell.miss { background:rgba(255,107,107,0.22); }
+    .an-heatmap-cell.none { background:rgba(255,255,255,0.04); }
   </style>
 </head>
 <body>
@@ -1503,6 +1545,21 @@
       <div class="sr-grid" id="srGrid">
         <div class="sr-empty">No data yet — log workouts, habits and recovery to get personalised tips.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="section">
+    <div class="section-title">Analytics</div>
+    <div class="gm-card" id="analyticsCard">
+      <div class="an-period-bar">
+        <button class="an-period-btn is-active" data-period="7">7 Days</button>
+        <button class="an-period-btn" data-period="30">30 Days</button>
+        <button class="an-period-btn" data-period="90">90 Days</button>
+        <button class="an-period-btn" data-period="0">All Time</button>
+        <button class="an-export-btn" id="anExportBtn">↓ Export JSON</button>
+      </div>
+      <div class="an-sections" id="anSections"></div>
     </div>
   </div>
 
@@ -3108,6 +3165,288 @@ function renderRecommendations() {
 
 function updateRecommendationsOnDataChange() { renderRecommendations(); }
 
+// ==================== ANALYTICS DASHBOARD ====================
+let anPeriod = 7;
+
+function getPeriodDates(days) {
+  const today = getActiveDateString();
+  if (days === 0) return { start: '2000-01-01', end: today };
+  const d = new Date(); d.setDate(d.getDate() - (days - 1));
+  return { start: dateToStr(d), end: today };
+}
+
+function filterDataByPeriod(items, dateKey, days) {
+  const { start } = getPeriodDates(days);
+  return items.filter(item => (item[dateKey] || '') >= start);
+}
+
+function calculateWorkoutMetrics(days) {
+  const all      = storeGet('lifeos_workouts') || [];
+  const filtered = filterDataByPeriod(all, 'date', days);
+  const total    = filtered.length;
+  const avgDur   = total > 0 ? Math.round(filtered.reduce((s,w) => s+(w.duration||0), 0) / total) : 0;
+  const totalVol = filtered.reduce((s, w) => {
+    const sets = w.exercises ? w.exercises.flatMap(e => e.sets || []) : [];
+    return s + sets.reduce((sv, set) => sv + (set.weight||0) * (set.reps||0), 0);
+  }, 0);
+  const weeklyFreq = days > 0 ? (total / Math.max(1, days / 7)).toFixed(1) : total;
+  // Previous period delta
+  let delta = null;
+  if (days > 0) {
+    const d1 = new Date(); d1.setDate(d1.getDate() - days * 2);
+    const d2 = new Date(); d2.setDate(d2.getDate() - days);
+    const prev = all.filter(w => w.date >= dateToStr(d1) && w.date < dateToStr(d2));
+    if (prev.length > 0) delta = Math.round((total - prev.length) / prev.length * 100);
+  }
+  // 7-day bar trend
+  const trend = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    trend.push({ label: d.toLocaleDateString('en',{weekday:'short'}), value: all.filter(w => w.date === dateToStr(d)).length });
+  }
+  // Top exercises by max weight
+  const exMap = {};
+  all.forEach(w => (w.exercises||[]).forEach(ex => {
+    const maxW = Math.max(0, ...(ex.sets||[]).map(s => s.weight||0));
+    if (maxW > 0) exMap[ex.name] = Math.max(exMap[ex.name]||0, maxW);
+  }));
+  const topEx = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  return { total, avgDur, totalVol: Math.round(totalVol), weeklyFreq, delta, trend, topEx };
+}
+
+function calculateHabitMetrics(days) {
+  const habits = loadHabits ? loadHabits() : [];
+  if (!habits.length) return { overallPct:0, best:null, worst:null, heatmap:[], catBreakdown:{} };
+  const { start } = getPeriodDates(days);
+  let totalDone = 0, totalPossible = 0;
+  const habitStats = habits.map(h => {
+    const done     = (h.completedDates||[]).filter(d => d >= start).length;
+    const fromDate = h.createdDate > start ? h.createdDate : start;
+    const today    = getActiveDateString();
+    let possible   = 0;
+    for (let d = new Date(fromDate+'T12:00:00'); dateToStr(d) <= today; d.setDate(d.getDate()+1)) possible++;
+    if (days > 0) possible = Math.min(possible, days);
+    totalDone += done; totalPossible += possible;
+    return { ...h, done, possible, pct: possible > 0 ? Math.round(done/possible*100) : 0 };
+  });
+  const overallPct = totalPossible > 0 ? Math.round(totalDone/totalPossible*100) : 0;
+  const sorted     = [...habitStats].sort((a,b) => b.pct-a.pct);
+  const best       = sorted[0];
+  const worst      = sorted[sorted.length-1];
+  // 7-day heatmap (up to 5 habits)
+  const heatmap = habits.slice(0,5).map(h => {
+    const cells = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i); const ds = dateToStr(d);
+      const inRange = ds >= h.createdDate;
+      cells.push({ ds, done: inRange && (h.completedDates||[]).includes(ds), inRange });
+    }
+    return { name: h.name, cells };
+  });
+  const catBreakdown = {};
+  habits.forEach(h => { catBreakdown[h.category] = (catBreakdown[h.category]||0)+1; });
+  return { overallPct, best, worst, heatmap, catBreakdown };
+}
+
+function calculateRecoveryMetrics(days) {
+  const all      = storeGet('lifeos_recovery') || [];
+  const { start } = getPeriodDates(days);
+  const filtered  = all.filter(r => r.date >= start);
+  if (!filtered.length) return { avgSleep:null, avgScore:null, avgTemp:null, trend:[], bestDay:null, delta:null };
+  const ws = filtered.filter(r => r.sleep!=null);
+  const wc = filtered.filter(r => r.recoveryScore!=null);
+  const wt = filtered.filter(r => r.bodyTemp!=null);
+  const avgSleep = ws.length ? (ws.reduce((s,r)=>s+r.sleep,0)/ws.length).toFixed(1) : null;
+  const avgScore = wc.length ? Math.round(wc.reduce((s,r)=>s+r.recoveryScore,0)/wc.length) : null;
+  const avgTemp  = wt.length ? (wt.reduce((s,r)=>s+r.bodyTemp,0)/wt.length).toFixed(1) : null;
+  const bestDay  = [...filtered].sort((a,b)=>(b.recoveryScore||0)-(a.recoveryScore||0))[0];
+  const trend    = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i); const ds = dateToStr(d);
+    const r = all.find(x => x.date === ds);
+    trend.push({ label: d.toLocaleDateString('en',{weekday:'short'}), score: r?r.recoveryScore:null, sleep: r?r.sleep:null });
+  }
+  let delta = null;
+  if (days > 0 && avgScore != null) {
+    const d1 = new Date(); d1.setDate(d1.getDate()-days*2);
+    const d2 = new Date(); d2.setDate(d2.getDate()-days);
+    const prev = all.filter(r => r.date >= dateToStr(d1) && r.date < dateToStr(d2));
+    const prevAvg = prev.length ? Math.round(prev.reduce((s,r)=>s+(r.recoveryScore||0),0)/prev.length) : null;
+    if (prevAvg) delta = avgScore - prevAvg;
+  }
+  return { avgSleep, avgScore, avgTemp, bestDay, trend, delta };
+}
+
+function calculateGoalMetrics() {
+  const goals = storeGet('lifeos_goals') || [];
+  if (!goals.length) return { total:0, avgProgress:0, onTrack:0, top3:[], fastest:null };
+  const total       = goals.length;
+  const avgProgress = Math.round(goals.reduce((s,g)=>s+(g.progress||0),0)/total);
+  const onTrack     = goals.filter(g=>(g.progress||0)>=50).length;
+  const sorted      = [...goals].sort((a,b)=>(b.progress||0)-(a.progress||0));
+  return { total, avgProgress, onTrack, top3: sorted.slice(0,3), fastest: sorted[0]||null };
+}
+
+function drawMiniChart(canvas, labels, values, color, type) {
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.parentElement.clientWidth || 280;
+  const H   = 56;
+  canvas.width  = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,W,H);
+  const valid = values.filter(v => v!=null);
+  if (!valid.length) { ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='9px ui-monospace,monospace'; ctx.textAlign='center'; ctx.fillText('No data', W/2, H/2); return; }
+  const minV = Math.min(...valid)*0.85, maxV = Math.max(...valid)*1.08||1;
+  const pL=4,pR=4,pT=4,pB=16, gW=W-pL-pR, gH=H-pT-pB, n=values.length, step=gW/Math.max(1,n-1);
+  ctx.fillStyle='rgba(180,178,172,0.38)'; ctx.font='600 8px ui-monospace,monospace'; ctx.textAlign='center';
+  labels.forEach((l,i) => ctx.fillText(l, pL+i*(gW/(n-1||1)), H-2));
+  if (type==='bar') {
+    const bw = Math.max(4, gW/n*0.55);
+    values.forEach((v,i) => {
+      if (v==null) return;
+      const barH = ((v-minV)/(maxV-minV))*gH||2;
+      ctx.fillStyle = color+'BB';
+      ctx.fillRect(pL+i*(gW/(n-1||1))-bw/2, pT+gH-barH, bw, barH);
+    });
+  } else {
+    const pts = values.map((v,i) => ({ x:pL+i*step, y:v!=null?pT+gH-((v-minV)/(maxV-minV))*gH:null }));
+    const vpts = pts.filter(p=>p.y!=null);
+    if (vpts.length>1) {
+      ctx.beginPath(); let f=true;
+      pts.forEach(p=>{if(p.y==null)return;if(f){ctx.moveTo(p.x,p.y);f=false;}else ctx.lineTo(p.x,p.y);});
+      ctx.lineTo(vpts[vpts.length-1].x,pT+gH); ctx.lineTo(vpts[0].x,pT+gH); ctx.closePath();
+      const g2=ctx.createLinearGradient(0,pT,0,pT+gH);
+      g2.addColorStop(0,color+'2A'); g2.addColorStop(1,color+'04'); ctx.fillStyle=g2; ctx.fill();
+      ctx.beginPath(); f=true;
+      pts.forEach(p=>{if(p.y==null)return;if(f){ctx.moveTo(p.x,p.y);f=false;}else ctx.lineTo(p.x,p.y);});
+      ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineJoin='round'; ctx.stroke();
+      vpts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+    }
+  }
+}
+
+function getAnalyticsData() {
+  return { workouts: storeGet('lifeos_workouts')||[], habits: loadHabits?loadHabits():[], recovery: storeGet('lifeos_recovery')||[], goals: storeGet('lifeos_goals')||[] };
+}
+
+function exportAnalytics() {
+  const data = { exported: new Date().toISOString(), period: anPeriod===0?'all-time':anPeriod+'d', workouts: calculateWorkoutMetrics(anPeriod), habits: calculateHabitMetrics(anPeriod), recovery: calculateRecoveryMetrics(anPeriod), goals: calculateGoalMetrics() };
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'),{href:url,download:'ascend-analytics-'+getActiveDateString()+'.json'});
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function renderAnalyticsDashboard() {
+  const sec = document.getElementById('anSections');
+  if (!sec) return;
+  sec.innerHTML = '';
+  const wm = calculateWorkoutMetrics(anPeriod);
+  const hm = calculateHabitMetrics(anPeriod);
+  const rm = calculateRecoveryMetrics(anPeriod);
+  const gm = calculateGoalMetrics();
+
+  function mkStat(num, label, sub, delta) {
+    const c = document.createElement('div'); c.className='an-stat';
+    const n = document.createElement('div'); n.className='an-stat-num'; n.textContent=num;
+    const l = document.createElement('div'); l.className='an-stat-label'; l.textContent=label;
+    c.appendChild(n); c.appendChild(l);
+    if (sub) { const s=document.createElement('div');s.className='an-stat-sub';s.textContent=sub;c.appendChild(s); }
+    if (delta!=null) { const d=document.createElement('div');d.className='an-stat-delta '+(delta>0?'an-delta-up':'an-delta-down');d.textContent=(delta>0?'↑':'↓')+Math.abs(delta)+'% vs prev';c.appendChild(d); }
+    return c;
+  }
+  function mkChart(title, labels, values, color, type) {
+    const w=document.createElement('div'); w.className='an-chart-wrap';
+    const l=document.createElement('div'); l.className='an-chart-label'; l.textContent=title;
+    const cv=document.createElement('canvas'); cv.style.cssText='width:100%;display:block;';
+    w.appendChild(l); w.appendChild(cv);
+    setTimeout(()=>drawMiniChart(cv,labels,values,color,type||'line'),0);
+    return w;
+  }
+  function mkInsight(text, type) {
+    const el=document.createElement('div'); el.className='an-insight '+(type||''); el.textContent=text; return el;
+  }
+  function mkSection(icon, title, color) {
+    const s=document.createElement('div'); s.className='an-section';
+    const h=document.createElement('div'); h.className='an-section-title';
+    h.innerHTML='<span style="color:'+color+'">'+icon+'</span> '+title;
+    s.appendChild(h); sec.appendChild(s); return s;
+  }
+
+  // ── Workouts ──
+  const ws = mkSection('💪','Workout Analytics','#6BE3A4');
+  const wg = document.createElement('div'); wg.className='an-stats-grid';
+  wg.appendChild(mkStat(wm.total,          'Workouts',      null,         wm.delta));
+  wg.appendChild(mkStat(wm.avgDur?wm.avgDur+'m':'—', 'Avg Duration', null, null));
+  wg.appendChild(mkStat(wm.totalVol>0?(wm.totalVol>9999?Math.round(wm.totalVol/1000)+'t':wm.totalVol+'kg'):'—','Volume',null,null));
+  wg.appendChild(mkStat(wm.weeklyFreq+'/wk','Frequency',    null,         null));
+  ws.appendChild(wg);
+  ws.appendChild(mkChart('Workouts — last 7 days', wm.trend.map(t=>t.label), wm.trend.map(t=>t.value), '#6BE3A4','bar'));
+  if (wm.topEx.length>0) {
+    const cl=document.createElement('div'); cl.className='an-chart-label'; cl.textContent='Top Exercises (PR)'; ws.appendChild(cl);
+    const tb=document.createElement('table'); tb.className='an-table';
+    wm.topEx.forEach(([name,kg],i)=>{ const tr=document.createElement('tr'); tr.innerHTML='<td><span class="an-rank">'+(i+1)+'</span>'+name+'</td><td>'+kg+'kg</td>'; tb.appendChild(tr); });
+    ws.appendChild(tb);
+  }
+  if (wm.total===0)        ws.appendChild(mkInsight('No workouts logged yet — start tracking to see analytics.',''));
+  else if (wm.delta!=null) ws.appendChild(mkInsight(wm.delta>=0?'You\'re '+wm.delta+'% more active than last period — great work!':''+Math.abs(wm.delta)+'% fewer workouts than last period — push harder.',wm.delta>=0?'good':'warn'));
+
+  // ── Habits ──
+  const hs = mkSection('🔥','Habit Analytics','#F2C063');
+  const hg = document.createElement('div'); hg.className='an-stats-grid';
+  hg.appendChild(mkStat(hm.overallPct+'%','Completion',null,null));
+  if (hm.best)  hg.appendChild(mkStat(hm.best.pct+'%','Best Habit',hm.best.name,null));
+  if (hm.worst && hm.worst.name!==hm.best?.name) hg.appendChild(mkStat(hm.worst.pct+'%','Needs Work',hm.worst.name,null));
+  const catKeys=Object.keys(hm.catBreakdown||{});
+  if (catKeys.length>0) hg.appendChild(mkStat(catKeys.length,'Categories',catKeys.join(', '),null));
+  hs.appendChild(hg);
+  if (hm.heatmap.length>0) {
+    const hl=document.createElement('div'); hl.className='an-chart-label'; hl.textContent='Last 7 Days — Habit Heatmap'; hs.appendChild(hl);
+    const hw=document.createElement('div'); hw.className='an-heatmap';
+    hm.heatmap.forEach(row=>{
+      const r=document.createElement('div'); r.className='an-heatmap-row';
+      const lb=document.createElement('div'); lb.className='an-heatmap-label'; lb.textContent=row.name; lb.title=row.name; r.appendChild(lb);
+      row.cells.forEach(c=>{ const cl2=document.createElement('div'); cl2.className='an-heatmap-cell '+(c.inRange?(c.done?'done':'miss'):'none'); cl2.title=c.ds; r.appendChild(cl2); });
+      hw.appendChild(r);
+    });
+    hs.appendChild(hw);
+  }
+  if (hm.overallPct===0)    hs.appendChild(mkInsight('No habits logged yet — add habits and start tracking.',''));
+  else if (hm.best)          hs.appendChild(mkInsight('Keep up "'+hm.best.name+'" — '+hm.best.done+' completions this period!','good'));
+  if (hm.overallPct>0 && hm.overallPct<70) hs.appendChild(mkInsight('Push for 70%+ daily completion — habits compound over time.','warn'));
+
+  // ── Recovery ──
+  const rs = mkSection('😴','Recovery Analytics','#7EB8F7');
+  const rg = document.createElement('div'); rg.className='an-stats-grid';
+  rg.appendChild(mkStat(rm.avgSleep!=null?rm.avgSleep+'h':'—','Avg Sleep',null,null));
+  rg.appendChild(mkStat(rm.avgScore!=null?rm.avgScore+'%':'—','Avg Recovery',null,rm.delta));
+  rg.appendChild(mkStat(rm.avgTemp!=null?rm.avgTemp+'°C':'—','Avg Temp',null,null));
+  if (rm.bestDay) rg.appendChild(mkStat(rm.bestDay.recoveryScore+'%','Best Day',rm.bestDay.date,null));
+  rs.appendChild(rg);
+  rs.appendChild(mkChart('Recovery Score — last 7 days', rm.trend.map(t=>t.label), rm.trend.map(t=>t.score),'#7EB8F7'));
+  rs.appendChild(mkChart('Sleep — last 7 days', rm.trend.map(t=>t.label), rm.trend.map(t=>t.sleep),'#C084FC'));
+  if (rm.avgScore==null) rs.appendChild(mkInsight('No recovery data yet — log sleep and stress to see trends.',''));
+  else if (rm.delta!=null) rs.appendChild(mkInsight(rm.delta>=0?'Recovery improved '+rm.delta+'% vs last period — keep it up!':'Recovery down '+Math.abs(rm.delta)+'% — prioritize sleep.',rm.delta>=0?'good':'warn'));
+
+  // ── Goals ──
+  const gs = mkSection('🏆','Goal Analytics','#C084FC');
+  const gg = document.createElement('div'); gg.className='an-stats-grid';
+  gg.appendChild(mkStat(gm.total,'Total Goals',null,null));
+  gg.appendChild(mkStat(gm.avgProgress+'%','Avg Progress',null,null));
+  gg.appendChild(mkStat(gm.onTrack+'/'+gm.total,'On Track (≥50%)',null,null));
+  gs.appendChild(gg);
+  if (gm.top3.length>0) {
+    const gl=document.createElement('div'); gl.className='an-chart-label'; gl.textContent='Top Goals by Progress'; gs.appendChild(gl);
+    const gt=document.createElement('table'); gt.className='an-table';
+    gm.top3.forEach((g,i)=>{ const tr=document.createElement('tr'); tr.innerHTML='<td><span class="an-rank">'+(i+1)+'</span>'+g.name+'</td><td>'+(g.progress||0)+'%</td>'; gt.appendChild(tr); });
+    gs.appendChild(gt);
+  }
+  if (gm.total===0) gs.appendChild(mkInsight('No goals yet — add goals to track your progress.',''));
+  else if (gm.fastest) gs.appendChild(mkInsight('"'+gm.fastest.name+'" is your strongest goal at '+(gm.fastest.progress||0)+'% — keep pushing!',(gm.fastest.progress||0)>=80?'good':'warn'));
+}
+
 // ==================== CALENDAR SYSTEM ====================
 const CAT_COLORS = { Workout:'#6BE3A4', Habit:'#F2C063', Recovery:'#7EB8F7', Goal:'#C084FC', Custom:'#76746E' };
 
@@ -3305,6 +3644,19 @@ renderRecovery();
 
 renderRecommendations();
 window.addEventListener('data-changed', updateRecommendationsOnDataChange);
+
+// Analytics init
+document.querySelectorAll('.an-period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.an-period-btn').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    anPeriod = parseInt(btn.dataset.period);
+    renderAnalyticsDashboard();
+  });
+});
+document.getElementById('anExportBtn').addEventListener('click', exportAnalytics);
+window.addEventListener('data-changed', () => renderAnalyticsDashboard());
+renderAnalyticsDashboard();
 
 // Calendar init
 document.getElementById('calPrev').addEventListener('click', () => {
