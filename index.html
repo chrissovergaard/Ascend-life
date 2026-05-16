@@ -1102,6 +1102,72 @@
     .sr-score-fill.sr-danger  { background:#FF6B6B; }
 
     .sr-empty { font-family:var(--font-mono); font-size:12px; color:var(--text-tertiary); text-align:center; padding:24px 0; }
+
+    /* ===== CALENDAR SYSTEM ===== */
+    .cal-layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media(max-width:680px){ .cal-layout { grid-template-columns:1fr; } }
+
+    /* Calendar grid */
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .cal-month-label { font-family:var(--font-mono); font-size:13px; font-weight:800; letter-spacing:0.06em; color:var(--text-primary); text-transform:uppercase; }
+    .cal-nav { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:8px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); font-size:14px; transition:background 0.15s; }
+    .cal-nav:hover { background:rgba(255,255,255,0.10); color:var(--text-primary); }
+    .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px; }
+    .cal-wd { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); text-align:center; padding:4px 0; }
+    .cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    .cal-day { min-height:34px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:4px 2px 2px; cursor:pointer; position:relative; transition:background 0.15s; }
+    .cal-day:hover { background:rgba(255,255,255,0.06); }
+    .cal-day.other-month .cal-day-num { color:rgba(255,255,255,0.18); }
+    .cal-day.is-today { background:rgba(107,227,164,0.12); }
+    .cal-day.is-today .cal-day-num { color:#6BE3A4; font-weight:800; }
+    .cal-day.is-selected { background:rgba(126,184,247,0.14); outline:1px solid rgba(126,184,247,0.35); }
+    .cal-day.has-events .cal-day-num { font-weight:700; }
+    .cal-day-num { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); line-height:1; }
+    .cal-dots { display:flex; gap:2px; flex-wrap:wrap; justify-content:center; margin-top:2px; }
+    .cal-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; }
+    .cal-dot-Workout  { background:#6BE3A4; }
+    .cal-dot-Habit    { background:#F2C063; }
+    .cal-dot-Recovery { background:#7EB8F7; }
+    .cal-dot-Goal     { background:#C084FC; }
+    .cal-dot-Custom   { background:#76746E; }
+
+    /* Event panel (right side) */
+    .cal-panel { display:flex; flex-direction:column; gap:10px; }
+    .cal-panel-date { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:2px; }
+    .cal-event-item { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); transition:background 0.15s; }
+    .cal-event-item:hover { background:rgba(255,255,255,0.06); }
+    .cal-event-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .cal-event-body { flex:1; min-width:0; }
+    .cal-event-name { font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-event-meta { font-family:var(--font-mono); font-size:10px; color:var(--text-tertiary); margin-top:1px; }
+    .cal-event-desc { font-size:11px; color:var(--text-secondary); margin-top:3px; line-height:1.4; }
+    .cal-event-actions { display:flex; gap:4px; flex-shrink:0; }
+    .cal-event-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; color:var(--text-tertiary); font-size:11px; padding:3px 8px; cursor:pointer; transition:background 0.15s; }
+    .cal-event-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+    .cal-event-btn.del:hover { background:rgba(255,107,107,0.12); color:#FF6B6B; border-color:rgba(255,107,107,0.25); }
+    .cal-no-events { font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); text-align:center; padding:20px 0; }
+
+    /* Add event form */
+    .cal-add-form { border-top:1px solid rgba(255,255,255,0.06); padding-top:12px; margin-top:4px; display:flex; flex-direction:column; gap:8px; }
+    .cal-form-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .cal-form-group { display:flex; flex-direction:column; flex:1; min-width:110px; gap:3px; }
+    .cal-form-label { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); }
+
+    /* Category colours for event dot */
+    .ev-dot-Workout  { background:#6BE3A4; }
+    .ev-dot-Habit    { background:#F2C063; }
+    .ev-dot-Recovery { background:#7EB8F7; }
+    .ev-dot-Goal     { background:#C084FC; }
+    .ev-dot-Custom   { background:#76746E; }
+
+    /* Upcoming events widget */
+    .cal-upcoming { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .cal-up-item  { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); cursor:pointer; transition:background 0.15s; }
+    .cal-up-item:hover { background:rgba(255,255,255,0.06); }
+    .cal-up-dot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .cal-up-info { flex:1; min-width:0; }
+    .cal-up-name { font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cal-up-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:1px; }
   </style>
 </head>
 <body>
@@ -1436,6 +1502,81 @@
       </div>
       <div class="sr-grid" id="srGrid">
         <div class="sr-empty">No data yet — log workouts, habits and recovery to get personalised tips.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="section">
+    <div class="section-title">Calendar</div>
+    <div class="gm-card">
+
+      <!-- Upcoming events strip -->
+      <div style="margin-bottom:6px">
+        <div style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px">Upcoming Events</div>
+        <div class="cal-upcoming" id="calUpcoming">
+          <div class="cal-no-events">No upcoming events</div>
+        </div>
+      </div>
+
+      <div class="cal-layout">
+
+        <!-- Left: calendar grid -->
+        <div>
+          <div class="cal-header">
+            <button class="cal-nav" id="calPrev">‹</button>
+            <div class="cal-month-label" id="calMonthLabel">—</div>
+            <button class="cal-nav" id="calNext">›</button>
+          </div>
+          <div class="cal-weekdays">
+            <div class="cal-wd">Mo</div><div class="cal-wd">Tu</div><div class="cal-wd">We</div>
+            <div class="cal-wd">Th</div><div class="cal-wd">Fr</div><div class="cal-wd">Sa</div><div class="cal-wd">Su</div>
+          </div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
+
+        <!-- Right: event panel -->
+        <div class="cal-panel" id="calPanel">
+          <div class="cal-panel-date" id="calPanelDate">Select a day to view events</div>
+          <div id="calEventList"><div class="cal-no-events">Click a day to see events</div></div>
+
+          <!-- Add event form -->
+          <div class="cal-add-form" id="calAddForm" style="display:none">
+            <div class="cal-form-row">
+              <div class="cal-form-group" style="flex:2">
+                <div class="cal-form-label">Event name</div>
+                <input type="text" class="goal-input" id="calEvName" placeholder="e.g. Leg Day, Doctor appointment…">
+              </div>
+              <div class="cal-form-group" style="flex:none;min-width:90px">
+                <div class="cal-form-label">Time</div>
+                <input type="time" class="goal-input" id="calEvTime" value="08:00">
+              </div>
+            </div>
+            <div class="cal-form-row">
+              <div class="cal-form-group">
+                <div class="cal-form-label">Category</div>
+                <select class="hb-select" id="calEvCat" style="width:100%">
+                  <option value="Workout">Workout</option>
+                  <option value="Habit">Habit</option>
+                  <option value="Recovery">Recovery</option>
+                  <option value="Goal">Goal</option>
+                  <option value="Custom" selected>Custom</option>
+                </select>
+              </div>
+              <div class="cal-form-group" style="flex:2">
+                <div class="cal-form-label">Description (optional)</div>
+                <input type="text" class="goal-input" id="calEvDesc" placeholder="Notes…">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="goal-add-btn" id="calEvSave">+ Add Event</button>
+              <button class="wt-cancel-btn" id="calEvCancel" style="padding:10px 16px;font-size:12px">Cancel</button>
+            </div>
+          </div>
+
+          <button class="goal-add-btn" id="calAddBtn" style="margin-top:4px;display:none">+ Add Event for this Day</button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2967,6 +3108,190 @@ function renderRecommendations() {
 
 function updateRecommendationsOnDataChange() { renderRecommendations(); }
 
+// ==================== CALENDAR SYSTEM ====================
+const CAT_COLORS = { Workout:'#6BE3A4', Habit:'#F2C063', Recovery:'#7EB8F7', Goal:'#C084FC', Custom:'#76746E' };
+
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let calSelectedDate = getActiveDateString();
+
+function loadEvents() { return storeGet('lifeos_events') || []; }
+function saveEvents(evs) { storeSet('lifeos_events', evs); }
+
+function addEvent(ev) {
+  const evs = loadEvents();
+  evs.push({ id: Date.now(), createdAt: new Date().toISOString(), ...ev });
+  saveEvents(evs);
+}
+
+function deleteEvent(id) {
+  saveEvents(loadEvents().filter(e => e.id !== id));
+}
+
+function updateEvent(id, data) {
+  const evs = loadEvents();
+  const idx = evs.findIndex(e => e.id === id);
+  if (idx !== -1) { evs[idx] = { ...evs[idx], ...data }; saveEvents(evs); }
+}
+
+function getEventsForDate(ds) {
+  return loadEvents().filter(e => e.date === ds).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+}
+
+function getNextEvents(n) {
+  const today = getActiveDateString();
+  return loadEvents()
+    .filter(e => e.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''))
+    .slice(0, n);
+}
+
+function renderEventList(ds) {
+  const listEl   = document.getElementById('calEventList');
+  const dateEl   = document.getElementById('calPanelDate');
+  const addBtn   = document.getElementById('calAddBtn');
+  const addForm  = document.getElementById('calAddForm');
+  if (!listEl) return;
+
+  const d = new Date(ds + 'T12:00:00');
+  dateEl.textContent = d.toLocaleDateString('en', { weekday:'long', month:'long', day:'numeric' });
+  addBtn.style.display = '';
+
+  const evs = getEventsForDate(ds);
+  listEl.innerHTML = '';
+  if (evs.length === 0) {
+    listEl.innerHTML = '<div class="cal-no-events">No events — add one below</div>';
+    return;
+  }
+  evs.forEach(ev => {
+    const item = document.createElement('div'); item.className = 'cal-event-item';
+    const dot  = document.createElement('div');
+    dot.className = 'cal-event-dot'; dot.style.background = CAT_COLORS[ev.category] || CAT_COLORS.Custom;
+    const body = document.createElement('div'); body.className = 'cal-event-body';
+    const name = document.createElement('div'); name.className = 'cal-event-name'; name.textContent = ev.name;
+    const meta = document.createElement('div'); meta.className = 'cal-event-meta';
+    meta.textContent = [ev.time || '', ev.category].filter(Boolean).join(' · ');
+    body.appendChild(name); body.appendChild(meta);
+    if (ev.description) {
+      const desc = document.createElement('div'); desc.className = 'cal-event-desc'; desc.textContent = ev.description;
+      body.appendChild(desc);
+    }
+    const acts = document.createElement('div'); acts.className = 'cal-event-actions';
+    const del  = document.createElement('button'); del.className = 'cal-event-btn del'; del.textContent = '×';
+    del.title = 'Delete event';
+    del.addEventListener('click', () => { deleteEvent(ev.id); renderCalendar(); renderEventList(ds); renderUpcoming(); });
+    acts.appendChild(del);
+    item.appendChild(dot); item.appendChild(body); item.appendChild(acts);
+    listEl.appendChild(item);
+  });
+}
+
+function renderUpcoming() {
+  const wrap = document.getElementById('calUpcoming');
+  if (!wrap) return;
+  const evs = getNextEvents(3);
+  wrap.innerHTML = '';
+  if (evs.length === 0) {
+    wrap.innerHTML = '<div class="cal-no-events">No upcoming events</div>'; return;
+  }
+  evs.forEach(ev => {
+    const item = document.createElement('div'); item.className = 'cal-up-item';
+    item.addEventListener('click', () => {
+      calSelectedDate = ev.date;
+      const d = new Date(ev.date + 'T12:00:00');
+      calYear = d.getFullYear(); calMonth = d.getMonth();
+      renderCalendar(); renderEventList(ev.date);
+    });
+    const dot  = document.createElement('div'); dot.className = 'cal-up-dot';
+    dot.style.background = CAT_COLORS[ev.category] || CAT_COLORS.Custom;
+    const info = document.createElement('div'); info.className = 'cal-up-info';
+    const name = document.createElement('div'); name.className = 'cal-up-name'; name.textContent = ev.name;
+    const d    = new Date(ev.date + 'T12:00:00');
+    const meta = document.createElement('div'); meta.className = 'cal-up-meta';
+    meta.textContent = d.toLocaleDateString('en',{weekday:'short',month:'short',day:'numeric'}) + (ev.time ? ' · ' + ev.time : '');
+    info.appendChild(name); info.appendChild(meta);
+    item.appendChild(dot); item.appendChild(info);
+    wrap.appendChild(item);
+  });
+}
+
+function renderCalendar() {
+  const daysEl  = document.getElementById('calDays');
+  const labelEl = document.getElementById('calMonthLabel');
+  if (!daysEl) return;
+
+  labelEl.textContent = new Date(calYear, calMonth, 1).toLocaleDateString('en', { month:'long', year:'numeric' });
+  daysEl.innerHTML = '';
+
+  const events    = loadEvents();
+  const eventDays = new Set(events.map(e => e.date));
+  const todayStr  = getActiveDateString();
+
+  // First day of month (adjust so Monday = 0)
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const offset   = (firstDay + 6) % 7; // Mon-based
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays    = new Date(calYear, calMonth, 0).getDate();
+
+  // Fill grid (6 rows × 7 cols = 42 cells)
+  for (let i = 0; i < 42; i++) {
+    const cell = document.createElement('div'); cell.className = 'cal-day';
+    let ds, dayNum, isOther = false;
+
+    if (i < offset) {
+      dayNum = prevDays - offset + i + 1; isOther = true;
+      const m = calMonth === 0 ? 11 : calMonth - 1;
+      const y = calMonth === 0 ? calYear - 1 : calYear;
+      ds = dateToStr(new Date(y, m, dayNum));
+    } else if (i - offset < daysInMonth) {
+      dayNum = i - offset + 1;
+      ds = dateToStr(new Date(calYear, calMonth, dayNum));
+    } else {
+      dayNum = i - offset - daysInMonth + 1; isOther = true;
+      const m = calMonth === 11 ? 0 : calMonth + 1;
+      const y = calMonth === 11 ? calYear + 1 : calYear;
+      ds = dateToStr(new Date(y, m, dayNum));
+    }
+
+    if (isOther)          cell.classList.add('other-month');
+    if (ds === todayStr)  cell.classList.add('is-today');
+    if (ds === calSelectedDate) cell.classList.add('is-selected');
+    if (eventDays.has(ds)) cell.classList.add('has-events');
+
+    const num = document.createElement('div'); num.className = 'cal-day-num'; num.textContent = dayNum;
+    cell.appendChild(num);
+
+    // Coloured dots for events
+    const dayEvs = events.filter(e => e.date === ds);
+    if (dayEvs.length > 0) {
+      const dotWrap = document.createElement('div'); dotWrap.className = 'cal-dots';
+      const shown = new Set();
+      dayEvs.slice(0, 4).forEach(ev => {
+        if (shown.has(ev.category)) return; shown.add(ev.category);
+        const dot = document.createElement('div');
+        dot.className = 'cal-dot cal-dot-' + (ev.category || 'Custom');
+        dotWrap.appendChild(dot);
+      });
+      cell.appendChild(dotWrap);
+    }
+
+    cell.addEventListener('click', () => {
+      calSelectedDate = ds;
+      document.querySelectorAll('.cal-day.is-selected').forEach(el => el.classList.remove('is-selected'));
+      cell.classList.add('is-selected');
+      renderEventList(ds);
+      document.getElementById('calAddForm').style.display = 'none';
+    });
+    cell.addEventListener('dblclick', () => {
+      calSelectedDate = ds; renderEventList(ds);
+      document.getElementById('calAddForm').style.display = '';
+      document.getElementById('calAddBtn').style.display = 'none';
+    });
+
+    daysEl.appendChild(cell);
+  }
+}
+
 // ==================== PROFILE INIT ====================
 
 // Workout tracker JS lives in workout.html
@@ -2980,6 +3305,51 @@ renderRecovery();
 
 renderRecommendations();
 window.addEventListener('data-changed', updateRecommendationsOnDataChange);
+
+// Calendar init
+document.getElementById('calPrev').addEventListener('click', () => {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar();
+});
+document.getElementById('calAddBtn').addEventListener('click', () => {
+  document.getElementById('calAddForm').style.display = '';
+  document.getElementById('calAddBtn').style.display = 'none';
+});
+document.getElementById('calEvCancel').addEventListener('click', () => {
+  document.getElementById('calAddForm').style.display = 'none';
+  document.getElementById('calAddBtn').style.display = '';
+});
+document.getElementById('calEvSave').addEventListener('click', () => {
+  const name = document.getElementById('calEvName').value.trim();
+  if (!name) return;
+  addEvent({
+    date: calSelectedDate,
+    time: document.getElementById('calEvTime').value,
+    name,
+    category: document.getElementById('calEvCat').value,
+    description: document.getElementById('calEvDesc').value.trim()
+  });
+  document.getElementById('calEvName').value = '';
+  document.getElementById('calEvDesc').value = '';
+  document.getElementById('calAddForm').style.display = 'none';
+  document.getElementById('calAddBtn').style.display = '';
+  renderCalendar(); renderEventList(calSelectedDate); renderUpcoming();
+  window.dispatchEvent(new CustomEvent('data-changed'));
+});
+// Space = jump to today
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+    e.preventDefault();
+    calYear = new Date().getFullYear(); calMonth = new Date().getMonth();
+    calSelectedDate = getActiveDateString();
+    renderCalendar(); renderEventList(calSelectedDate);
+  }
+});
+renderCalendar();
+renderEventList(calSelectedDate);
+renderUpcoming();
 
 document.getElementById('profSaveBtn').addEventListener('click', saveProfile);
 document.getElementById('profEditBtn').addEventListener('click', showProfileEdit);
