@@ -357,6 +357,180 @@
       .wt-start-form { flex-direction: column; align-items: stretch; }
       .wt-action-row { flex-direction: column; }
     }
+
+    /* ===== IMPORT TRAINING PROGRAM ===== */
+    .imp-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .imp-toggle {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 22px; cursor: pointer;
+      transition: background 0.2s; user-select: none;
+    }
+    .imp-toggle:hover { background: rgba(255,255,255,0.03); }
+    .imp-toggle-icon {
+      font-size: 11px; color: var(--text-tertiary);
+      transition: transform 0.22s cubic-bezier(0.22,1,0.36,1);
+      flex-shrink: 0;
+    }
+    .imp-toggle-icon.is-open { transform: rotate(90deg); }
+    .imp-toggle-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .imp-toggle-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .imp-toggle-badge {
+      margin-left: auto; font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      background: rgba(107,227,164,0.1); color: var(--success);
+      border-radius: 6px; padding: 3px 8px; letter-spacing: 0.06em;
+      display: none;
+    }
+    .imp-toggle-badge.is-visible { display: block; }
+    .imp-body { padding: 0 22px 22px; display: none; }
+    .imp-body.is-open { display: block; }
+    .imp-textarea {
+      width: 100%; background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+      padding: 14px 16px; color: var(--text-primary);
+      font-family: var(--font-mono); font-size: 12px; line-height: 1.7;
+      outline: none; resize: vertical; min-height: 150px;
+      transition: border-color 0.2s;
+    }
+    .imp-textarea:focus { border-color: rgba(255,255,255,0.22); }
+    .imp-textarea::placeholder { color: var(--text-tertiary); font-style: italic; font-family: var(--font-body); font-size: 12px; }
+    .imp-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .imp-parse-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-primary); font-weight: 700; font-size: 12px;
+      font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 10px 20px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .imp-parse-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+    .imp-clear-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.07);
+      color: var(--text-tertiary); font-size: 12px; font-family: var(--font-mono);
+      padding: 10px 16px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .imp-clear-btn:hover { background: rgba(255,107,107,0.08); color: var(--danger); border-color: rgba(255,107,107,0.25); }
+    .imp-error {
+      margin-top: 10px; padding: 10px 14px;
+      background: rgba(255,107,107,0.07); border: 1px solid rgba(255,107,107,0.18);
+      border-radius: 10px; font-size: 12px; color: var(--danger);
+    }
+    .imp-preview { margin-top: 20px; }
+    .imp-preview-hdr {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .imp-preview-hdr::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent); }
+    .imp-day-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .imp-day-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .imp-day-name-input {
+      flex: 1; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+      padding: 7px 12px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 13px; font-weight: 600; outline: none;
+      transition: border-color 0.2s;
+    }
+    .imp-day-name-input:focus { border-color: rgba(255,255,255,0.28); }
+    .imp-del-day-btn {
+      background: none; border: 1px solid rgba(255,107,107,0.18);
+      border-radius: 8px; color: var(--danger); font-size: 11px;
+      font-family: var(--font-mono); font-weight: 700;
+      padding: 6px 10px; cursor: pointer; opacity: 0.65;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .imp-del-day-btn:hover { opacity: 1; background: rgba(255,107,107,0.08); }
+    .imp-ex-row {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .imp-ex-type {
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 7px; border-radius: 5px; flex-shrink: 0;
+    }
+    .imp-ex-type.strength { background: rgba(107,227,164,0.1); color: var(--success); }
+    .imp-ex-type.cardio   { background: rgba(242,192,99,0.1);  color: var(--warning); }
+    .imp-ex-type.rest     { background: rgba(255,255,255,0.05); color: var(--text-tertiary); }
+    .imp-ex-name-input {
+      flex: 1; min-width: 110px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+      padding: 6px 10px; color: var(--text-primary); font-family: var(--font-body);
+      font-size: 12px; outline: none; transition: border-color 0.2s;
+    }
+    .imp-ex-num-input {
+      width: 52px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+      padding: 6px 8px; color: var(--text-primary); font-family: var(--font-mono);
+      font-size: 12px; outline: none; text-align: center;
+      -moz-appearance: textfield; appearance: textfield;
+      transition: border-color 0.2s;
+    }
+    .imp-ex-num-input::-webkit-outer-spin-button,
+    .imp-ex-num-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .imp-ex-name-input:focus, .imp-ex-num-input:focus { border-color: rgba(255,255,255,0.25); }
+    .imp-ex-lbl { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
+    .imp-del-ex-btn {
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text-tertiary); padding: 2px 4px; border-radius: 5px;
+      opacity: 0.45; flex-shrink: 0; transition: opacity 0.15s, color 0.15s;
+    }
+    .imp-del-ex-btn:hover { opacity: 1; color: var(--danger); }
+    .imp-import-btn {
+      width: 100%; margin-top: 14px;
+      background: linear-gradient(180deg,#6BE3A4 0%,#4AC98A 100%);
+      color: #050506; font-weight: 700; font-size: 13px; font-family: var(--font-body);
+      padding: 13px 20px; border-radius: 12px; border: none; cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 4px 12px rgba(107,227,164,0.2);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .imp-import-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 6px 16px rgba(107,227,164,0.3); }
+
+    /* ===== SAVED PROGRAMS ===== */
+    .prog-item {
+      display: flex; align-items: center;
+      padding: 12px 14px; margin-bottom: 8px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; gap: 10px; flex-wrap: wrap;
+      transition: background 0.15s;
+    }
+    .prog-item:hover { background: rgba(255,255,255,0.05); }
+    .prog-item-left { flex: 1; min-width: 0; }
+    .prog-item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .prog-item-meta { font-size: 11px; color: var(--text-tertiary); }
+    .prog-start-btn {
+      background: rgba(107,227,164,0.1); border: 1px solid rgba(107,227,164,0.2);
+      color: var(--success); font-weight: 700; font-size: 11px;
+      font-family: var(--font-mono); letter-spacing: 0.06em;
+      padding: 7px 14px; border-radius: 9px; cursor: pointer;
+      white-space: nowrap; transition: background 0.15s;
+    }
+    .prog-start-btn:hover { background: rgba(107,227,164,0.18); }
+    .prog-del-btn {
+      background: none; border: none; cursor: pointer; font-size: 17px;
+      color: var(--text-tertiary); padding: 2px 6px; border-radius: 6px;
+      opacity: 0.45; flex-shrink: 0; transition: opacity 0.15s, color 0.15s;
+    }
+    .prog-del-btn:hover { opacity: 1; color: var(--danger); }
+    .imp-hint {
+      font-size: 11px; color: var(--text-tertiary); line-height: 1.6;
+      margin-bottom: 12px; padding: 10px 14px;
+      background: rgba(255,255,255,0.025); border-radius: 10px;
+    }
+    .imp-hint code {
+      font-family: var(--font-mono); font-size: 10.5px;
+      background: rgba(255,255,255,0.07); border-radius: 4px; padding: 1px 5px;
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 <body>
@@ -370,6 +544,62 @@
   </nav>
 
   <h1 class="dash-title">Workout Tracker</h1>
+
+  <!-- ==================== IMPORT TRAINING PROGRAM ==================== -->
+  <div class="section">
+    <div class="section-title">Import Training Program</div>
+    <div class="imp-card">
+      <div class="imp-toggle" id="impToggle">
+        <span class="imp-toggle-icon" id="impToggleIcon">▶</span>
+        <div>
+          <div class="imp-toggle-title">Import Your Program</div>
+          <div class="imp-toggle-sub">Paste any format — auto-parsed</div>
+        </div>
+        <span class="imp-toggle-badge" id="impToggleBadge"></span>
+      </div>
+      <div class="imp-body" id="impBody">
+        <div class="imp-hint">
+          Accepts any format: day headers (<code>Monday</code>, <code>Chest Day</code>), inline days (<code>Monday: Bench 4x5 @ 70kg, Squats 3x5</code>), rest days (<code>Rest</code>), cardio (<code>30min Running</code>). Review and edit the parsed preview before importing.
+        </div>
+        <textarea class="imp-textarea" id="impTextarea" placeholder="Paste your training program here…
+
+Example:
+Monday
+Bench Press: 4x5 @ 70kg
+Squats: 3x5 @ 80kg
+
+Wednesday
+Deadlift: 3x3 @ 100kg
+Rows: 4x8 @ 60kg
+
+Thursday: Cardio 30min Running
+Friday: Rest"></textarea>
+        <div class="imp-btn-row">
+          <button class="imp-parse-btn" id="impParseBtn">⟳ Parse Program</button>
+          <button class="imp-clear-btn" id="impClearBtn">Clear</button>
+        </div>
+        <div id="impError" class="imp-error" style="display:none"></div>
+        <div id="impPreview" class="imp-preview" style="display:none">
+          <div class="imp-preview-hdr">Preview — Edit Before Importing</div>
+          <div id="impDaysList"></div>
+          <button class="imp-import-btn" id="impImportBtn">↓ Import as Templates</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SAVED PROGRAMS ==================== -->
+  <div class="section" id="impProgramsSection" style="display:none">
+    <div class="section-title">Saved Programs</div>
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left"><div class="gm-eyebrow">Quick Start Templates</div></div>
+        <div class="gs-counter" id="impProgCount">0 days</div>
+      </div>
+      <div id="impProgList"></div>
+      <div id="impProgEmpty" class="empty-state" style="display:none">No saved templates.</div>
+    </div>
+  </div>
 
   <div class="section">
     <div class="section-title">Log a Workout</div>
@@ -911,6 +1141,400 @@ function renderPersonalRecords() {
     listEl.appendChild(item);
   });
 }
+
+// ==================== IMPORT TRAINING PROGRAM ====================
+
+const IMP_DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday',
+                        'mon','tue','wed','thu','fri','sat','sun'];
+
+function impIsDayHeader(line) {
+  const l = line.toLowerCase().replace(/:$/, '').trim();
+  if (IMP_DAY_NAMES.includes(l)) return true;
+  // "X Day" / "X + Y Day" patterns like "Chest Day", "Push/Pull Day"
+  if (/\bday$/i.test(l) && l.length < 45) return true;
+  // Standalone rest/off
+  if (/^(rest|off|recovery)(\s+day)?$/.test(l)) return true;
+  return false;
+}
+
+function impParseExercise(raw) {
+  const str = raw.trim();
+  if (!str) return null;
+
+  // Rest / Off
+  if (/^(rest|off|rest\s*day|recovery(\s+day)?)$/i.test(str)) {
+    return { type: 'rest', name: 'Rest', sets: null, reps: null, weight: null, duration: null };
+  }
+
+  // Cardio: "30min Running", "Running 30min", "Cardio 45min", "1hr Cycling"
+  const cA = str.match(/^(\d+)\s*(min|hr|hours?|minutes?)\s+(.+)/i);
+  const cB = str.match(/^(.+?)\s+(\d+)\s*(min|hr|hours?|minutes?)$/i);
+  const cC = str.match(/^(cardio)\s+(\d+)\s*(min|hr|hours?|minutes?)$/i);
+  const cD = str.match(/^(\d+)\s*(min|hr|hours?|minutes?)$/i);
+  if (cA) return { type:'cardio', name: cA[3].trim(), duration: parseInt(cA[1]), sets:null, reps:null, weight:null };
+  if (cC) return { type:'cardio', name: 'Cardio', duration: parseInt(cC[2]), sets:null, reps:null, weight:null };
+  if (cB) return { type:'cardio', name: cB[1].trim(), duration: parseInt(cB[2]), sets:null, reps:null, weight:null };
+  if (cD) return { type:'cardio', name: 'Cardio', duration: parseInt(cD[1]), sets:null, reps:null, weight:null };
+
+  // Strength: Name [sets x reps] [@ weight]
+  // Handles colon separator: "Bench: 4x8 @ 80kg", no separator: "Bench 4x5 @ 70", dash: "Bench 4x5 - 70kg"
+  const sM = str.match(/^(.+?):?\s+(\d+)\s*[xX×]\s*(\d+)(?:\s*[@\-]\s*(\d+(?:\.\d+)?)\s*(?:kg|lbs?)?)?/i);
+  if (sM) {
+    return {
+      type: 'strength',
+      name: sM[1].replace(/:$/, '').trim(),
+      sets: parseInt(sM[2]),
+      reps: parseInt(sM[3]),
+      weight: sM[4] ? parseFloat(sM[4]) : null,
+      duration: null
+    };
+  }
+
+  // Name + weight only: "Bench 80kg"
+  const wM = str.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|lbs?)$/i);
+  if (wM) return { type:'strength', name: wM[1].trim(), sets:null, reps:null, weight: parseFloat(wM[2]), duration:null };
+
+  // Just a name (exercise without numbers)
+  const clean = str.replace(/:$/, '').trim();
+  if (clean.length > 0 && clean.length < 80) {
+    return { type:'strength', name: clean, sets:null, reps:null, weight:null, duration:null };
+  }
+  return null;
+}
+
+function impParseProgram(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#') && !l.startsWith('//'));
+  const days = [];
+  let currentDay = null;
+
+  for (const line of lines) {
+    // Format 3: "Monday: ex1, ex2" or "Monday: Rest"
+    const colonIdx = line.indexOf(':');
+    if (colonIdx > 0) {
+      const head = line.slice(0, colonIdx).trim();
+      const tail = line.slice(colonIdx + 1).trim();
+      if (IMP_DAY_NAMES.includes(head.toLowerCase())) {
+        if (/^(rest|off|rest\s*day|recovery)$/i.test(tail)) {
+          days.push({ dayLabel: head, exercises: [{ type:'rest', name:'Rest', sets:null, reps:null, weight:null, duration:null }] });
+        } else {
+          const exs = tail.split(',').map(e => impParseExercise(e.trim())).filter(Boolean);
+          if (exs.length > 0) {
+            days.push({ dayLabel: head, exercises: exs });
+          } else {
+            // Treat rest of line as single exercise
+            const ex = impParseExercise(tail);
+            currentDay = { dayLabel: head, exercises: ex ? [ex] : [] };
+            days.push(currentDay);
+          }
+        }
+        currentDay = null;
+        continue;
+      }
+    }
+
+    // Day header (standalone line)
+    if (impIsDayHeader(line)) {
+      const label = line.replace(/:$/, '').trim();
+      if (/^(rest|off|recovery)(\s+day)?$/i.test(label)) {
+        // Standalone rest-day header with no exercises
+        currentDay = { dayLabel: label, exercises: [{ type:'rest', name:'Rest', sets:null, reps:null, weight:null, duration:null }] };
+      } else {
+        currentDay = { dayLabel: label, exercises: [] };
+      }
+      days.push(currentDay);
+      continue;
+    }
+
+    // Exercise line
+    const ex = impParseExercise(line);
+    if (ex) {
+      if (!currentDay) {
+        currentDay = { dayLabel: 'Day 1', exercises: [] };
+        days.push(currentDay);
+      }
+      currentDay.exercises.push(ex);
+    }
+  }
+
+  return days.filter(d => d.exercises.length > 0);
+}
+
+// ---- Preview ----
+let _impDays = [];
+
+function impRenderPreview(days) {
+  _impDays = days;
+  const preview  = document.getElementById('impPreview');
+  const daysList = document.getElementById('impDaysList');
+  const importBtn = document.getElementById('impImportBtn');
+
+  if (!days.length) { preview.style.display = 'none'; return; }
+  preview.style.display = '';
+  daysList.innerHTML = '';
+
+  days.forEach((day, di) => {
+    const card = document.createElement('div');
+    card.className = 'imp-day-card';
+    card.dataset.di = di;
+
+    // Day header row
+    const hdr = document.createElement('div'); hdr.className = 'imp-day-hdr';
+    const nameIn = document.createElement('input');
+    nameIn.type = 'text'; nameIn.className = 'imp-day-name-input';
+    nameIn.value = day.dayLabel; nameIn.placeholder = 'Day name';
+
+    const delDay = document.createElement('button');
+    delDay.className = 'imp-del-day-btn'; delDay.textContent = '✕ Remove';
+    delDay.addEventListener('click', () => {
+      _impDays.splice(di, 1);
+      impRenderPreview([..._impDays]);
+    });
+
+    hdr.appendChild(nameIn); hdr.appendChild(delDay);
+    card.appendChild(hdr);
+
+    // Exercise rows
+    day.exercises.forEach((ex, ei) => {
+      const row = document.createElement('div');
+      row.className = 'imp-ex-row';
+      row.dataset.ei = ei;
+
+      const typeBadge = document.createElement('span');
+      typeBadge.className = `imp-ex-type ${ex.type}`;
+      typeBadge.textContent = ex.type;
+      row.appendChild(typeBadge);
+
+      const nameExIn = document.createElement('input');
+      nameExIn.type = 'text'; nameExIn.className = 'imp-ex-name-input';
+      nameExIn.value = ex.name; nameExIn.placeholder = 'Exercise';
+      nameExIn.dataset.field = 'name';
+      row.appendChild(nameExIn);
+
+      if (ex.type === 'strength') {
+        const sIn = document.createElement('input');
+        sIn.type = 'number'; sIn.className = 'imp-ex-num-input';
+        sIn.value = ex.sets || ''; sIn.placeholder = 'Sets'; sIn.min = '1';
+        sIn.dataset.field = 'sets';
+        const xLbl = document.createElement('span'); xLbl.className = 'imp-ex-lbl'; xLbl.textContent = '×';
+        const rIn = document.createElement('input');
+        rIn.type = 'number'; rIn.className = 'imp-ex-num-input';
+        rIn.value = ex.reps || ''; rIn.placeholder = 'Reps'; rIn.min = '1';
+        rIn.dataset.field = 'reps';
+        const atLbl = document.createElement('span'); atLbl.className = 'imp-ex-lbl'; atLbl.textContent = '@';
+        const wIn = document.createElement('input');
+        wIn.type = 'number'; wIn.className = 'imp-ex-num-input'; wIn.style.width = '62px';
+        wIn.value = ex.weight || ''; wIn.placeholder = 'kg'; wIn.min = '0'; wIn.step = '0.5';
+        wIn.dataset.field = 'weight';
+        const kgLbl = document.createElement('span'); kgLbl.className = 'imp-ex-lbl'; kgLbl.textContent = 'kg';
+        row.appendChild(sIn); row.appendChild(xLbl); row.appendChild(rIn);
+        row.appendChild(atLbl); row.appendChild(wIn); row.appendChild(kgLbl);
+      } else if (ex.type === 'cardio') {
+        const durIn = document.createElement('input');
+        durIn.type = 'number'; durIn.className = 'imp-ex-num-input';
+        durIn.value = ex.duration || ''; durIn.placeholder = 'Min'; durIn.min = '1';
+        durIn.dataset.field = 'duration';
+        const minLbl = document.createElement('span'); minLbl.className = 'imp-ex-lbl'; minLbl.textContent = 'min';
+        row.appendChild(durIn); row.appendChild(minLbl);
+      }
+
+      const delEx = document.createElement('button');
+      delEx.className = 'imp-del-ex-btn'; delEx.textContent = '✕'; delEx.title = 'Remove';
+      delEx.addEventListener('click', () => {
+        _impDays[di].exercises.splice(ei, 1);
+        if (_impDays[di].exercises.length === 0) _impDays.splice(di, 1);
+        impRenderPreview([..._impDays]);
+      });
+      row.appendChild(delEx);
+      card.appendChild(row);
+    });
+
+    daysList.appendChild(card);
+  });
+
+  importBtn.textContent = `↓ Import ${days.length} Day${days.length !== 1 ? 's' : ''} as Templates`;
+}
+
+function impReadFromDOM() {
+  const result = [];
+  document.querySelectorAll('.imp-day-card').forEach(card => {
+    const dayLabel = card.querySelector('.imp-day-name-input').value.trim();
+    if (!dayLabel) return;
+    const exercises = [];
+    card.querySelectorAll('.imp-ex-row').forEach(row => {
+      const type = row.querySelector('.imp-ex-type').textContent;
+      const name = row.querySelector('[data-field="name"]').value.trim();
+      if (!name) return;
+      if (type === 'strength') {
+        exercises.push({
+          type: 'strength', name,
+          sets:   parseInt(row.querySelector('[data-field="sets"]')?.value)   || null,
+          reps:   parseInt(row.querySelector('[data-field="reps"]')?.value)   || null,
+          weight: parseFloat(row.querySelector('[data-field="weight"]')?.value) || null,
+          duration: null
+        });
+      } else if (type === 'cardio') {
+        exercises.push({
+          type: 'cardio', name,
+          duration: parseInt(row.querySelector('[data-field="duration"]')?.value) || null,
+          sets: null, reps: null, weight: null
+        });
+      } else {
+        exercises.push({ type: 'rest', name, sets:null, reps:null, weight:null, duration:null });
+      }
+    });
+    if (exercises.length > 0) result.push({ dayLabel, exercises });
+  });
+  return result;
+}
+
+function impImportProgram() {
+  const days = impReadFromDOM();
+  if (!days.length) return;
+  const programs = storeGet('lifeos_programs') || [];
+  days.forEach(day => {
+    programs.push({ id: Date.now() + Math.random(), dayLabel: day.dayLabel, exercises: day.exercises });
+  });
+  storeSet('lifeos_programs', programs);
+
+  // Reset UI
+  document.getElementById('impTextarea').value = '';
+  document.getElementById('impPreview').style.display = 'none';
+  document.getElementById('impError').style.display = 'none';
+  _impDays = [];
+
+  // Close card
+  document.getElementById('impBody').classList.remove('is-open');
+  document.getElementById('impToggleIcon').classList.remove('is-open');
+
+  renderPrograms();
+}
+
+// ---- Saved programs ----
+function renderPrograms() {
+  const programs = storeGet('lifeos_programs') || [];
+  const section  = document.getElementById('impProgramsSection');
+  const list     = document.getElementById('impProgList');
+  const empty    = document.getElementById('impProgEmpty');
+  const counter  = document.getElementById('impProgCount');
+  const badge    = document.getElementById('impToggleBadge');
+
+  section.style.display = programs.length === 0 ? 'none' : '';
+  empty.style.display   = programs.length === 0 ? '' : 'none';
+  counter.textContent   = `${programs.length} day${programs.length !== 1 ? 's' : ''}`;
+
+  if (programs.length > 0) {
+    badge.textContent = `${programs.length} saved`;
+    badge.classList.add('is-visible');
+  } else {
+    badge.classList.remove('is-visible');
+  }
+
+  list.innerHTML = '';
+  programs.forEach(prog => {
+    const item = document.createElement('div'); item.className = 'prog-item';
+
+    const left = document.createElement('div'); left.className = 'prog-item-left';
+    const nameEl = document.createElement('div'); nameEl.className = 'prog-item-name';
+    nameEl.textContent = prog.dayLabel;
+
+    const strengthExs = prog.exercises.filter(e => e.type === 'strength');
+    const cardioExs   = prog.exercises.filter(e => e.type === 'cardio');
+    const isRest      = prog.exercises.every(e => e.type === 'rest');
+
+    const parts = [];
+    if (strengthExs.length) parts.push(`${strengthExs.length} exercise${strengthExs.length !== 1 ? 's' : ''}`);
+    if (cardioExs.length)   parts.push(cardioExs.map(e => `${e.duration || '?'}min ${e.name}`).join(', '));
+    if (isRest)             parts.push('Rest day');
+
+    const metaEl = document.createElement('div'); metaEl.className = 'prog-item-meta';
+    metaEl.textContent = parts.join(' · ') || 'Empty';
+    left.appendChild(nameEl); left.appendChild(metaEl);
+    item.appendChild(left);
+
+    if (strengthExs.length > 0) {
+      const startBtn = document.createElement('button'); startBtn.className = 'prog-start-btn';
+      startBtn.textContent = '▶ Start';
+      startBtn.addEventListener('click', () => impStartFromTemplate(prog));
+      item.appendChild(startBtn);
+    }
+
+    const delBtn = document.createElement('button'); delBtn.className = 'prog-del-btn';
+    delBtn.textContent = '×'; delBtn.title = 'Remove template';
+    delBtn.addEventListener('click', () => {
+      const progs = (storeGet('lifeos_programs') || []).filter(p => p.id !== prog.id);
+      storeSet('lifeos_programs', progs);
+      renderPrograms();
+    });
+    item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+function impStartFromTemplate(prog) {
+  if (currentWorkout && !confirm('You have an active workout. Discard it and start this template?')) return;
+  clearInterval(wtTimerInterval); wtTimerInterval = null;
+  currentWorkout = {
+    editingId: null,
+    name: prog.dayLabel,
+    startTime: Date.now(),
+    notes: '',
+    manualDuration: null,
+    exercises: prog.exercises
+      .filter(ex => ex.type === 'strength')
+      .map(ex => ({
+        id: Date.now() + Math.random(),
+        name: ex.name,
+        sets: Array.from({ length: ex.sets || 3 }, () => ({
+          weight: ex.weight ? String(ex.weight) : '',
+          reps:   ex.reps   ? String(ex.reps)   : ''
+        }))
+      }))
+  };
+  wtRenderActive();
+  document.getElementById('wtActiveCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---- Toggle + init ----
+(function initImport() {
+  document.getElementById('impToggle').addEventListener('click', () => {
+    const body = document.getElementById('impBody');
+    const icon = document.getElementById('impToggleIcon');
+    const open = body.classList.contains('is-open');
+    body.classList.toggle('is-open', !open);
+    icon.classList.toggle('is-open', !open);
+  });
+
+  function runParse() {
+    const text  = document.getElementById('impTextarea').value.trim();
+    const errEl = document.getElementById('impError');
+    errEl.style.display = 'none';
+    if (!text) { errEl.textContent = 'Please paste a training program first.'; errEl.style.display = ''; return; }
+    try {
+      const days = impParseProgram(text);
+      if (!days.length) {
+        errEl.textContent = 'Could not parse any workout days. Check the format and try again.';
+        errEl.style.display = '';
+        document.getElementById('impPreview').style.display = 'none';
+        return;
+      }
+      impRenderPreview(days);
+    } catch (e) {
+      errEl.textContent = 'Parse error: ' + e.message;
+      errEl.style.display = '';
+    }
+  }
+
+  document.getElementById('impParseBtn').addEventListener('click', runParse);
+  document.getElementById('impTextarea').addEventListener('paste', () => setTimeout(runParse, 50));
+  document.getElementById('impClearBtn').addEventListener('click', () => {
+    document.getElementById('impTextarea').value = '';
+    document.getElementById('impPreview').style.display = 'none';
+    document.getElementById('impError').style.display = 'none';
+    _impDays = [];
+  });
+  document.getElementById('impImportBtn').addEventListener('click', impImportProgram);
+  renderPrograms();
+})();
 
 // ==================== INIT ====================
 (function initWorkoutTracker() {
