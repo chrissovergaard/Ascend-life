@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nutrition Tracker — Chriss Dashboard</title>
+  <style>
+    :root {
+      --text-primary:   #FAFAFA;
+      --text-secondary: #B8B6B0;
+      --text-tertiary:  #76746E;
+      --success:  #6BE3A4;
+      --warning:  #F2C063;
+      --danger:   #FF6B6B;
+      --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #050506;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: max(32px, env(safe-area-inset-top, 32px)) 24px 56px;
+      position: relative; overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(242,192,99,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 15% 88%, rgba(180,180,200,0.06) 0%, transparent 60%);
+      filter: blur(40px);
+      pointer-events: none; z-index: 0;
+      animation: wash-drift 36s ease-in-out infinite alternate;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.014)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      pointer-events: none; z-index: 0;
+    }
+    @keyframes wash-drift {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(2%,2%) scale(1.04); }
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    .site-nav {
+      display: flex; gap: 4px; margin-bottom: 20px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 4px;
+      width: fit-content; flex-wrap: wrap;
+    }
+    .nav-link {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+      color: var(--text-tertiary); padding: 7px 14px; border-radius: 9px;
+      transition: background 0.2s, color 0.2s; white-space: nowrap;
+    }
+    .nav-link:hover     { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+    .nav-link.is-active { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* ── TITLE ── */
+    .dash-title {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+    .dash-date {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+      letter-spacing: 0.06em; margin-bottom: 22px;
+    }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 18px; }
+    .section-title {
+      font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .section-title::before { content: ''; width: 18px; height: 1px; background: var(--text-tertiary); opacity: 0.6; flex-shrink: 0; }
+    .section-title::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg,rgba(255,255,255,0.08),transparent); }
+
+    /* ── CARD ── */
+    .gm-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px; padding: 20px 22px;
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      margin-bottom: 12px;
+    }
+
+    /* ── INPUTS ── */
+    .goal-input {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 11px 14px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .goal-input:focus { border-color: rgba(255,255,255,0.25); }
+    .goal-input::placeholder { color: var(--text-tertiary); }
+    .goal-input[type="number"] { -moz-appearance: textfield; }
+    .goal-input[type="number"]::-webkit-inner-spin-button,
+    .goal-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .nt-select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 11px 34px 11px 14px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; outline: none; cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2376746E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+
+    .goal-add-btn {
+      background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+      color: #0A0A0B; font-weight: 700; font-size: 13px;
+      font-family: var(--font-body);
+      padding: 11px 20px; border-radius: 12px; border: none;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 6px 16px rgba(0,0,0,0.4); }
+
+    .wt-save-btn {
+      background: linear-gradient(180deg, #7EE8B0 0%, #5BC990 100%);
+      color: #050506; font-weight: 700; font-size: 13px;
+      font-family: var(--font-body);
+      padding: 11px 20px; border-radius: 12px; border: none;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 4px 12px rgba(107,227,164,0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .wt-save-btn:hover { transform: translateY(-1px); }
+    .wt-cancel-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-secondary); font-weight: 600; font-size: 13px;
+      font-family: var(--font-body);
+      padding: 11px 18px; border-radius: 12px;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s, color 0.15s;
+    }
+    .wt-cancel-btn:hover { background: rgba(255,107,107,0.08); color: var(--danger); }
+
+    /* ── SUMMARY CARD ── */
+    .nt-summary-layout {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 20px 24px;
+      align-items: center;
+    }
+    @media (max-width: 560px) { .nt-summary-layout { grid-template-columns: 1fr; } }
+
+    /* Calorie ring */
+    .nt-ring-wrap { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+    .nt-ring-wrap svg { width: 110px; height: 110px; transform: rotate(-90deg); }
+    .nt-ring-bg   { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 8; }
+    .nt-ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.7s ease, stroke 0.3s; }
+    .nt-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+    .nt-ring-kcal { font-family: var(--font-mono); font-size: 18px; font-weight: 800; line-height: 1; }
+    .nt-ring-sub  { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    /* Macros */
+    .nt-macros { display: flex; flex-direction: column; gap: 10px; }
+    .nt-macro-row { display: flex; align-items: center; gap: 10px; }
+    .nt-macro-label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); min-width: 54px; }
+    .nt-macro-val   { font-family: var(--font-mono); font-size: 13px; font-weight: 800; min-width: 52px; text-align: right; }
+    .nt-macro-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; }
+    .nt-macro-fill  { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .nt-macro-goal  { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); min-width: 40px; text-align: right; }
+
+    /* ── QUICK ADD ── */
+    .nt-quick-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .nt-quick-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      color: var(--text-secondary); font-family: var(--font-body); font-size: 12px; font-weight: 600;
+      padding: 7px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .nt-quick-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* ── ADD FORM ── */
+    .nt-add-form { display: flex; flex-direction: column; gap: 8px; }
+    .nt-form-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nt-num-group { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 80px; }
+    .nt-num-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    /* ── MEAL LIST ── */
+    .nt-meal-type-header {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-tertiary); margin: 14px 0 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nt-meal-type-header::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+    .nt-meal-item {
+      padding: 12px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 6px; transition: background 0.15s;
+    }
+    .nt-meal-item:hover { background: rgba(255,255,255,0.05); }
+    .nt-meal-top { display: flex; align-items: center; gap: 10px; }
+    .nt-meal-icon { font-size: 18px; flex-shrink: 0; }
+    .nt-meal-info { flex: 1; min-width: 0; }
+    .nt-meal-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .nt-meal-time { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 1px; }
+    .nt-meal-kcal { font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--warning); flex-shrink: 0; }
+    .nt-meal-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .nt-meal-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-tertiary); font-size: 11px; padding: 4px 9px;
+      border-radius: 7px; cursor: pointer; transition: background 0.15s;
+    }
+    .nt-meal-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .nt-meal-btn.del:hover { background: rgba(255,107,107,0.10); color: var(--danger); border-color: rgba(255,107,107,0.25); }
+
+    .nt-meal-macros {
+      display: flex; gap: 12px; margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .nt-macro-chip { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+    .nt-macro-chip span { font-weight: 700; color: var(--text-secondary); }
+
+    .nt-meal-edit-form {
+      display: none; flex-direction: column; gap: 8px;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .nt-meal-edit-form.is-open { display: flex; }
+
+    /* ── GOALS EDITOR ── */
+    .nt-goals-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 10px; margin-bottom: 14px; }
+    .nt-goal-group { display: flex; flex-direction: column; gap: 4px; }
+    .nt-goal-label { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    /* ── TOTALS ROW ── */
+    .nt-totals-row {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+      margin-top: 12px;
+    }
+    .nt-total-chip { display: flex; flex-direction: column; gap: 1px; }
+    .nt-total-num  { font-family: var(--font-mono); font-size: 14px; font-weight: 800; }
+    .nt-total-lbl  { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+    .empty-state { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 18px 0; text-align: center; }
+
+    @media (max-width: 520px) {
+      body { padding: 18px 14px 48px; }
+      .dash-title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav class="site-nav">
+    <a href="index.html"     class="nav-link">Dashboard</a>
+    <a href="workout.html"   class="nav-link">Workouts</a>
+    <a href="analytics.html" class="nav-link">Analytics</a>
+    <a href="nutrition.html" class="nav-link is-active">Nutrition</a>
+  </nav>
+
+  <h1 class="dash-title">Nutrition Tracker</h1>
+  <div class="dash-date" id="ntDate">—</div>
+
+  <!-- ══ TODAY'S SUMMARY ══ -->
+  <div class="section">
+    <div class="section-title">Today's Summary</div>
+    <div class="gm-card">
+      <div class="nt-summary-layout">
+        <!-- Calorie ring -->
+        <div class="nt-ring-wrap">
+          <svg viewBox="0 0 110 110">
+            <circle class="nt-ring-bg"   cx="55" cy="55" r="46"/>
+            <circle class="nt-ring-fill" cx="55" cy="55" r="46" id="ntCalRing"/>
+          </svg>
+          <div class="nt-ring-center">
+            <span class="nt-ring-kcal" id="ntCalEaten" style="color:var(--warning)">0</span>
+            <span class="nt-ring-sub">kcal</span>
+            <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-top:1px" id="ntCalGoalSub">/ 2500</span>
+          </div>
+        </div>
+        <!-- Macros -->
+        <div class="nt-macros">
+          <div class="nt-macro-row">
+            <span class="nt-macro-label">Protein</span>
+            <span class="nt-macro-val" id="ntProteinVal" style="color:#7EB8F7">0g</span>
+            <div class="nt-macro-track"><div class="nt-macro-fill" id="ntProteinFill" style="background:#7EB8F7"></div></div>
+            <span class="nt-macro-goal" id="ntProteinGoalLabel">150g</span>
+          </div>
+          <div class="nt-macro-row">
+            <span class="nt-macro-label">Carbs</span>
+            <span class="nt-macro-val" id="ntCarbsVal" style="color:#F2C063">0g</span>
+            <div class="nt-macro-track"><div class="nt-macro-fill" id="ntCarbsFill" style="background:#F2C063"></div></div>
+            <span class="nt-macro-goal" id="ntCarbsGoalLabel">250g</span>
+          </div>
+          <div class="nt-macro-row">
+            <span class="nt-macro-label">Fat</span>
+            <span class="nt-macro-val" id="ntFatVal" style="color:#C084FC">0g</span>
+            <div class="nt-macro-track"><div class="nt-macro-fill" id="ntFatFill" style="background:#C084FC"></div></div>
+            <span class="nt-macro-goal" id="ntFatGoalLabel">70g</span>
+          </div>
+          <div class="nt-macro-row" style="margin-top:4px">
+            <span class="nt-macro-label">Remaining</span>
+            <span class="nt-macro-val" id="ntCalRemaining" style="color:var(--success);font-size:11px">2500 kcal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOG MEAL ══ -->
+  <div class="section">
+    <div class="section-title">Log a Meal</div>
+    <div class="gm-card">
+      <!-- Quick add presets -->
+      <div class="nt-quick-row" id="ntQuickRow"></div>
+
+      <!-- Form -->
+      <div class="nt-add-form" id="ntAddForm">
+        <div class="nt-form-row">
+          <input type="text" class="goal-input" id="ntMealName" placeholder="Meal name… (e.g. Grilled Chicken)" style="flex:2">
+          <select class="nt-select" id="ntMealType">
+            <option value="Breakfast">🌅 Breakfast</option>
+            <option value="Lunch" selected>☀️ Lunch</option>
+            <option value="Dinner">🌙 Dinner</option>
+            <option value="Snack">🍎 Snack</option>
+          </select>
+          <input type="time" class="goal-input" id="ntMealTime" style="flex:none;width:110px">
+        </div>
+        <div class="nt-form-row">
+          <div class="nt-num-group">
+            <div class="nt-num-label">Calories (kcal)</div>
+            <input type="number" class="goal-input" id="ntMealCal" placeholder="e.g. 450" min="0">
+          </div>
+          <div class="nt-num-group">
+            <div class="nt-num-label">Protein (g)</div>
+            <input type="number" class="goal-input" id="ntMealProtein" placeholder="e.g. 35" min="0">
+          </div>
+          <div class="nt-num-group">
+            <div class="nt-num-label">Carbs (g)</div>
+            <input type="number" class="goal-input" id="ntMealCarbs" placeholder="e.g. 50" min="0">
+          </div>
+          <div class="nt-num-group">
+            <div class="nt-num-label">Fat (g)</div>
+            <input type="number" class="goal-input" id="ntMealFat" placeholder="e.g. 12" min="0">
+          </div>
+        </div>
+        <div class="nt-form-row">
+          <button class="wt-save-btn" id="ntSaveMealBtn">+ Log Meal</button>
+          <button class="wt-cancel-btn" id="ntClearFormBtn">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MEAL HISTORY ══ -->
+  <div class="section">
+    <div class="section-title">Today's Meals</div>
+    <div class="gm-card">
+      <div id="ntMealList"></div>
+      <!-- Daily totals footer -->
+      <div class="nt-totals-row" id="ntTotalsRow" style="display:none">
+        <div class="nt-total-chip"><span class="nt-total-num" id="totKcal" style="color:var(--warning)">0</span><span class="nt-total-lbl">kcal total</span></div>
+        <div class="nt-total-chip"><span class="nt-total-num" id="totProtein" style="color:#7EB8F7">0g</span><span class="nt-total-lbl">protein</span></div>
+        <div class="nt-total-chip"><span class="nt-total-num" id="totCarbs" style="color:#F2C063">0g</span><span class="nt-total-lbl">carbs</span></div>
+        <div class="nt-total-chip"><span class="nt-total-num" id="totFat" style="color:#C084FC">0g</span><span class="nt-total-lbl">fat</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NUTRITION GOALS ══ -->
+  <div class="section">
+    <div class="section-title">Daily Goals</div>
+    <div class="gm-card">
+      <div class="nt-goals-grid">
+        <div class="nt-goal-group">
+          <div class="nt-goal-label">Calories (kcal)</div>
+          <input type="number" class="goal-input" id="goalCal" placeholder="2500" min="0">
+        </div>
+        <div class="nt-goal-group">
+          <div class="nt-goal-label">Protein (g)</div>
+          <input type="number" class="goal-input" id="goalProtein" placeholder="150" min="0">
+        </div>
+        <div class="nt-goal-group">
+          <div class="nt-goal-label">Carbs (g)</div>
+          <input type="number" class="goal-input" id="goalCarbs" placeholder="250" min="0">
+        </div>
+        <div class="nt-goal-group">
+          <div class="nt-goal-label">Fat (g)</div>
+          <input type="number" class="goal-input" id="goalFat" placeholder="70" min="0">
+        </div>
+      </div>
+      <button class="wt-save-btn" id="ntSaveGoalsBtn" style="font-size:12px;padding:9px 18px">✓ Save Goals</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ==================== HELPERS ====================
+function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function storeSet(k,v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+function dateToStr(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getToday() {
+  const now = new Date();
+  if (now.getHours() < 6) now.setDate(now.getDate()-1);
+  return dateToStr(now);
+}
+function nowTime() {
+  const n = new Date();
+  return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+function fmtDate(ds) {
+  return new Date(ds+'T12:00:00').toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
+// ==================== DATA ====================
+const DEFAULT_GOALS = { cal:2500, protein:150, carbs:250, fat:70 };
+const MEAL_ICONS = { Breakfast:'🌅', Lunch:'☀️', Dinner:'🌙', Snack:'🍎' };
+const PRESETS = [
+  { name:'Chicken + Rice', cal:520, protein:45, carbs:55, fat:8 },
+  { name:'Protein Shake',  cal:160, protein:30, carbs:8,  fat:3 },
+  { name:'Salad',          cal:180, protein:6,  carbs:18, fat:9 },
+  { name:'Pasta',          cal:420, protein:14, carbs:72, fat:8 },
+  { name:'Eggs (3)',       cal:210, protein:18, carbs:1,  fat:15 },
+  { name:'Oatmeal',        cal:310, protein:11, carbs:54, fat:6 },
+];
+
+function loadGoals() {
+  return Object.assign({}, DEFAULT_GOALS, storeGet('lifeos_nutrition_goals') || {});
+}
+function saveGoals(g) { storeSet('lifeos_nutrition_goals', g); }
+
+function loadMeals() { return storeGet('lifeos_nutrition') || []; }
+function saveMeals(m) { storeSet('lifeos_nutrition', m); }
+
+function getTodayMeals() {
+  return loadMeals().filter(m => m.date === getToday()).sort((a,b) => (a.time||'').localeCompare(b.time||''));
+}
+
+function getTodayTotals() {
+  return getTodayMeals().reduce((t,m) => ({
+    cal:     t.cal     + (m.cal||0),
+    protein: t.protein + (m.protein||0),
+    carbs:   t.carbs   + (m.carbs||0),
+    fat:     t.fat     + (m.fat||0)
+  }), { cal:0, protein:0, carbs:0, fat:0 });
+}
+
+// ==================== RING ══════════════
+const NT_CIRC = 2 * Math.PI * 46;
+
+function setRing(pct, color) {
+  const el = document.getElementById('ntCalRing');
+  el.style.strokeDasharray  = NT_CIRC;
+  el.style.strokeDashoffset = NT_CIRC - (NT_CIRC * Math.min(1, Math.max(0, pct)));
+  el.style.stroke = color;
+}
+
+// ==================== RENDER SUMMARY ====================
+function renderSummary() {
+  const goals  = loadGoals();
+  const totals = getTodayTotals();
+
+  const calPct  = goals.cal     > 0 ? totals.cal     / goals.cal     : 0;
+  const pPct    = goals.protein > 0 ? totals.protein / goals.protein : 0;
+  const cPct    = goals.carbs   > 0 ? totals.carbs   / goals.carbs   : 0;
+  const fPct    = goals.fat     > 0 ? totals.fat     / goals.fat     : 0;
+
+  const color = calPct >= 1.05 ? '#FF6B6B' : calPct >= 0.85 ? '#F2C063' : '#6BE3A4';
+  setRing(calPct, color);
+
+  document.getElementById('ntCalEaten').textContent    = totals.cal;
+  document.getElementById('ntCalEaten').style.color    = color;
+  document.getElementById('ntCalGoalSub').textContent  = '/ '+goals.cal;
+  document.getElementById('ntCalRemaining').textContent = Math.max(0, goals.cal - totals.cal)+' kcal left';
+
+  document.getElementById('ntProteinVal').textContent = totals.protein+'g';
+  document.getElementById('ntCarbsVal').textContent   = totals.carbs+'g';
+  document.getElementById('ntFatVal').textContent     = totals.fat+'g';
+
+  document.getElementById('ntProteinFill').style.width = Math.min(100,Math.round(pPct*100))+'%';
+  document.getElementById('ntCarbsFill').style.width   = Math.min(100,Math.round(cPct*100))+'%';
+  document.getElementById('ntFatFill').style.width     = Math.min(100,Math.round(fPct*100))+'%';
+
+  document.getElementById('ntProteinGoalLabel').textContent = goals.protein+'g';
+  document.getElementById('ntCarbsGoalLabel').textContent   = goals.carbs+'g';
+  document.getElementById('ntFatGoalLabel').textContent     = goals.fat+'g';
+}
+
+// ==================== RENDER MEALS ====================
+function renderMeals() {
+  const list   = document.getElementById('ntMealList');
+  const totRow = document.getElementById('ntTotalsRow');
+  list.innerHTML = '';
+  const meals  = getTodayMeals();
+
+  if (!meals.length) {
+    list.innerHTML = '<div class="empty-state">No meals logged today — add your first meal above.</div>';
+    totRow.style.display = 'none';
+    return;
+  }
+
+  // Group by type
+  const groups = { Breakfast:[], Lunch:[], Dinner:[], Snack:[] };
+  meals.forEach(m => (groups[m.type] || (groups['Snack'] = groups['Snack']||[])).push(m));
+  // Ensure snack key exists
+  if (!groups.Snack) groups.Snack = [];
+
+  ['Breakfast','Lunch','Dinner','Snack'].forEach(type => {
+    const ms = groups[type];
+    if (!ms || !ms.length) return;
+
+    const hdr = document.createElement('div'); hdr.className='nt-meal-type-header';
+    hdr.textContent = MEAL_ICONS[type]+' '+type;
+    list.appendChild(hdr);
+
+    ms.forEach(meal => {
+      const item = document.createElement('div'); item.className='nt-meal-item';
+
+      // Top row
+      const top  = document.createElement('div'); top.className='nt-meal-top';
+      const icon = document.createElement('div'); icon.className='nt-meal-icon'; icon.textContent=MEAL_ICONS[meal.type]||'🍽';
+      const info = document.createElement('div'); info.className='nt-meal-info';
+      const name = document.createElement('div'); name.className='nt-meal-name'; name.textContent=meal.name;
+      const time = document.createElement('div'); time.className='nt-meal-time'; time.textContent=meal.time||'';
+      info.appendChild(name); info.appendChild(time);
+      const kcal = document.createElement('div'); kcal.className='nt-meal-kcal'; kcal.textContent=(meal.cal||0)+' kcal';
+      const acts = document.createElement('div'); acts.className='nt-meal-actions';
+      const editBtn = document.createElement('button'); editBtn.className='nt-meal-btn'; editBtn.textContent='✎'; editBtn.title='Edit';
+      const delBtn  = document.createElement('button'); delBtn.className='nt-meal-btn del'; delBtn.textContent='×'; delBtn.title='Delete';
+      delBtn.addEventListener('click', () => { deleteMeal(meal.id); });
+      acts.appendChild(editBtn); acts.appendChild(delBtn);
+      top.appendChild(icon); top.appendChild(info); top.appendChild(kcal); top.appendChild(acts);
+      item.appendChild(top);
+
+      // Macro chips
+      const macros = document.createElement('div'); macros.className='nt-meal-macros';
+      const chips = [
+        { label:'P', val:meal.protein||0, color:'#7EB8F7' },
+        { label:'C', val:meal.carbs||0,   color:'#F2C063' },
+        { label:'F', val:meal.fat||0,     color:'#C084FC' },
+      ];
+      chips.forEach(ch => {
+        const c=document.createElement('div'); c.className='nt-macro-chip';
+        c.innerHTML='<span style="color:'+ch.color+'">'+ch.label+'</span> <span>'+ch.val+'g</span>';
+        macros.appendChild(c);
+      });
+      item.appendChild(macros);
+
+      // Inline edit form
+      const editForm = document.createElement('div'); editForm.className='nt-meal-edit-form';
+      const ef1 = document.createElement('div'); ef1.className='nt-form-row';
+      const nameIn = document.createElement('input'); nameIn.type='text'; nameIn.className='goal-input'; nameIn.value=meal.name; nameIn.style.flex='2';
+      const typeIn = document.createElement('select'); typeIn.className='nt-select';
+      ['Breakfast','Lunch','Dinner','Snack'].forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=MEAL_ICONS[t]+' '+t;if(t===meal.type)o.selected=true;typeIn.appendChild(o);});
+      const timeIn = document.createElement('input'); timeIn.type='time'; timeIn.className='goal-input'; timeIn.value=meal.time||''; timeIn.style.cssText='flex:none;width:110px';
+      ef1.appendChild(nameIn); ef1.appendChild(typeIn); ef1.appendChild(timeIn);
+
+      const ef2 = document.createElement('div'); ef2.className='nt-form-row';
+      const fields = [{id:'cal',lbl:'Calories',val:meal.cal||0},{id:'protein',lbl:'Protein (g)',val:meal.protein||0},{id:'carbs',lbl:'Carbs (g)',val:meal.carbs||0},{id:'fat',lbl:'Fat (g)',val:meal.fat||0}];
+      const numInputs = {};
+      fields.forEach(f=>{
+        const g=document.createElement('div'); g.className='nt-num-group';
+        const l=document.createElement('div'); l.className='nt-num-label'; l.textContent=f.lbl;
+        const inp=document.createElement('input'); inp.type='number'; inp.className='goal-input'; inp.value=f.val; inp.min='0';
+        numInputs[f.id]=inp; g.appendChild(l); g.appendChild(inp); ef2.appendChild(g);
+      });
+      const ef3 = document.createElement('div'); ef3.className='nt-form-row';
+      const saveEd = document.createElement('button'); saveEd.className='wt-save-btn'; saveEd.textContent='✓ Save'; saveEd.style.cssText='font-size:12px;padding:9px 16px';
+      const canEd  = document.createElement('button'); canEd.className='wt-cancel-btn'; canEd.textContent='Cancel'; canEd.style.cssText='font-size:12px;padding:9px 14px';
+      ef3.appendChild(saveEd); ef3.appendChild(canEd);
+      editForm.appendChild(ef1); editForm.appendChild(ef2); editForm.appendChild(ef3);
+
+      editBtn.addEventListener('click', () => editForm.classList.toggle('is-open'));
+      canEd.addEventListener('click',  () => editForm.classList.remove('is-open'));
+      saveEd.addEventListener('click', () => {
+        updateMeal(meal.id, {
+          name: nameIn.value.trim()||meal.name,
+          type: typeIn.value, time: timeIn.value,
+          cal:     parseInt(numInputs.cal.value)||0,
+          protein: parseInt(numInputs.protein.value)||0,
+          carbs:   parseInt(numInputs.carbs.value)||0,
+          fat:     parseInt(numInputs.fat.value)||0,
+        });
+      });
+
+      item.appendChild(editForm);
+      list.appendChild(item);
+    });
+  });
+
+  // Totals footer
+  const totals = getTodayTotals();
+  document.getElementById('totKcal').textContent    = totals.cal;
+  document.getElementById('totProtein').textContent = totals.protein+'g';
+  document.getElementById('totCarbs').textContent   = totals.carbs+'g';
+  document.getElementById('totFat').textContent     = totals.fat+'g';
+  totRow.style.display = '';
+}
+
+// ==================== ACTIONS ====================
+function logMeal() {
+  const name = document.getElementById('ntMealName').value.trim();
+  if (!name) { document.getElementById('ntMealName').focus(); return; }
+  const meals = loadMeals();
+  meals.push({
+    id:      Date.now(),
+    date:    getToday(),
+    name,
+    type:    document.getElementById('ntMealType').value,
+    time:    document.getElementById('ntMealTime').value || nowTime(),
+    cal:     parseInt(document.getElementById('ntMealCal').value)||0,
+    protein: parseInt(document.getElementById('ntMealProtein').value)||0,
+    carbs:   parseInt(document.getElementById('ntMealCarbs').value)||0,
+    fat:     parseInt(document.getElementById('ntMealFat').value)||0,
+  });
+  saveMeals(meals);
+  clearForm();
+  renderAll();
+}
+
+function deleteMeal(id) {
+  saveMeals(loadMeals().filter(m => m.id !== id));
+  renderAll();
+}
+
+function updateMeal(id, data) {
+  const meals = loadMeals();
+  const idx = meals.findIndex(m => m.id === id);
+  if (idx !== -1) { meals[idx] = { ...meals[idx], ...data }; saveMeals(meals); }
+  renderAll();
+}
+
+function clearForm() {
+  ['ntMealName','ntMealCal','ntMealProtein','ntMealCarbs','ntMealFat'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('ntMealTime').value = nowTime();
+}
+
+function fillPreset(preset) {
+  document.getElementById('ntMealName').value    = preset.name;
+  document.getElementById('ntMealCal').value     = preset.cal;
+  document.getElementById('ntMealProtein').value = preset.protein;
+  document.getElementById('ntMealCarbs').value   = preset.carbs;
+  document.getElementById('ntMealFat').value     = preset.fat;
+  document.getElementById('ntMealName').focus();
+}
+
+// ==================== RENDER ALL ====================
+function renderAll() {
+  renderSummary();
+  renderMeals();
+}
+
+// ==================== INIT ====================
+// Date
+document.getElementById('ntDate').textContent = fmtDate(getToday());
+
+// Time default
+document.getElementById('ntMealTime').value = nowTime();
+
+// Quick preset buttons
+const quickRow = document.getElementById('ntQuickRow');
+PRESETS.forEach(p => {
+  const btn = document.createElement('button'); btn.className='nt-quick-btn';
+  btn.textContent = p.name;
+  btn.addEventListener('click', () => fillPreset(p));
+  quickRow.appendChild(btn);
+});
+
+// Log meal button
+document.getElementById('ntSaveMealBtn').addEventListener('click', logMeal);
+document.getElementById('ntMealName').addEventListener('keydown', e => { if (e.key==='Enter') logMeal(); });
+document.getElementById('ntClearFormBtn').addEventListener('click', clearForm);
+
+// Save goals
+document.getElementById('ntSaveGoalsBtn').addEventListener('click', () => {
+  const g = {
+    cal:     parseInt(document.getElementById('goalCal').value)     || DEFAULT_GOALS.cal,
+    protein: parseInt(document.getElementById('goalProtein').value) || DEFAULT_GOALS.protein,
+    carbs:   parseInt(document.getElementById('goalCarbs').value)   || DEFAULT_GOALS.carbs,
+    fat:     parseInt(document.getElementById('goalFat').value)     || DEFAULT_GOALS.fat,
+  };
+  saveGoals(g);
+  renderAll();
+});
+
+// Load goals into form
+const savedGoals = loadGoals();
+document.getElementById('goalCal').value     = savedGoals.cal;
+document.getElementById('goalProtein').value = savedGoals.protein;
+document.getElementById('goalCarbs').value   = savedGoals.carbs;
+document.getElementById('goalFat').value     = savedGoals.fat;
+
+// Initial render
+renderAll();
+</script>
+</body>
+</html>
