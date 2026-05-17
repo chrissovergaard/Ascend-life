@@ -2242,7 +2242,8 @@ function buildTickerItems() {
   const goals = storeGet(`goals:${getActiveDateString()}`) || [];
   const total = goals.length;
   const done  = goals.filter(g => g.done).length;
-  document.getElementById('goalTickerMeta').textContent = `${done}/${total}`;
+  const metaEl = document.getElementById('goalTickerMeta');
+  if (metaEl) metaEl.textContent = `${done}/${total}`;
   if (total === 0) return [{ status: 'empty',   text: 'No goals set for today — add one to get rolling.' }];
   if (done === total) return [{ status: 'done', text: '✓ All goals done — solid day.' }];
   return goals.filter(g => !g.done).map(g => ({ status: 'pending', text: g.text }));
@@ -2265,9 +2266,10 @@ function makeTickerRow(item) {
 function tick(isFirst) {
   tickerItems = buildTickerItems();
   if (!tickerItems.length) return;
+  const stage = document.getElementById('goalTickerStage');
+  if (!stage) return;
   const idx  = cycleIdx % tickerItems.length;
   cycleIdx   = (cycleIdx + 1) % tickerItems.length;
-  const stage  = document.getElementById('goalTickerStage');
   const newRow = makeTickerRow(tickerItems[idx]);
 
   if (isFirst) {
