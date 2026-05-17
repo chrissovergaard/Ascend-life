@@ -1208,17 +1208,27 @@
         <div class="imp-hint">
           Accepts any format: day headers (<code>Monday</code>, <code>Chest Day</code>), inline days (<code>Monday: Bench 4x5 @ 70kg, Squats 3x5</code>), rest days (<code>Rest</code>), cardio (<code>30min Running</code>). Review and edit the parsed preview before importing.
         </div>
-        <textarea class="imp-textarea" id="impTextarea" placeholder="Paste your training program here…
+        <textarea class="imp-textarea" id="impTextarea" placeholder="Paste your training program — JSON or text format.
 
-Example:
+JSON format:
+[
+  {
+    &quot;date&quot;: &quot;2026-05-19&quot;,
+    &quot;name&quot;: &quot;Push Day 1&quot;,
+    &quot;exercises&quot;: [
+      { &quot;name&quot;: &quot;Bench Press&quot;, &quot;sets&quot;: 4, &quot;reps&quot;: 5, &quot;weight&quot;: 70 },
+      { &quot;name&quot;: &quot;Overhead Press&quot;, &quot;sets&quot;: 3, &quot;reps&quot;: 8, &quot;weight&quot;: 40 }
+    ]
+  }
+]
+
+Text format:
 Monday
 Bench Press: 4x5 @ 70kg
 Squats: 3x5 @ 80kg
 
 Wednesday
 Deadlift: 3x3 @ 100kg
-Rows: 4x8 @ 60kg
-
 Thursday: Cardio 30min Running
 Friday: Rest"></textarea>
         <div class="cw-config-row" style="margin-bottom:12px">
@@ -2256,6 +2266,37 @@ function renderPersonalRecords() {
 const IMP_DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday',
                         'mon','tue','wed','thu','fri','sat','sun'];
 
+// ---- JSON import ----
+// Handles user's format: [{date, name, exercises:[{name,sets,reps,weight}]}]
+// or {name, startDate, workouts:[...]}
+function impParseJSON(raw) {
+  const list = Array.isArray(raw) ? raw : (raw.workouts || raw.days || []);
+  if (!list.length) return null;
+  const result = [];
+  list.forEach((w, i) => {
+    const label = w.name || w.dayLabel || w.label || `Day ${i + 1}`;
+    const dateStr = w.date ? w.date.slice(0, 10) : (w.startDate ? w.startDate.slice(0, 10) : null);
+    const rawExs = w.exercises || w.workout || [];
+    if (!rawExs.length) {
+      result.push({ dayLabel: label, exercises: [{ type:'rest', name:'Rest', sets:null, reps:null, weight:null, duration:null }], _date: dateStr });
+      return;
+    }
+    const exercises = rawExs.map(ex => {
+      if (!ex.name) return null;
+      const name = ex.name;
+      const sets = parseInt(ex.sets) || null;
+      const reps = parseInt(ex.reps) || null;
+      const weight = parseFloat(ex.weight) || null;
+      if (/cardio|run|cycling|swim|bike|rowing|walk/i.test(name) && !sets && !reps) {
+        return { type:'cardio', name, sets:null, reps:null, weight:null, duration: parseInt(ex.duration)||null };
+      }
+      return { type:'strength', name, sets, reps, weight, duration:null };
+    }).filter(Boolean);
+    if (exercises.length) result.push({ dayLabel: label, exercises, _date: dateStr });
+  });
+  return result.length ? result : null;
+}
+
 function impIsDayHeader(line) {
   const l = line.toLowerCase().replace(/:$/, '').trim();
   if (IMP_DAY_NAMES.includes(l)) return true;
@@ -2312,6 +2353,15 @@ function impParseExercise(raw) {
 }
 
 function impParseProgram(text) {
+  // Try JSON first
+  const trimmed = text.trim();
+  if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const result = impParseJSON(parsed);
+      if (result) return result;
+    } catch(e) { /* not valid JSON, fall through to text parser */ }
+  }
   const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#') && !l.startsWith('//'));
   const days = [];
   let currentDay = null;
@@ -2385,6 +2435,7 @@ function impRenderPreview(days) {
     const card = document.createElement('div');
     card.className = 'imp-day-card';
     card.dataset.di = di;
+    if (day._date) card.dataset.date = day._date;
 
     // Day header row
     const hdr = document.createElement('div'); hdr.className = 'imp-day-hdr';
@@ -2491,7 +2542,7 @@ function impReadFromDOM() {
         exercises.push({ type: 'rest', name, sets:null, reps:null, weight:null, duration:null });
       }
     });
-    if (exercises.length > 0) result.push({ dayLabel, exercises });
+    if (exercises.length > 0) result.push({ dayLabel, exercises, _date: card.dataset.date || null });
   });
   return result;
 }
@@ -2532,17 +2583,24 @@ function impImportAndSchedule() {
   // Build calendar program
   const time    = (document.getElementById('impSchedTime') || {}).value || '18:00';
   const repeat  = (document.getElementById('impSchedRepeat') || {}).checked || false;
+  const hasDates = days.every(d => d._date);
   const start   = new Date(); start.setDate(start.getDate() + 1);
 
   const program = {
     id: Date.now(), importedAt: new Date().toISOString(),
     totalDays: days.length, workoutTime: time, repeat,
-    startDate: dateToStr(start),
+    startDate: hasDates ? days[0]._date : dateToStr(start),
     days: days.map((day, i) => {
-      const d = new Date(start); d.setDate(start.getDate() + i);
+      let date;
+      if (day._date) {
+        date = day._date;
+      } else {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        date = dateToStr(d);
+      }
       return {
         dayNumber: i + 1, label: day.dayLabel,
-        date: dateToStr(d),
+        date,
         exercises: day.exercises.map(e => ({ ...e })),
         completed: false, actual: null
       };
@@ -2550,7 +2608,7 @@ function impImportAndSchedule() {
   };
   storeSet('lifeos_custom_program', program);
 
-  // Create calendar events (skip rest days)
+  // Create calendar events (skip rest days) — use 'Program' category (orange)
   const events = storeGet('lifeos_events') || [];
   let evtCreated = 0;
   program.days.forEach(day => {
@@ -2563,7 +2621,7 @@ function impImportAndSchedule() {
       const w  = e.weight ? ` @ ${e.weight}kg` : '';
       return `${e.name}${sr}${w}`;
     }).join(', ');
-    events.push({ id: Date.now() + Math.random(), title, date: day.date, time, category: 'Workout', description: desc });
+    events.push({ id: Date.now() + Math.random(), title, date: day.date, time, category: 'Program', description: desc });
     evtCreated++;
   });
   storeSet('lifeos_events', events);
@@ -2906,7 +2964,27 @@ function cwRenderProgram() {
   document.getElementById('cwProgFill').style.width   = `${pct}%`;
   document.getElementById('cwProgPct').textContent    = `${pct}%`;
   const badge = document.getElementById('cwBadge');
-  badge.textContent = `${total} days`; badge.classList.add('is-visible');
+  if (badge) { badge.textContent = `${total} days`; badge.classList.add('is-visible'); }
+
+  // Delete program button (idempotent)
+  let delProgBtn = document.getElementById('cwDelProgBtn');
+  if (!delProgBtn) {
+    delProgBtn = document.createElement('button');
+    delProgBtn.id = 'cwDelProgBtn';
+    delProgBtn.className = 'cw-act-btn del';
+    delProgBtn.style.cssText = 'margin:0 0 14px auto;display:block;font-size:11px;';
+    delProgBtn.textContent = '✕ Delete Program';
+    delProgBtn.addEventListener('click', () => {
+      if (!confirm('Delete the active program? This will not remove calendar events.')) return;
+      localStorage.removeItem('lifeos_custom_program');
+      cwRenderProgram();
+    });
+    document.getElementById('cwProgramSection').querySelector('.gm-card').insertBefore(
+      delProgBtn,
+      document.getElementById('cwProgList')
+    );
+  }
+
   const list  = document.getElementById('cwProgList');
   list.innerHTML = '';
 

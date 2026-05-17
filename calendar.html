@@ -248,6 +248,7 @@
     .cat-badge.Health   { background: rgba(127,202,255,0.15);color: #7CCAFF; }
     .cat-badge.Personal { background: rgba(200,150,255,0.15);color: #C896FF; }
     .cat-badge.Work     { background: rgba(255,180,100,0.15);color: #FFB464; }
+    .cat-badge.Program  { background: rgba(255,165,0,0.15);  color: #FFA500; }
     .cat-badge.Other    { background: rgba(255,255,255,0.08);color: var(--text-secondary); }
 
     /* ── ADD EVENT FORM ── */
@@ -438,6 +439,7 @@
             <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div><span class="legend-label">Workout</span></div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><span class="legend-label">Habit</span></div>
             <div class="legend-item"><div class="legend-dot" style="background:#7CAEFF"></div><span class="legend-label">Event</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#FFA500"></div><span class="legend-label">Program</span></div>
           </div>
         </div>
       </div>
@@ -513,6 +515,7 @@
           <option value="Health">Health</option>
           <option value="Personal">Personal</option>
           <option value="Work">Work</option>
+          <option value="Program">Program (Imported)</option>
           <option value="Other">Other</option>
         </select>
       </div>
@@ -578,6 +581,7 @@ const CAT_COLORS = {
   Health:   '#7CCAFF',
   Personal: '#C896FF',
   Work:     '#FFB464',
+  Program:  '#FFA500',
   Other:    '#888888'
 };
 function catColor(cat) { return CAT_COLORS[cat] || CAT_COLORS.Other; }
