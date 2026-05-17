@@ -64,7 +64,7 @@
       transition: background 0.2s, color 0.2s; white-space: nowrap;
     }
     .nav-link:hover     { background: #111111; color: var(--text-primary); }
-    .nav-link.is-active { background: #FFFFFF; color: #0A0A0A; }
+    .nav-link.is-active { background: #5FD45F; color: #0A0A0A; }
 
     /* ── TITLE ── */
     .dash-title {
@@ -128,18 +128,18 @@
     }
 
     .goal-add-btn {
-      background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
-      color: #0A0A0B; font-weight: 700; font-size: 13px;
+      background: linear-gradient(180deg, #5FD45F 0%, #4ab84a 100%);
+      color: #0A0A0A; font-weight: 700; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 20px; border-radius: 12px; border: none;
       cursor: pointer; white-space: nowrap;
-      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(95,212,95,0.25);
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 6px 16px rgba(0,0,0,0.4); }
+    .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(95,212,95,0.35); }
 
     .wt-save-btn {
-      background: #FFFFFF;
+      background: #5FD45F;
       color: #0A0A0A; font-weight: 700; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 20px; border-radius: 16px; border: none;
@@ -192,7 +192,7 @@
       padding: 7px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .nt-quick-btn:hover { background: #FFFFFF; color: #0A0A0A; border-color: #FFFFFF; }
+    .nt-quick-btn:hover { background: #1a1a1a; color: var(--text-primary); border-color: #555555; }
 
     /* ── ADD FORM ── */
     .nt-add-form { display: flex; flex-direction: column; gap: 8px; }
@@ -211,7 +211,7 @@
 
     .nt-meal-item {
       padding: 12px 14px; border-radius: 12px;
-      background: #111111; border: 1px solid #2a2a2a;
+      background: #111111; border: 1px solid #333333;
       margin-bottom: 6px; transition: background 0.15s;
     }
     .nt-meal-item:hover { background: #1a1a1a; }
@@ -223,11 +223,11 @@
     .nt-meal-kcal { font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--warning); flex-shrink: 0; }
     .nt-meal-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .nt-meal-btn {
-      background: #111111; border: 1px solid #2a2a2a;
+      background: #111111; border: 1px solid #333333;
       color: var(--text-tertiary); font-size: 11px; padding: 4px 9px;
       border-radius: 7px; cursor: pointer; transition: background 0.15s;
     }
-    .nt-meal-btn:hover { background: #2a2a2a; color: var(--text-primary); }
+    .nt-meal-btn:hover { background: #333333; color: var(--text-primary); }
     .nt-meal-btn.del:hover { background: rgba(255,107,107,0.10); color: var(--danger); border-color: rgba(255,107,107,0.25); }
 
     .nt-meal-macros {
@@ -253,7 +253,7 @@
     .nt-totals-row {
       display: flex; gap: 16px; flex-wrap: wrap;
       padding: 10px 14px; border-radius: 10px;
-      background: #111111; border: 1px solid #2a2a2a;
+      background: #111111; border: 1px solid #333333;
       margin-top: 12px;
     }
     .nt-total-chip { display: flex; flex-direction: column; gap: 1px; }

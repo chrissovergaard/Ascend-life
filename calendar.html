@@ -61,7 +61,7 @@
       transition: background 0.2s, color 0.2s; white-space: nowrap;
     }
     .nav-link:hover     { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-    .nav-link.is-active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+    .nav-link.is-active { background: #5FD45F; color: #0A0A0A; }
 
     /* ── TITLE ── */
     .dash-title {
@@ -124,7 +124,7 @@
       font-size: 16px; display: flex; align-items: center; justify-content: center;
       transition: background 0.15s, color 0.15s;
     }
-    .cal-nav-btn:hover { background: #252525; color: var(--text-primary); }
+    .cal-nav-btn:hover { background: #151515; color: var(--text-primary); }
 
     .cal-weekdays {
       display: grid; grid-template-columns: repeat(7, 1fr);
@@ -153,15 +153,15 @@
       min-height: 48px;
       position: relative;
     }
-    .cal-day:hover { background: #252525; border-color: #444444; }
+    .cal-day:hover { background: #151515; border-color: #555555; }
     .cal-day.is-other-month { opacity: 0.3; pointer-events: none; }
     .cal-day.is-today {
       background: #1f2a1f;
       border-color: var(--success);
     }
     .cal-day.is-selected {
-      background: #FFFFFF;
-      border-color: #FFFFFF;
+      background: #5FD45F;
+      border-color: #5FD45F;
     }
     .cal-day.is-selected .cal-day-num { color: #0A0A0A; }
     .cal-day.is-selected .cal-dot { background: #0A0A0A; }
@@ -197,13 +197,13 @@
     .evt-list { display: flex; flex-direction: column; gap: 8px; }
     .evt-item {
       background: #111111;
-      border: 1px solid #2a2a2a;
+      border: 1px solid #333333;
       border-radius: 12px;
       padding: 12px 14px;
       display: flex; align-items: flex-start; gap: 10px;
       transition: border-color 0.15s;
     }
-    .evt-item:hover { border-color: #3a3a3a; }
+    .evt-item:hover { border-color: #333333; }
     .evt-cat-dot {
       width: 8px; height: 8px; border-radius: 50%;
       flex-shrink: 0; margin-top: 5px;
@@ -275,7 +275,7 @@
     textarea.form-input { resize: vertical; min-height: 60px; }
 
     .btn-primary {
-      background: #FFFFFF; color: #0A0A0A;
+      background: #5FD45F; color: #0A0A0A;
       border: none; border-radius: 12px;
       padding: 11px 20px; font-family: var(--font-body);
       font-size: 13px; font-weight: 700; cursor: pointer;
@@ -291,7 +291,7 @@
       font-size: 13px; font-weight: 600; cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
-    .btn-secondary:hover { background: #252525; color: var(--text-primary); }
+    .btn-secondary:hover { background: #151515; color: var(--text-primary); }
 
     /* ── UPCOMING EVENTS ── */
     .upcoming-item {
@@ -302,7 +302,7 @@
     .upcoming-item:last-child { border-bottom: none; padding-bottom: 0; }
     .upcoming-date {
       flex-shrink: 0; width: 44px; text-align: center;
-      background: #111111; border: 1px solid #2a2a2a;
+      background: #111111; border: 1px solid #333333;
       border-radius: 10px; padding: 6px 4px;
     }
     .upcoming-day-num {
@@ -424,7 +424,7 @@
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       width: 100%;
     }
-    .toggle-btn:hover { background: #252525; color: var(--text-primary); border-color: #444444; }
+    .toggle-btn:hover { background: #151515; color: var(--text-primary); border-color: #555555; }
 
     @media (max-width: 520px) {
       body { padding: 20px 16px 48px; }
