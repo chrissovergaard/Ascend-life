@@ -597,22 +597,36 @@ function buildSystemPrompt(data, a) {
     gentle:  'Encouraging first, then honest. Lead with support and effort, push for improvement constructively. Patient but still direct.'
   }[tone];
 
-  return `You are ${name}'s personal AI coach. Help them become the best version of themselves.
+  return `You are ${name}'s personal AI coach inside their Life OS app. You have full access to their logged data.
 
 TONE: ${toneDesc}
 
-RULES:
+CRITICAL RULES:
+- Read the user's EXACT question and answer THAT question — not a generic overview
 - ALWAYS reference their actual numbers from the data below
-- NEVER invent data you don't have — if something isn't logged, say so
-- Be concise: 2-4 sentences unless they ask for detail
-- Give specific, actionable recommendations
-- Use emojis sparingly (1-2 max per message)
-- When data is missing, encourage logging it
+- NEVER give the same answer twice — every response must be specific to what was asked
+- NEVER invent data you don't have — if something isn't logged, say so and ask them to log it
+- Be concise: 2-4 sentences unless they explicitly ask for detail
+- Give specific, actionable recommendations tied to their real metrics
+- Use emojis sparingly (0-2 max per message)
+- If asked about training quality/progression, reference actual exercise weights and trends
+- If asked the same question twice, give a different angle or more specific insight
 
-USER DATA:
+${name}'S PROFILE:
+- Age: ${data.profile?.age || 16}, Height: ${data.profile?.height || 175}cm, Weight: ${data.profile?.weight || 62}kg
+- Body goal: 65kg lean, under 10% body fat
+
+${name}'S STRENGTH GOALS:
+- Bench Press: 85kg (current progress tracked below)
+- Squat: 90-100kg
+- Deadlift: 110-120kg
+- Pull-ups: +10kg added weight
+- 5K run: under 20 minutes
+
+CURRENT APP DATA:
 ${buildContext(data, a)}
 
-Respond to the user's message directly, using their specific data. Be honest and helpful.`;
+When answering, be intelligent: the SAME data should produce DIFFERENT answers for "how is my training?" vs "is my training good?" vs "am I progressing?". Read the nuance in what they're asking and respond accordingly.`;
 }
 
 /* ─────────────────────────────────────────────
@@ -620,10 +634,10 @@ Respond to the user's message directly, using their specific data. Be honest and
 ───────────────────────────────────────────── */
 async function callClaude(history, systemPrompt) {
   const key = (storeGet('coach_settings') || {}).apiKey;
-  if (!key) return null;
+  if (!key) return { noKey: true };
 
-  // Build alternating messages (last 12, must start with user)
-  const raw = history.slice(-12).map(m => ({
+  // Build alternating messages (last 20, must start with user)
+  const raw = history.slice(-20).map(m => ({
     role: m.role === 'coach' ? 'assistant' : 'user',
     content: m.content
   }));
@@ -631,7 +645,7 @@ async function callClaude(history, systemPrompt) {
   // Ensure starts with user
   let msgs = raw;
   while (msgs.length && msgs[0].role === 'assistant') msgs = msgs.slice(1);
-  if (!msgs.length) return null;
+  if (!msgs.length) return { error: 'no messages' };
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -644,17 +658,21 @@ async function callClaude(history, systemPrompt) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 600,
+        max_tokens: 1000,
         system: systemPrompt,
         messages: msgs
       })
     });
-    if (!res.ok) { console.warn('Claude API', res.status); return null; }
+    if (!res.ok) {
+      const errBody = await res.json().catch(()=>({}));
+      console.warn('Claude API', res.status, errBody);
+      return { error: `API error ${res.status}: ${errBody?.error?.message || res.statusText}` };
+    }
     const d = await res.json();
-    return d.content?.[0]?.text || null;
+    return { text: d.content?.[0]?.text || '' };
   } catch(e) {
     console.warn('Claude API error:', e);
-    return null;
+    return { error: e.message || 'Network error' };
   }
 }
 
@@ -898,23 +916,26 @@ async function sendMessage() {
 
   const data = loadAllData();
   const a    = analyze(data);
-
-  await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
-
-  const apiKey = (storeGet('coach_settings') || {}).apiKey;
-  let text2 = null;
-
-  if (apiKey) {
-    text2 = await callClaude(messages, buildSystemPrompt(data, a));
-  }
+  const result = await callClaude(messages, buildSystemPrompt(data, a));
 
   hideTyping();
 
-  if (text2) {
-    addMessage({ role:'coach', content:text2, tone:'normal', time:fmtTime(new Date()) });
+  if (result.noKey) {
+    addMessage({
+      role: 'coach',
+      content: 'Add your Anthropic API key in ⚙ Settings to unlock intelligent coaching. Without it I can\'t give you personalized feedback.',
+      tone: 'warning',
+      time: fmtTime(new Date())
+    });
+  } else if (result.error) {
+    addMessage({
+      role: 'coach',
+      content: `Something went wrong: ${result.error}\n\nCheck your API key in ⚙ Settings.`,
+      tone: 'danger',
+      time: fmtTime(new Date())
+    });
   } else {
-    const rb = ruleResponse(text, a);
-    addMessage({ role:'coach', content:rb.content, tone:rb.tone, time:fmtTime(new Date()) });
+    addMessage({ role:'coach', content: result.text, tone:'normal', time:fmtTime(new Date()) });
   }
 
   busy = false;
@@ -1031,11 +1052,31 @@ function clearHistory() {
 
   if (newSess) {
     showTyping();
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
-    hideTyping();
 
-    const op = openingMessage(a);
-    const msg = { role:'coach', content:op.content, tone:op.tone, time:fmtTime(new Date()), ts:Date.now() };
+    const hasKey = !!(storeGet('coach_settings') || {}).apiKey;
+    let opContent, opTone;
+
+    if (hasKey) {
+      // Use Claude for the opening greeting
+      const greetHistory = [{
+        role: 'user',
+        content: 'Start our session. Give me a brief, personalized greeting based on my current data. Be direct — 2-3 sentences max.'
+      }];
+      const result = await callClaude(greetHistory, buildSystemPrompt(data, a));
+      if (result.text) {
+        opContent = result.text;
+        opTone = 'normal';
+      } else {
+        const op = openingMessage(a);
+        opContent = op.content; opTone = op.tone;
+      }
+    } else {
+      const op = openingMessage(a);
+      opContent = op.content; opTone = op.tone;
+    }
+
+    hideTyping();
+    const msg = { role:'coach', content:opContent, tone:opTone, time:fmtTime(new Date()), ts:Date.now() };
     addMessage(msg);
 
     if (!history.length) document.getElementById('quickPrompts').style.display = '';
