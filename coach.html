@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach — Chriss Dashboard</title>
+  <style>
+    :root {
+      --text-primary: #FFFFFF;
+      --text-secondary: #D0D0D0;
+      --text-tertiary: #888888;
+      --success: #5FD45F;
+      --warning: #FFC107;
+      --danger: #FF6B6B;
+      --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+    }
+    body {
+      background: #0A0A0A;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: max(28px, env(safe-area-inset-top, 28px)) 24px 0;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAV ── */
+    .site-nav {
+      display: flex; gap: 4px; margin-bottom: 16px;
+      background: #1a1a1a; border: 1px solid #333333;
+      border-radius: 12px; padding: 4px;
+      width: fit-content; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .nav-link {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+      color: var(--text-tertiary); padding: 7px 14px; border-radius: 9px;
+      transition: background 0.2s, color 0.2s; white-space: nowrap;
+    }
+    .nav-link:hover     { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+    .nav-link.is-active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+
+    /* ── HEADER ── */
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 14px; flex-shrink: 0;
+    }
+    .dash-title {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .api-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      background: #111111; border: 1px solid #2a2a2a;
+      border-radius: 99px; padding: 3px 8px;
+      color: var(--text-tertiary);
+      -webkit-text-fill-color: var(--text-tertiary);
+    }
+    .api-badge.is-ai { border-color: rgba(95,212,95,0.4); color: var(--success); -webkit-text-fill-color: var(--success); }
+    .api-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .dash-sub {
+      font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary);
+      letter-spacing: 0.06em; margin-top: 3px;
+    }
+    .settings-btn {
+      background: #1a1a1a; border: 1px solid #333333; border-radius: 10px;
+      padding: 8px 12px; color: var(--text-tertiary); cursor: pointer;
+      font-size: 15px; transition: color 0.15s, background 0.15s; flex-shrink: 0;
+    }
+    .settings-btn:hover { background: #252525; color: var(--text-primary); }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 8px; margin-bottom: 12px; flex-shrink: 0;
+    }
+    @media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card {
+      background: #1a1a1a; border: 1px solid #333333;
+      border-radius: 12px; padding: 12px 14px;
+      transition: border-color 0.2s;
+    }
+    .stat-card.is-good { border-color: rgba(95,212,95,0.3); }
+    .stat-card.is-warn { border-color: rgba(255,193,7,0.3); }
+    .stat-card.is-bad  { border-color: rgba(255,107,107,0.3); }
+    .stat-label {
+      font-family: var(--font-mono); font-size: 8.5px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--text-primary); line-height: 1;
+    }
+    .stat-card.is-good .stat-value { color: var(--success); }
+    .stat-card.is-warn .stat-value { color: var(--warning); }
+    .stat-card.is-bad  .stat-value { color: var(--danger); }
+    .stat-sub {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); margin-top: 2px;
+    }
+
+    /* ── CHAT WRAPPER ── */
+    .chat-wrapper {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      background: #1a1a1a; border: 1px solid #333333;
+      border-radius: 18px 18px 0 0;
+      overflow: hidden;
+    }
+
+    /* ── MESSAGES ── */
+    .chat-messages {
+      flex: 1; min-height: 0;
+      overflow-y: auto;
+      padding: 20px 18px;
+      display: flex; flex-direction: column; gap: 12px;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .msg { display: flex; flex-direction: column; max-width: 82%; }
+    .msg.coach { align-self: flex-start; }
+    .msg.user  { align-self: flex-end; }
+
+    .msg-bubble {
+      padding: 11px 15px; font-size: 13.5px; line-height: 1.65;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.coach .msg-bubble {
+      background: #111111; border: 1px solid #2a2a2a;
+      border-radius: 4px 16px 16px 16px; color: var(--text-secondary);
+    }
+    .msg.user .msg-bubble {
+      background: #252525; border: 1px solid #3a3a3a;
+      border-radius: 16px 4px 16px 16px; color: var(--text-primary);
+    }
+    .msg.coach.tone-success .msg-bubble { border-left: 3px solid var(--success); }
+    .msg.coach.tone-warning .msg-bubble { border-left: 3px solid var(--warning); }
+    .msg.coach.tone-danger  .msg-bubble { border-left: 3px solid var(--danger); }
+
+    .msg-time {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary);
+      margin-top: 3px; padding: 0 4px;
+    }
+    .msg.user .msg-time { text-align: right; }
+
+    /* ── TYPING ── */
+    .typing-indicator {
+      align-self: flex-start; display: none;
+      background: #111111; border: 1px solid #2a2a2a;
+      border-radius: 4px 16px 16px 16px;
+      padding: 12px 16px; gap: 5px; align-items: center;
+    }
+    .typing-indicator.is-visible { display: flex; }
+    .typing-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-tertiary);
+      animation: typingBounce 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.18s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); opacity: 0.35; }
+      30%          { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* ── QUICK PROMPTS ── */
+    .quick-prompts {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 10px 18px; border-top: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .quick-btn {
+      background: #0A0A0A; border: 1px solid #2a2a2a;
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 11px; color: var(--text-tertiary); cursor: pointer;
+      transition: all 0.15s; white-space: nowrap; font-family: var(--font-body);
+    }
+    .quick-btn:hover { border-color: #444; color: var(--text-primary); background: #111111; }
+
+    /* ── INPUT ── */
+    .chat-input-row {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 12px 18px max(16px, env(safe-area-inset-bottom, 16px));
+      border-top: 1px solid #222222;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; background: #0A0A0A;
+      border: 1px solid #333333; border-radius: 13px;
+      padding: 10px 14px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 14px;
+      outline: none; resize: none;
+      min-height: 44px; max-height: 120px; line-height: 1.5;
+      transition: border-color 0.2s; overflow-y: auto;
+    }
+    .chat-input:focus { border-color: var(--success); }
+    .chat-input::placeholder { color: var(--text-tertiary); }
+    .send-btn {
+      background: #FFFFFF; color: #0A0A0A;
+      border: none; border-radius: 12px;
+      width: 44px; height: 44px; flex-shrink: 0;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .send-btn:hover  { opacity: 0.88; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── SETTINGS MODAL ── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.78); z-index: 200;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-bg.is-open { display: flex; }
+    .modal {
+      background: #1a1a1a; border: 1px solid #333333;
+      border-radius: 20px; padding: 26px;
+      width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block; font-family: var(--font-mono); font-size: 9.5px;
+      font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%; background: #0A0A0A; border: 1px solid #333333;
+      border-radius: 10px; padding: 10px 12px;
+      color: var(--text-primary); font-family: var(--font-mono);
+      font-size: 13px; outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--success); }
+    .form-select {
+      width: 100%; background: #0A0A0A; border: 1px solid #333333;
+      border-radius: 10px; padding: 10px 12px;
+      color: var(--text-primary); font-size: 13px; font-family: var(--font-body);
+      outline: none; cursor: pointer; color-scheme: dark;
+    }
+    .form-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 5px; line-height: 1.5; }
+    .form-hint a { color: var(--success); text-decoration: none; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+    .btn-primary {
+      background: #FFFFFF; color: #0A0A0A; border: none;
+      border-radius: 12px; padding: 11px 20px; flex: 1; min-height: 44px;
+      font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary {
+      background: #111111; color: var(--text-secondary);
+      border: 1px solid #333333; border-radius: 12px;
+      padding: 10px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: #252525; }
+    .btn-danger {
+      background: rgba(255,107,107,0.1); color: var(--danger);
+      border: 1px solid rgba(255,107,107,0.25); border-radius: 12px;
+      padding: 10px 16px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-danger:hover { background: rgba(255,107,107,0.2); }
+
+    @media (max-width: 520px) {
+      body { padding: 16px 14px 0; }
+      .msg { max-width: 92%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <a class="nav-link" href="index.html">Dashboard</a>
+    <a class="nav-link" href="workout.html">Workout</a>
+    <a class="nav-link" href="calendar.html">Calendar</a>
+    <a class="nav-link" href="analytics.html">Analytics</a>
+    <a class="nav-link" href="nutrition.html">Nutrition</a>
+    <a class="nav-link is-active" href="coach.html">Coach</a>
+  </nav>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="dash-title">
+        Coach
+        <span class="api-badge" id="apiBadge">
+          <span class="api-dot"></span>
+          <span id="apiBadgeText">Rule-based</span>
+        </span>
+      </div>
+      <div class="dash-sub">Honest · Data-driven · No excuses</div>
+    </div>
+    <button class="settings-btn" onclick="openSettings()">⚙</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card" id="statWorkouts">
+      <div class="stat-label">Workouts / wk</div>
+      <div class="stat-value">—</div>
+      <div class="stat-sub">this week</div>
+    </div>
+    <div class="stat-card" id="statHabits">
+      <div class="stat-label">Habits 7-day</div>
+      <div class="stat-value">—</div>
+      <div class="stat-sub">adherence</div>
+    </div>
+    <div class="stat-card" id="statSleep">
+      <div class="stat-label">Avg sleep</div>
+      <div class="stat-value">—</div>
+      <div class="stat-sub">last 7 days</div>
+    </div>
+    <div class="stat-card" id="statProgram">
+      <div class="stat-label">Program</div>
+      <div class="stat-value">—</div>
+      <div class="stat-sub">completion</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-wrapper">
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+
+    <div class="quick-prompts" id="quickPrompts">
+      <button class="quick-btn" onclick="quickSend('How am I doing this week?')">📊 Status</button>
+      <button class="quick-btn" onclick="quickSend('What should I focus on right now?')">🎯 Priority</button>
+      <button class="quick-btn" onclick="quickSend('Am I on track to hit my goals?')">📈 Goals</button>
+      <button class="quick-btn" onclick="quickSend('Give me a pep talk 🔥')">🔥 Motivate me</button>
+      <button class="quick-btn" onclick="quickSend('What does my week look like so far?')">📅 This week</button>
+    </div>
+
+    <div class="chat-input-row">
+      <textarea
+        class="chat-input"
+        id="chatInput"
+        placeholder="Ask me anything..."
+        rows="1"
+        onkeydown="inputKeydown(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+    </div>
+
+  </div>
+
+</div><!-- /container -->
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settingsModal" onclick="settingsBgClick(event)">
+  <div class="modal">
+    <div class="modal-title">⚙ Coach Settings</div>
+
+    <div class="form-group">
+      <label class="form-label" for="settingApiKey">Anthropic API Key (optional)</label>
+      <input type="password" id="settingApiKey" class="form-input" placeholder="sk-ant-api03-...">
+      <div class="form-hint">
+        Stored locally — only sent to api.anthropic.com.<br>
+        Get one at <a href="#" onclick="return false" style="color:var(--success)">console.anthropic.com</a>.
+        Without a key, the coach uses smart rule-based analysis.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="settingTone">Coach Tone</label>
+      <select id="settingTone" class="form-select">
+        <option value="honest">Honest — Direct but fair</option>
+        <option value="brutal">Brutal — Zero sugarcoating</option>
+        <option value="gentle">Supportive — Encouraging first</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="settingName">Your Name</label>
+      <input type="text" id="settingName" class="form-input" placeholder="Chris">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+      <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn-danger" onclick="clearHistory()">Clear chat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   STORAGE
+───────────────────────────────────────────── */
+function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+/* ─────────────────────────────────────────────
+   DATE
+───────────────────────────────────────────── */
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function nowStr() { return toDateStr(new Date()); }
+function fmtTime(d) { return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true }); }
+
+/* ─────────────────────────────────────────────
+   LOAD DATA
+───────────────────────────────────────────── */
+function loadAllData() {
+  return {
+    profile:   storeGet('lifeos_profile'),
+    goals:     storeGet('lifeos_goals')         || [],
+    habits:    storeGet('lifeos_habits')         || [],
+    recovery:  storeGet('lifeos_recovery')       || [],
+    workouts:  storeGet('lifeos_workouts')       || [],
+    nutrition: storeGet('lifeos_nutrition_log')  || [],
+    program:   storeGet('lifeos_custom_program'),
+    events:    storeGet('lifeos_events')         || [],
+    prs:       storeGet('lifeos_prs')            || {}
+  };
+}
+
+/* ─────────────────────────────────────────────
+   ANALYZE
+───────────────────────────────────────────── */
+function analyze(data) {
+  const now    = new Date();
+  const today  = nowStr();
+  const wkAgo  = new Date(now - 7  * 86400000);
+  const wk2Ago = new Date(now - 14 * 86400000);
+
+  // Workouts
+  const wks  = [...data.workouts].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const thisW = wks.filter(w => w.date && new Date(w.date+'T12:00:00') >= wkAgo);
+  const lastW = wks.filter(w => w.date && new Date(w.date+'T12:00:00') >= wk2Ago && new Date(w.date+'T12:00:00') < wkAgo);
+  const daysSince = wks[0]?.date ? Math.floor((now - new Date(wks[0].date+'T12:00:00')) / 86400000) : null;
+
+  // Habits
+  const habits = data.habits;
+  const totalH = habits.length;
+  let h7total = 0, h7done = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = toDateStr(new Date(now - i * 86400000));
+    h7total += totalH;
+    h7done  += habits.filter(h => h.completedDates?.includes(d)).length;
+  }
+  const habitPct   = totalH > 0 ? Math.round(h7done / h7total * 100) : null;
+  const habitsToday = habits.filter(h => h.completedDates?.includes(today)).length;
+
+  // Recovery
+  const recs = [...data.recovery].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const recW  = recs.filter(r => r.date && new Date(r.date+'T12:00:00') >= wkAgo);
+  const avgSleep  = recW.length ? Math.round(recW.reduce((s,r)=>s+(parseFloat(r.sleep)||0),0)/recW.length*10)/10 : null;
+  const avgStress = recW.length ? Math.round(recW.reduce((s,r)=>s+(parseFloat(r.stress)||0),0)/recW.length*10)/10 : null;
+  const lastRec   = recs[0] || null;
+
+  // Program
+  let prog = null;
+  if (data.program?.days?.length) {
+    const days = data.program.days;
+    const done = days.filter(d => d.completed).length;
+    prog = { total: days.length, done, pct: Math.round(done/days.length*100), left: days.length - done };
+  }
+
+  // Nutrition
+  const todayKcal = (data.nutrition || [])
+    .filter(n => n.date === today)
+    .reduce((s,n)=>s+(n.calories||0), 0);
+
+  return {
+    workoutsThisWeek: thisW.length,
+    workoutsLastWeek: lastW.length,
+    daysSince, lastWorkout: wks[0] || null,
+    totalHabits: totalH, habitsToday, habitPct,
+    avgSleep, avgStress, lastRec,
+    prog, todayKcal,
+    profile: data.profile,
+    prs: data.prs,
+    hasData: data.workouts.length > 0 || data.habits.length > 0 || data.recovery.length > 0
+  };
+}
+
+/* ─────────────────────────────────────────────
+   CONTEXT STRING (for API)
+───────────────────────────────────────────── */
+function buildContext(data, a) {
+  const p = data.profile || {};
+  const lines = [
+    `USER: ${p.name||'Chris'}${p.age?`, age ${p.age}`:''}${p.weight?`, ${p.weight}kg`:''}, ${p.height||'?'}cm`,
+    ``,
+    `WORKOUTS THIS WEEK: ${a.workoutsThisWeek} (last week: ${a.workoutsLastWeek})`,
+    a.daysSince !== null ? `Days since last workout: ${a.daysSince}` : 'No workouts logged yet',
+    a.lastWorkout ? `Last workout: ${a.lastWorkout.date}` : '',
+    ``,
+    `HABITS: ${a.habitsToday}/${a.totalHabits} done today | 7-day adherence: ${a.habitPct !== null ? a.habitPct+'%' : 'no data'}`,
+    ...(data.habits.slice(0,8).map(h=>`  - ${h.name} (streak: ${h.currentStreak||0}d, cat: ${h.category||'?'})`)),
+    ``,
+    `SLEEP: avg ${a.avgSleep !== null ? a.avgSleep+'h' : 'no data'} (last 7 days)`,
+    a.avgStress !== null ? `Stress avg: ${a.avgStress}/10` : '',
+    a.lastRec ? `Last recovery log: ${a.lastRec.date} — sleep ${a.lastRec.sleep}h, stress ${a.lastRec.stress}/10` : '',
+    ``,
+    a.prog ? `PROGRAM: ${a.prog.done}/${a.prog.total} days (${a.prog.pct}%), ${a.prog.left} days remaining` : 'No active training program',
+    a.todayKcal > 0 ? `\nNUTRITION: ${a.todayKcal} kcal logged today` : '',
+    ``,
+    Object.keys(a.prs).length ? `TOP PRs:\n${Object.entries(a.prs).slice(0,8).map(([e,pr])=>`  - ${e}: ${pr.weight}kg × ${pr.reps}`).join('\n')}` : '',
+    ``,
+    `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`
+  ];
+  return lines.filter(l => l !== '').join('\n');
+}
+
+/* ─────────────────────────────────────────────
+   SYSTEM PROMPT
+───────────────────────────────────────────── */
+function buildSystemPrompt(data, a) {
+  const settings = storeGet('coach_settings') || {};
+  const tone = settings.tone || 'honest';
+  const name = settings.name || data.profile?.name || 'Chris';
+  const toneDesc = {
+    honest:  'Direct and fair — no sugarcoating but not cruel. Acknowledge genuine wins, call out poor performance clearly. Like a good trainer who respects the athlete.',
+    brutal:  'Zero sugarcoating. If performance is poor, say it clearly. Celebrate real achievements but never be falsely positive. Be blunt.',
+    gentle:  'Encouraging first, then honest. Lead with support and effort, push for improvement constructively. Patient but still direct.'
+  }[tone];
+
+  return `You are ${name}'s personal AI coach. Help them become the best version of themselves.
+
+TONE: ${toneDesc}
+
+RULES:
+- ALWAYS reference their actual numbers from the data below
+- NEVER invent data you don't have — if something isn't logged, say so
+- Be concise: 2-4 sentences unless they ask for detail
+- Give specific, actionable recommendations
+- Use emojis sparingly (1-2 max per message)
+- When data is missing, encourage logging it
+
+USER DATA:
+${buildContext(data, a)}
+
+Respond to the user's message directly, using their specific data. Be honest and helpful.`;
+}
+
+/* ─────────────────────────────────────────────
+   ANTHROPIC API
+───────────────────────────────────────────── */
+async function callClaude(history, systemPrompt) {
+  const key = (storeGet('coach_settings') || {}).apiKey;
+  if (!key) return null;
+
+  // Build alternating messages (last 12, must start with user)
+  const raw = history.slice(-12).map(m => ({
+    role: m.role === 'coach' ? 'assistant' : 'user',
+    content: m.content
+  }));
+
+  // Ensure starts with user
+  let msgs = raw;
+  while (msgs.length && msgs[0].role === 'assistant') msgs = msgs.slice(1);
+  if (!msgs.length) return null;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: msgs
+      })
+    });
+    if (!res.ok) { console.warn('Claude API', res.status); return null; }
+    const d = await res.json();
+    return d.content?.[0]?.text || null;
+  } catch(e) {
+    console.warn('Claude API error:', e);
+    return null;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   RULE-BASED COACH
+───────────────────────────────────────────── */
+function detectIntent(msg) {
+  const m = msg.toLowerCase();
+  if (/how.*(am i|doing|going|look)|status|overview/i.test(m))       return 'status';
+  if (/focus|should i do|priorit|next step|what.*do/i.test(m))       return 'focus';
+  if (/on track|goal.*hit|reach.*goal|target/i.test(m))              return 'goals';
+  if (/motivat|pep talk|push|inspire|pump me/i.test(m))              return 'motivation';
+  if (/sleep|recover|rest|tired|fatigue/i.test(m))                   return 'recovery';
+  if (/workout|gym|train|lift|exercise/i.test(m))                    return 'workout';
+  if (/habit|routine|streak|daily/i.test(m))                         return 'habits';
+  if (/eat|nutri|calori|food|protein|macro/i.test(m))                return 'nutrition';
+  if (/program|plan|schedule/i.test(m))                              return 'program';
+  if (/today|this week/i.test(m))                                    return 'today';
+  if (/didn.?t|missed|skip|didn't/i.test(m))                        return 'missed';
+  return 'general';
+}
+
+function ruleResponse(msg, a) {
+  const intent = detectIntent(msg);
+
+  if (!a.hasData) return {
+    content: `I need data to coach you. Start logging workouts on the Workout page, check off habits on the Dashboard, and log sleep/recovery. A week of data and I can give you real, specific feedback.`,
+    tone: 'normal'
+  };
+
+  switch(intent) {
+
+    case 'status': {
+      const parts = [];
+      let bad = 0, good = 0;
+      if (a.workoutsThisWeek >= 3)       { parts.push(`💪 ${a.workoutsThisWeek} workouts this week`);                    good++; }
+      else if (a.workoutsThisWeek >= 1)  { parts.push(`⚠️ Only ${a.workoutsThisWeek} workout${a.workoutsThisWeek>1?'s':''} this week`); bad++; }
+      else                               { parts.push(`🚨 Zero workouts this week`);                                      bad+=2; }
+      if (a.habitPct !== null) {
+        if (a.habitPct >= 80)            { parts.push(`✅ ${a.habitPct}% habit adherence`);                               good++; }
+        else if (a.habitPct >= 60)       { parts.push(`📊 ${a.habitPct}% habit adherence — needs work`);                 bad++; }
+        else                             { parts.push(`🚨 ${a.habitPct}% habit adherence — this is a problem`);          bad+=2; }
+      }
+      if (a.avgSleep !== null) {
+        if (a.avgSleep >= 7.5)           { parts.push(`😴 ${a.avgSleep}h avg sleep — good`);                             good++; }
+        else if (a.avgSleep >= 6)        { parts.push(`⚠️ ${a.avgSleep}h avg sleep — need more`);                        bad++; }
+        else                             { parts.push(`🚨 ${a.avgSleep}h avg sleep — critically low`);                   bad+=2; }
+      }
+      if (a.prog) parts.push(`📋 Program: ${a.prog.pct}% complete (${a.prog.left} days left)`);
+
+      const tone = bad >= 3 ? 'danger' : bad >= 1 ? 'warning' : 'success';
+      const lead = { danger:'We need to talk. Here\'s the reality:', warning:'Mixed picture this week:', success:'Solid week. Here\'s the breakdown:' }[tone];
+      return { content: `${lead}\n\n${parts.join('\n')}`, tone };
+    }
+
+    case 'focus': {
+      const issues = [];
+      if (a.workoutsThisWeek === 0)            issues.push({ area:'Training',            action:`You haven't trained this week. Get in a session today — even 30 minutes counts.` });
+      else if (a.daysSince > 2)                issues.push({ area:'Training frequency',  action:`It's been ${a.daysSince} days since your last workout. Schedule the next one now.` });
+      if (a.avgSleep !== null && a.avgSleep < 7) issues.push({ area:'Sleep',             action:`You're averaging ${a.avgSleep}h. Set a hard bedtime tonight — no negotiation.` });
+      if (a.habitPct !== null && a.habitPct < 65) issues.push({ area:'Habit consistency', action:`${a.habitPct}% adherence. Pick your top 3 habits and commit to those only this week.` });
+      if (a.prog && a.prog.pct < 80 && a.prog.left <= 5) issues.push({ area:'Program finish', action:`${a.prog.left} days left — don't drop off now. Finish what you started.` });
+
+      if (!issues.length) return { content:`You're covering all the bases. Next level: push intensity and volume in training. Progress needs progressive overload.`, tone:'success' };
+      return { content:`Your #1 priority: **${issues[0].area}**\n\n→ ${issues[0].action}`, tone: issues.length >= 2 ? 'warning' : 'normal' };
+    }
+
+    case 'recovery': {
+      if (a.avgSleep === null) return { content:`Start logging sleep and stress on the Dashboard. I need data to give you meaningful recovery feedback.`, tone:'normal' };
+      if (a.avgSleep < 6)   return { content:`${a.avgSleep}h average sleep is not acceptable. Below 6h, training adaptations drop 30-40%, cortisol spikes, decisions suffer. This is your #1 issue — everything else is secondary. Pick a bedtime and hold it for 5 nights straight.`, tone:'danger' };
+      if (a.avgSleep < 7.5) return { content:`${a.avgSleep}h avg sleep is functional but not optimal. You're leaving gains on the table.${a.avgStress && a.avgStress > 6 ? ` With ${a.avgStress}/10 stress, recovery is compromised.` : ''} Aim for 7.5-8h this week.`, tone:'warning' };
+      return { content:`${a.avgSleep}h avg sleep — solid.${a.avgStress && a.avgStress > 7 ? ` Watch the stress (${a.avgStress}/10) though — it'll catch up.` : ' Recovery base is good. Keep it.'}`, tone:'success' };
+    }
+
+    case 'workout': {
+      if (!a.workoutsThisWeek && a.daysSince === null) return { content:`No workouts logged yet. Go to the Workout page and start tracking. I need data to coach you on training.`, tone:'normal' };
+      if (!a.workoutsThisWeek) return { content:`No workouts this week. Last one was ${a.daysSince} days ago. That's too long. What's the plan for today?`, tone:'danger' };
+      if (a.daysSince > 2)    return { content:`${a.workoutsThisWeek} workouts this week but ${a.daysSince} days since the last one. Don't let momentum die. When are you training next?`, tone:'warning' };
+      return { content:`${a.workoutsThisWeek} workouts this week${a.workoutsLastWeek!==undefined?` (last week: ${a.workoutsLastWeek})`:''}. ${a.daysSince===0?'Trained today — good.':a.daysSince===1?'Trained yesterday.': `Last session ${a.daysSince} days ago.`} Keep the frequency up.`, tone: a.workoutsThisWeek>=3?'success':'warning' };
+    }
+
+    case 'habits': {
+      if (a.habitPct === null) return { content:`Add your daily habits on the Dashboard and start checking them off. Consistency is everything — you can't manage what you don't track.`, tone:'normal' };
+      if (a.habitPct >= 85) return { content:`${a.habitPct}% habit adherence this week — excellent. ${a.habitsToday}/${a.totalHabits} done today. This is what building a lifestyle looks like.`, tone:'success' };
+      if (a.habitPct >= 65) return { content:`${a.habitPct}% habit adherence. ${a.habitsToday}/${a.totalHabits} today. You're consistent but there are gaps. Identify which habits keep slipping and fix the cause, not the symptom.`, tone:'warning' };
+      return { content:`${a.habitPct}% habit adherence isn't cutting it. ${a.habitsToday}/${a.totalHabits} today. Your habits are the foundation. Commit to just your top 3 this week — nothing else.`, tone:'danger' };
+    }
+
+    case 'motivation': {
+      const wins = [];
+      if (a.workoutsThisWeek >= 3) wins.push(`${a.workoutsThisWeek} workouts this week`);
+      if (a.habitPct  >= 75)       wins.push(`${a.habitPct}% habit consistency`);
+      if (a.avgSleep  >= 7.5)      wins.push(`${a.avgSleep}h sleep average`);
+      if (a.prog?.pct >= 50)       wins.push(`${a.prog.pct}% through your program`);
+
+      if (!wins.length) return { content:`Right now, the data doesn't show up. But you're here, asking — that matters. The gap between where you are and where you want to be is just reps. Show up today. One workout. One good sleep. Start there.`, tone:'warning' };
+      return { content:`Look at what you're actually doing:\n${wins.map(w=>`✅ ${w}`).join('\n')}\n\nMost people don't even track this stuff. You're showing up. Keep the standard.`, tone:'success' };
+    }
+
+    case 'missed': return {
+      content: `Noted. One missed session doesn't derail you — a pattern does. ${a.workoutsThisWeek>0?`You've still got ${a.workoutsThisWeek} workouts in this week.`:"You haven't trained this week yet."} What was the actual reason? Life, energy, motivation? Tell me and we fix it.`,
+      tone: 'warning'
+    };
+
+    case 'program': {
+      if (!a.prog) return { content:`No training program active. Import one on the Workout page to get a structured plan.`, tone:'normal' };
+      if (a.prog.pct >= 90) return { content:`${a.prog.pct}% done — ${a.prog.done}/${a.prog.total} days. ${a.prog.left} left. Don't ease off at the end. Finish strong.`, tone:'success' };
+      if (a.prog.pct >= 50) return { content:`${a.prog.pct}% through — ${a.prog.done}/${a.prog.total} days, ${a.prog.left} remaining. Past halfway. The second half is where discipline shows.`, tone:'success' };
+      return { content:`${a.prog.pct}% complete (${a.prog.done}/${a.prog.total} days), ${a.prog.left} days to go. Early phase — consistency here sets the tone for everything after.`, tone:'normal' };
+    }
+
+    case 'today': {
+      const lines = [
+        `${new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}:`,
+        `Habits: ${a.habitsToday}/${a.totalHabits} done`,
+        a.daysSince === 0 ? `Workout: ✅ logged today` : a.daysSince !== null ? `Workout: last was ${a.daysSince} day${a.daysSince>1?'s':''} ago` : 'Workout: none logged',
+        a.todayKcal > 0 ? `Nutrition: ${a.todayKcal} kcal` : '',
+        a.prog ? `Program: ${a.prog.pct}% complete` : ''
+      ].filter(Boolean);
+      return { content: lines.join('\n'), tone: 'normal' };
+    }
+
+    case 'goals': {
+      const issues = [];
+      if (a.workoutsThisWeek < 3) issues.push('training frequency is below target');
+      if (a.avgSleep !== null && a.avgSleep < 7) issues.push(`sleep is ${a.avgSleep}h (needs to be 7.5+)`);
+      if (a.habitPct !== null && a.habitPct < 70) issues.push(`habit adherence is ${a.habitPct}%`);
+      if (!issues.length) return { content:`All key metrics are tracking well. Stay consistent — results are a function of time and adherence. Keep the current standard.`, tone:'success' };
+      return { content:`To hit your goals, fix these first:\n${issues.map(i=>`⚠️ ${i}`).join('\n')}\n\nGoals don't wait for perfect conditions. Fix the foundation first.`, tone:'warning' };
+    }
+
+    default: return {
+      content: `I'm here to give you honest, data-driven feedback. Ask me "how am I doing?", "what should I focus on?", or anything about your training, habits, sleep, or goals.`,
+      tone: 'normal'
+    };
+  }
+}
+
+/* ─────────────────────────────────────────────
+   OPENING MESSAGE
+───────────────────────────────────────────── */
+function openingMessage(a) {
+  const h    = new Date().getHours();
+  const gr   = h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening';
+  const name = (storeGet('coach_settings')?.name) || a.profile?.name || '';
+  const hi   = name ? `${gr}, ${name}.` : `${gr}.`;
+
+  if (!a.hasData) return {
+    content: `${hi} I'm your coach. I need data to work with — start by logging workouts, checking off habits, and recording your sleep. A week of data and I'll give you real, specific feedback. What are you working towards?`,
+    tone: 'normal'
+  };
+
+  const bad = [];
+  const win = [];
+  if (a.workoutsThisWeek === 0)         bad.push(`no workouts this week`);
+  else if (a.daysSince > 2)             bad.push(`${a.daysSince} days without training`);
+  if (a.avgSleep !== null && a.avgSleep < 6.5)   bad.push(`only ${a.avgSleep}h avg sleep`);
+  if (a.habitPct !== null && a.habitPct < 55)    bad.push(`${a.habitPct}% habit adherence`);
+  if (a.workoutsThisWeek >= 3)          win.push(`${a.workoutsThisWeek} workouts in`);
+  if (a.habitPct  >= 80)                win.push(`${a.habitPct}% habit adherence`);
+  if (a.avgSleep  >= 7.5)               win.push(`solid ${a.avgSleep}h sleep`);
+
+  if (bad.length >= 2) return { content:`${hi} ${bad.join(' and ')} — we have things to address. What's going on?`, tone:'warning' };
+  if (win.length >= 2) return { content:`${hi} Data looks solid — ${win.join(', ')}. Keep that standard. What are we working on today?`, tone:'success' };
+  return {
+    content: `${hi} ${a.workoutsThisWeek} workout${a.workoutsThisWeek!==1?'s':''} this week${a.habitPct!==null?`, ${a.habitPct}% habit adherence`:''}${a.avgSleep!==null?`, ${a.avgSleep}h avg sleep`:''}. What do you need from me today?`,
+    tone: 'normal'
+  };
+}
+
+/* ─────────────────────────────────────────────
+   MESSAGES STATE
+───────────────────────────────────────────── */
+let messages = [];
+
+function loadHistory()  { return storeGet('coach_history') || []; }
+function saveHistory()  { storeSet('coach_history', messages.slice(-80)); }
+
+function renderMsg(msg, prepend) {
+  const container = document.getElementById('chatMessages');
+  const el  = document.createElement('div');
+  el.className = `msg ${msg.role}${msg.tone && msg.role==='coach' ? ` tone-${msg.tone}` : ''}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = msg.content;
+
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = msg.role === 'coach' ? `Coach · ${msg.time||''}` : msg.time||'';
+
+  el.appendChild(bubble);
+  el.appendChild(time);
+
+  const typing = document.getElementById('typingIndicator');
+  if (prepend) {
+    container.insertBefore(el, container.firstChild);
+  } else {
+    container.insertBefore(el, typing);
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function addMessage(msg) {
+  messages.push(msg);
+  saveHistory();
+  renderMsg(msg, false);
+}
+
+/* ─────────────────────────────────────────────
+   TYPING
+───────────────────────────────────────────── */
+function showTyping() {
+  const t = document.getElementById('typingIndicator');
+  t.classList.add('is-visible');
+  document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+}
+function hideTyping() { document.getElementById('typingIndicator').classList.remove('is-visible'); }
+
+/* ─────────────────────────────────────────────
+   SEND
+───────────────────────────────────────────── */
+let busy = false;
+
+async function sendMessage() {
+  if (busy) return;
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  busy = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+  autoResize(input);
+
+  const time = fmtTime(new Date());
+  addMessage({ role:'user', content:text, time });
+
+  document.getElementById('quickPrompts').style.display = 'none';
+  showTyping();
+
+  const data = loadAllData();
+  const a    = analyze(data);
+
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
+
+  const apiKey = (storeGet('coach_settings') || {}).apiKey;
+  let text2 = null;
+
+  if (apiKey) {
+    text2 = await callClaude(messages, buildSystemPrompt(data, a));
+  }
+
+  hideTyping();
+
+  if (text2) {
+    addMessage({ role:'coach', content:text2, tone:'normal', time:fmtTime(new Date()) });
+  } else {
+    const rb = ruleResponse(text, a);
+    addMessage({ role:'coach', content:rb.content, tone:rb.tone, time:fmtTime(new Date()) });
+  }
+
+  busy = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function quickSend(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function inputKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+/* ─────────────────────────────────────────────
+   STATS
+───────────────────────────────────────────── */
+function renderStats(a) {
+  const wc = document.getElementById('statWorkouts');
+  wc.querySelector('.stat-value').textContent = a.workoutsThisWeek ?? '—';
+  wc.querySelector('.stat-sub').textContent   = `last wk: ${a.workoutsLastWeek}`;
+  wc.className = 'stat-card' + (a.workoutsThisWeek>=3?' is-good':a.workoutsThisWeek>=1?' is-warn':a.hasData?' is-bad':'');
+
+  const hc = document.getElementById('statHabits');
+  hc.querySelector('.stat-value').textContent = a.habitPct !== null ? a.habitPct+'%' : '—';
+  hc.querySelector('.stat-sub').textContent   = `${a.habitsToday}/${a.totalHabits} today`;
+  hc.className = 'stat-card' + (a.habitPct>=80?' is-good':a.habitPct>=60?' is-warn':a.habitPct!==null?' is-bad':'');
+
+  const sc = document.getElementById('statSleep');
+  sc.querySelector('.stat-value').textContent = a.avgSleep !== null ? a.avgSleep+'h' : '—';
+  sc.querySelector('.stat-sub').textContent   = 'last 7 days';
+  sc.className = 'stat-card' + (a.avgSleep>=7.5?' is-good':a.avgSleep>=6?' is-warn':a.avgSleep!==null?' is-bad':'');
+
+  const pc = document.getElementById('statProgram');
+  if (a.prog) {
+    pc.querySelector('.stat-value').textContent = a.prog.pct+'%';
+    pc.querySelector('.stat-sub').textContent   = `${a.prog.left} days left`;
+    pc.className = 'stat-card' + (a.prog.pct>=70?' is-good':' is-warn');
+  } else {
+    pc.querySelector('.stat-value').textContent = '—';
+    pc.querySelector('.stat-sub').textContent   = 'no program';
+    pc.className = 'stat-card';
+  }
+}
+
+/* ─────────────────────────────────────────────
+   SETTINGS
+───────────────────────────────────────────── */
+function updateApiBadge() {
+  const key = (storeGet('coach_settings') || {}).apiKey;
+  const el  = document.getElementById('apiBadge');
+  const txt = document.getElementById('apiBadgeText');
+  if (key) { el.className='api-badge is-ai'; txt.textContent='AI Connected'; }
+  else     { el.className='api-badge';        txt.textContent='Rule-based'; }
+}
+
+function openSettings() {
+  const s = storeGet('coach_settings') || {};
+  document.getElementById('settingApiKey').value = s.apiKey || '';
+  document.getElementById('settingTone').value   = s.tone || 'honest';
+  document.getElementById('settingName').value   = s.name || (loadAllData().profile?.name) || '';
+  document.getElementById('settingsModal').classList.add('is-open');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('is-open'); }
+function settingsBgClick(e) { if (e.target===document.getElementById('settingsModal')) closeSettings(); }
+function saveSettings() {
+  storeSet('coach_settings', {
+    apiKey: document.getElementById('settingApiKey').value.trim(),
+    tone:   document.getElementById('settingTone').value,
+    name:   document.getElementById('settingName').value.trim()
+  });
+  updateApiBadge();
+  closeSettings();
+}
+
+function clearHistory() {
+  if (!confirm('Clear all chat history?')) return;
+  messages = [];
+  storeSet('coach_history', []);
+  const c = document.getElementById('chatMessages');
+  const t = document.getElementById('typingIndicator');
+  [...c.children].forEach(el => { if (el !== t) el.remove(); });
+  document.getElementById('quickPrompts').style.display = '';
+  closeSettings();
+}
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+(async function init() {
+  updateApiBadge();
+
+  const data = loadAllData();
+  const a    = analyze(data);
+  renderStats(a);
+
+  const history = loadHistory();
+  const lastMsg = history[history.length - 1];
+  const gapMs   = lastMsg ? Date.now() - new Date(lastMsg.ts || 0).getTime() : Infinity;
+  const newSess = gapMs > 3 * 3600 * 1000; // 3h gap = new session
+
+  if (history.length > 0) {
+    messages = history;
+    history.slice(-30).forEach(m => renderMsg(m, false));
+    document.getElementById('quickPrompts').style.display = 'none';
+  }
+
+  if (newSess) {
+    showTyping();
+    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
+    hideTyping();
+
+    const op = openingMessage(a);
+    const msg = { role:'coach', content:op.content, tone:op.tone, time:fmtTime(new Date()), ts:Date.now() };
+    addMessage(msg);
+
+    if (!history.length) document.getElementById('quickPrompts').style.display = '';
+  }
+})();
+</script>
+</body>
+</html>
