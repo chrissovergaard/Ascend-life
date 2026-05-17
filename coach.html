@@ -458,11 +458,34 @@ function analyze(data) {
   const wkAgo  = new Date(now - 7  * 86400000);
   const wk2Ago = new Date(now - 14 * 86400000);
 
-  // Workouts
+  // Workouts — handle both ISO datetime and date-only strings
+  function wDate(w) { return w.date ? new Date(w.date) : null; }
   const wks  = [...data.workouts].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const thisW = wks.filter(w => w.date && new Date(w.date+'T12:00:00') >= wkAgo);
-  const lastW = wks.filter(w => w.date && new Date(w.date+'T12:00:00') >= wk2Ago && new Date(w.date+'T12:00:00') < wkAgo);
-  const daysSince = wks[0]?.date ? Math.floor((now - new Date(wks[0].date+'T12:00:00')) / 86400000) : null;
+  const thisW = wks.filter(w => { const d=wDate(w); return d && d>=wkAgo; });
+  const lastW = wks.filter(w => { const d=wDate(w); return d && d>=wk2Ago && d<wkAgo; });
+  const daysSince = wks[0]?.date ? Math.max(0, Math.floor((now - wDate(wks[0])) / 86400000)) : null;
+
+  // Per-exercise progression: map exercise name → last 5 sessions [{date,weight,reps,sets}]
+  const exMap = {};
+  wks.forEach(w => {
+    const dateStr = w.date ? w.date.slice(0,10) : '';
+    (w.exercises || []).forEach(ex => {
+      if (!ex.name) return;
+      const key = ex.name.toLowerCase().trim();
+      if (!exMap[key]) exMap[key] = { name: ex.name, sessions: [] };
+      if (exMap[key].sessions.length >= 5) return;
+      const sets = ex.sets || [];
+      if (!sets.length) return;
+      const topSet = sets.reduce((best, s) =>
+        (parseFloat(s.weight)||0) > (parseFloat(best.weight)||0) ? s : best, sets[0]);
+      exMap[key].sessions.push({
+        date: dateStr,
+        weight: parseFloat(topSet.weight) || 0,
+        reps:   parseInt(topSet.reps)   || 0,
+        vol:    sets.reduce((s,x)=>(parseFloat(x.weight)||0)*(parseInt(x.reps)||0)+s, 0)
+      });
+    });
+  });
 
   // Habits
   const habits = data.habits;
@@ -500,6 +523,8 @@ function analyze(data) {
     workoutsThisWeek: thisW.length,
     workoutsLastWeek: lastW.length,
     daysSince, lastWorkout: wks[0] || null,
+    recentWorkouts: wks.slice(0, 10),
+    exMap,
     totalHabits: totalH, habitsToday, habitPct,
     avgSleep, avgStress, lastRec,
     prog, todayKcal,
@@ -519,7 +544,28 @@ function buildContext(data, a) {
     ``,
     `WORKOUTS THIS WEEK: ${a.workoutsThisWeek} (last week: ${a.workoutsLastWeek})`,
     a.daysSince !== null ? `Days since last workout: ${a.daysSince}` : 'No workouts logged yet',
-    a.lastWorkout ? `Last workout: ${a.lastWorkout.date}` : '',
+    ``,
+    ...(a.recentWorkouts.length ? [
+      `RECENT WORKOUTS (last ${Math.min(a.recentWorkouts.length, 10)}):`,
+      ...a.recentWorkouts.slice(0,10).map(w => {
+        const exSummary = (w.exercises||[]).map(ex => {
+          const sets = ex.sets || [];
+          if (!sets.length) return ex.name;
+          const topSet = sets.reduce((b,s)=>(parseFloat(s.weight)||0)>(parseFloat(b.weight)||0)?s:b, sets[0]);
+          return `${ex.name}: ${topSet.weight||0}kg×${topSet.reps||0} (${sets.length} sets)`;
+        }).join(', ');
+        return `  ${w.date?.slice(0,10)||'?'} — ${w.name||'Workout'}${exSummary ? ' | '+exSummary : ''}`;
+      })
+    ] : []),
+    ``,
+    ...(Object.keys(a.exMap).length ? [
+      `EXERCISE PROGRESSION (most recent → oldest):`,
+      ...Object.values(a.exMap).slice(0,15).map(ex => {
+        const s = ex.sessions;
+        const trend = s.length >= 2 ? (s[0].weight > s[1].weight ? ' ↑' : s[0].weight < s[1].weight ? ' ↓' : ' →') : '';
+        return `  ${ex.name}: ${s.map(x=>`${x.weight}kg×${x.reps}`).join(' → ')}${trend}`;
+      })
+    ] : []),
     ``,
     `HABITS: ${a.habitsToday}/${a.totalHabits} done today | 7-day adherence: ${a.habitPct !== null ? a.habitPct+'%' : 'no data'}`,
     ...(data.habits.slice(0,8).map(h=>`  - ${h.name} (streak: ${h.currentStreak||0}d, cat: ${h.category||'?'})`)),
