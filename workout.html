@@ -3052,8 +3052,17 @@ function cwRenderProgram() {
     delProgBtn.style.cssText = 'margin:0 0 14px auto;display:block;font-size:11px;';
     delProgBtn.textContent = '✕ Delete Program';
     delProgBtn.addEventListener('click', () => {
-      if (!confirm('Delete the active program? This will not remove calendar events.')) return;
+      if (!confirm('Delete the active program and remove all its calendar events?')) return;
+      const p = storeGet('lifeos_custom_program');
+      if (p?.days) {
+        const progDates = new Set(p.days.map(d => d.date));
+        const events = (storeGet('lifeos_events') || []).filter(e => !(e.category === 'Program' && progDates.has(e.date)));
+        storeSet('lifeos_events', events);
+      }
       localStorage.removeItem('lifeos_custom_program');
+      localStorage.removeItem('lifeos_21day_program');
+      const badge = document.getElementById('impToggleBadge');
+      if (badge) { badge.textContent = ''; badge.classList.remove('is-visible'); }
       cwRenderProgram();
     });
     document.getElementById('cwProgramSection').querySelector('.gm-card').insertBefore(
