@@ -115,6 +115,38 @@
       background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
     }
 
+    /* ===== PR COLLAPSE TOGGLE ===== */
+    .pr-toggle-btn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; background: none; border: none; cursor: pointer;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); margin-bottom: 12px; padding: 0; text-align: left;
+      font-family: var(--font-body);
+    }
+    .pr-toggle-btn::before {
+      content: ''; width: 18px; height: 1px;
+      background: var(--text-tertiary); opacity: 0.6; flex-shrink: 0;
+    }
+    .pr-toggle-btn::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+    }
+    .pr-toggle-btn:hover { color: var(--text-secondary); }
+    .pr-toggle-icon { transition: transform 0.2s; font-size: 8px; display: inline-block; }
+    .pr-toggle-btn.is-open .pr-toggle-icon { transform: rotate(90deg); }
+    .pr-toggle-btn .gs-counter { margin-left: auto; }
+
+    /* ===== HISTORY FILTER ===== */
+    .wt-filter-row { margin-bottom: 14px; }
+    .wt-filter-select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 10px; padding: 7px 12px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 12px; outline: none; cursor: pointer;
+    }
+    .wt-filter-select:focus { border-color: rgba(255,255,255,0.22); }
+
     /* ===== CARDS ===== */
     .gm-card {
       background: rgba(255,255,255,0.04);
@@ -1188,6 +1220,22 @@ Rows: 4x8 @ 60kg
 
 Thursday: Cardio 30min Running
 Friday: Rest"></textarea>
+        <div class="cw-config-row" style="margin-bottom:12px">
+          <div class="cw-config-item">
+            <div class="cw-config-label">Antal dage</div>
+            <input type="number" id="impSchedDays" class="cw-num-input" value="21" min="1" max="365">
+          </div>
+          <div class="cw-config-item">
+            <div class="cw-config-label">Workout tid</div>
+            <input type="time" id="impSchedTime" class="cw-time-input" value="18:00">
+          </div>
+          <div class="cw-config-item" style="justify-content:flex-end">
+            <label class="cw-check-wrap">
+              <input type="checkbox" id="impSchedRepeat">
+              <span>Gentag program</span>
+            </label>
+          </div>
+        </div>
         <div class="imp-btn-row">
           <button class="imp-parse-btn" id="impParseBtn">⟳ Parse Program</button>
           <button class="imp-clear-btn" id="impClearBtn">Clear</button>
@@ -1215,54 +1263,6 @@ Friday: Rest"></textarea>
     </div>
   </div>
 
-  <!-- ==================== IMPORT CUSTOM WORKOUTS ==================== -->
-  <div class="section">
-    <div class="section-title">Import Custom Workouts</div>
-    <div class="imp-card">
-      <div class="imp-toggle" id="cwToggle">
-        <span class="imp-toggle-icon" id="cwToggleIcon">▶</span>
-        <div>
-          <div class="imp-toggle-title">Import Custom Workouts</div>
-          <div class="imp-toggle-sub">Set days · paste program · auto-create calendar events</div>
-        </div>
-        <span class="imp-toggle-badge" id="cwBadge"></span>
-      </div>
-      <div class="imp-body" id="cwBody">
-        <div class="imp-hint">
-          Each day must start with <code>Day X:</code> header. Accepts: <code>4x5 @ 70kg</code>, <code>@ BW</code>, <code>@ BW+10kg</code>, <code>per ben</code>, rest days, cardio. Review the preview before importing.
-        </div>
-        <div class="cw-config-row">
-          <div class="cw-config-item">
-            <div class="cw-config-label">How many days?</div>
-            <input type="number" id="cwNumDays" class="cw-num-input" value="21" min="1" max="365">
-          </div>
-          <div class="cw-config-item">
-            <div class="cw-config-label">Workout time</div>
-            <input type="time" id="cwTime" class="cw-time-input" value="18:00">
-          </div>
-          <div class="cw-config-item" style="justify-content:flex-end">
-            <label class="cw-check-wrap">
-              <input type="checkbox" id="cwRepeat">
-              <span>Repeat program after completion</span>
-            </label>
-          </div>
-        </div>
-        <textarea class="imp-textarea" id="cwTextarea" rows="11"
-          placeholder="Paste 21 workouts here…"></textarea>
-        <div class="imp-btn-row" style="margin-top:10px">
-          <button class="imp-parse-btn" id="cwParseBtn">⟳ Parse Workouts</button>
-          <button class="imp-clear-btn" id="cwClearBtn">Clear</button>
-        </div>
-        <div id="cwError" class="imp-error" style="display:none"></div>
-        <div id="cwWarn"  class="cw-warn"  style="display:none"></div>
-        <div id="cwPreview" class="imp-preview" style="display:none">
-          <div class="imp-preview-hdr">Preview — <span id="cwPreviewInfo"></span></div>
-          <div id="cwPreviewList"></div>
-          <button class="imp-import-btn" id="cwImportBtn">↓ Import Workouts &amp; Create Calendar Events</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- ==================== CURRENT PROGRAM ==================== -->
   <div class="section" id="cwProgramSection" style="display:none">
@@ -1285,10 +1285,25 @@ Friday: Rest"></textarea>
     </div>
   </div>
 
+  <!-- ==================== PERSONAL RECORDS ==================== -->
   <div class="section">
-    <div class="section-title">Log a Workout</div>
+    <button class="pr-toggle-btn" id="prToggleBtn" onclick="prToggle()">
+      <span class="pr-toggle-icon" id="prToggleIcon">▶</span>
+      Personal Records
+      <span class="gs-counter" id="wtPRCount">—</span>
+    </button>
+    <div id="prBody" style="display:none">
+      <div class="gm-card">
+        <div id="wtPRList"></div>
+        <div id="wtPREmpty" class="empty-state">No workouts logged yet — start one below.</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Start / Active Workout Card -->
+  <!-- ==================== QUICK ADD ==================== -->
+  <div class="section">
+    <div class="section-title">Quick Add</div>
+
     <div class="gm-card" id="wtActiveCard">
       <div id="wtStartState">
         <div class="gm-header">
@@ -1332,33 +1347,7 @@ Friday: Rest"></textarea>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Personal Records</div>
-    <div class="gm-card">
-      <div class="gm-header">
-        <div class="gm-header-left"><div class="gm-eyebrow">Best Lifts</div></div>
-        <div class="gs-counter" id="wtPRCount">—</div>
-      </div>
-      <div id="wtPRList"></div>
-      <div id="wtPREmpty" class="empty-state">No workouts logged yet — start one above.</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Workout History</div>
-    <div class="gm-card">
-      <div class="gm-header">
-        <div class="gm-header-left"><div class="gm-eyebrow">Recent Sessions</div></div>
-        <div class="gs-counter" id="wtHistoryCount">0 workouts</div>
-      </div>
-      <div id="wtHistoryList"></div>
-      <div id="wtHistoryEmpty" class="empty-state">No workouts logged yet.</div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ==================== PROGRESSIVE OVERLOAD COACH ==================== -->
+<!-- ==================== PROGRESS COACH ==================== -->
 <div class="po-shell">
   <button class="po-day-pill" type="button" id="dayPill" title="Tap to switch the day filter to today's split">
     <span class="po-day-date" id="dayPillDate">−</span>
@@ -1640,6 +1629,26 @@ Friday: Rest"></textarea>
       <div class="po-tw-past-body" id="poTwPastBody" style="display:none"></div>
     </div>
   </div>
+</div>
+
+  <!-- ==================== WORKOUT HISTORY ==================== -->
+  <div class="section">
+    <div class="section-title">Workout History</div>
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left"><div class="gm-eyebrow">Sessions</div></div>
+        <div class="gs-counter" id="wtHistoryCount">0 workouts</div>
+      </div>
+      <div class="wt-filter-row">
+        <select class="wt-filter-select" id="wtHistoryFilter" onchange="renderWorkoutHistory()">
+          <option value="">All time</option>
+        </select>
+      </div>
+      <div id="wtHistoryList"></div>
+      <div id="wtHistoryEmpty" class="empty-state">No workouts logged yet.</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- POC: Add / Edit Exercise Modal -->
@@ -2024,14 +2033,34 @@ function wtBuildExBlock(ex) {
 function loadWorkouts() { return storeGet('lifeos_workouts') || []; }
 
 function renderWorkoutHistory() {
-  const workouts = loadWorkouts();
+  const allWorkouts = loadWorkouts();
   const listEl   = document.getElementById('wtHistoryList');
   const emptyEl  = document.getElementById('wtHistoryEmpty');
   const counter  = document.getElementById('wtHistoryCount');
+  const filterEl = document.getElementById('wtHistoryFilter');
+
+  // Populate month filter options
+  const months = new Set();
+  allWorkouts.forEach(w => { if (w.date) months.add(w.date.slice(0, 7)); });
+  const saved = filterEl.value;
+  filterEl.innerHTML = '<option value="">All time</option>';
+  [...months].sort().reverse().forEach(m => {
+    const [yr, mo] = m.split('-');
+    const label = new Date(parseInt(yr), parseInt(mo) - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = label;
+    if (m === saved) opt.selected = true;
+    filterEl.appendChild(opt);
+  });
+
+  const workouts = filterEl.value
+    ? allWorkouts.filter(w => w.date && w.date.startsWith(filterEl.value))
+    : allWorkouts;
+
   counter.textContent = `${workouts.length} workout${workouts.length !== 1 ? 's' : ''}`;
   emptyEl.style.display = workouts.length === 0 ? '' : 'none';
   listEl.innerHTML = '';
-  workouts.slice(0, 10).forEach(w => {
+  workouts.forEach(w => {
     const totalSets = w.exercises.reduce((s, ex) => s + ex.sets.length, 0);
     const vol = w.exercises.reduce((s, ex) => s + ex.sets.reduce((sv, set) => {
       const wt = parseFloat(set.weight); const r = parseInt(set.reps);
@@ -2122,6 +2151,17 @@ function editWorkout(id) {
 }
 
 // ---- Personal Records ----
+function prToggle() {
+  const btn  = document.getElementById('prToggleBtn');
+  const body = document.getElementById('prBody');
+  const icon = document.getElementById('prToggleIcon');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  icon.textContent   = open ? '▶' : '▼';
+  btn.classList.toggle('is-open', !open);
+  if (!open) renderPersonalRecords();
+}
+
 function getPersonalRecord(exerciseName) {
   let pr = null;
   loadWorkouts().forEach(w => w.exercises.forEach(ex => {
@@ -2419,7 +2459,7 @@ function impRenderPreview(days) {
     daysList.appendChild(card);
   });
 
-  importBtn.textContent = `↓ Import ${days.length} Day${days.length !== 1 ? 's' : ''} as Templates`;
+  importBtn.textContent = `↓ Import & Schedule (${days.length} day${days.length !== 1 ? 's' : ''})`;
 }
 
 function impReadFromDOM() {
@@ -2475,6 +2515,76 @@ function impImportProgram() {
   document.getElementById('impToggleIcon').classList.remove('is-open');
 
   renderPrograms();
+}
+
+function impImportAndSchedule() {
+  const days = impReadFromDOM();
+  if (!days.length) return;
+
+  // Save as templates
+  const programs = storeGet('lifeos_programs') || [];
+  days.forEach(day => {
+    programs.push({ id: Date.now() + Math.random(), dayLabel: day.dayLabel, exercises: day.exercises });
+  });
+  storeSet('lifeos_programs', programs);
+
+  // Build calendar program
+  const time    = (document.getElementById('impSchedTime') || {}).value || '18:00';
+  const repeat  = (document.getElementById('impSchedRepeat') || {}).checked || false;
+  const start   = new Date(); start.setDate(start.getDate() + 1);
+
+  const program = {
+    id: Date.now(), importedAt: new Date().toISOString(),
+    totalDays: days.length, workoutTime: time, repeat,
+    startDate: dateToStr(start),
+    days: days.map((day, i) => {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      return {
+        dayNumber: i + 1, label: day.dayLabel,
+        date: dateToStr(d),
+        exercises: day.exercises.map(e => ({ ...e })),
+        completed: false, actual: null
+      };
+    })
+  };
+  storeSet('lifeos_custom_program', program);
+
+  // Create calendar events (skip rest days)
+  const events = storeGet('lifeos_events') || [];
+  let evtCreated = 0;
+  program.days.forEach(day => {
+    const isRest = day.exercises.every(e => e.type === 'rest');
+    if (isRest) return;
+    const title = day.label || `Day ${day.dayNumber} Workout`;
+    const desc  = day.exercises.filter(e => e.type !== 'rest').map(e => {
+      if (e.type === 'cardio') return `${e.name} ${e.duration || ''}min`.trim();
+      const sr = e.sets && e.reps ? ` ${e.sets}×${e.reps}` : '';
+      const w  = e.weight ? ` @ ${e.weight}kg` : '';
+      return `${e.name}${sr}${w}`;
+    }).join(', ');
+    events.push({ id: Date.now() + Math.random(), title, date: day.date, time, category: 'Workout', description: desc });
+    evtCreated++;
+  });
+  storeSet('lifeos_events', events);
+
+  // Reset UI
+  document.getElementById('impTextarea').value = '';
+  document.getElementById('impPreview').style.display = 'none';
+  document.getElementById('impError').style.display = 'none';
+  _impDays = [];
+  document.getElementById('impBody').classList.remove('is-open');
+  document.getElementById('impToggleIcon').classList.remove('is-open');
+
+  renderPrograms();
+  cwRenderProgram();
+
+  // Show success banner
+  const body = document.getElementById('impBody');
+  let sEl = document.getElementById('impSchedSuccess');
+  if (!sEl) { sEl = document.createElement('div'); sEl.id = 'impSchedSuccess'; body.insertBefore(sEl, body.firstChild); }
+  sEl.className = 'cw-success';
+  sEl.innerHTML = `<div class="cw-success-main">${days.length} workout days imported!</div>
+    <div class="cw-success-sub">📅 ${evtCreated} calendar event${evtCreated !== 1 ? 's' : ''} created · Starting ${formatDate(program.startDate)}${repeat ? ' · Repeating' : ''}</div>`;
 }
 
 // ---- Saved programs ----
@@ -2600,7 +2710,7 @@ function impStartFromTemplate(prog) {
     document.getElementById('impError').style.display = 'none';
     _impDays = [];
   });
-  document.getElementById('impImportBtn').addEventListener('click', impImportProgram);
+  document.getElementById('impImportBtn').addEventListener('click', impImportAndSchedule);
   renderPrograms();
 })();
 
@@ -2974,58 +3084,8 @@ function cwStartDay(di, day) {
   document.getElementById('wtActiveCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ---- Toggle + init ----
+// ---- Init ----
 (function initCustomWorkouts() {
-  document.getElementById('cwToggle').addEventListener('click', () => {
-    const body = document.getElementById('cwBody');
-    const icon = document.getElementById('cwToggleIcon');
-    const open = body.classList.contains('is-open');
-    body.classList.toggle('is-open', !open);
-    icon.classList.toggle('is-open', !open);
-  });
-
-  const numInput = document.getElementById('cwNumDays');
-  const textarea = document.getElementById('cwTextarea');
-
-  function updatePlaceholder() {
-    const n = parseInt(numInput.value) || 21;
-    textarea.placeholder = `Paste ${n} workouts here…\n\nExample:\nDay 1: Upper Focus\nBarbell Bench Press 4x4 @ 70kg\nPull-ups 4x6 @ BW+10kg\nIncline DB Press 3x8 @ 30kg\n\nDay 2: Rest\n\nDay 3: Push Focus\nBench Press 4x6 @ 65kg\nShoulder Press 3x6 @ 40kg\nLateral Raises 3x12 @ 5kg per ben\n\n...`;
-  }
-  numInput.addEventListener('input', updatePlaceholder);
-  updatePlaceholder();
-
-  function runCwParse() {
-    const text  = textarea.value.trim();
-    const errEl = document.getElementById('cwError');
-    errEl.style.display = 'none';
-    document.getElementById('cwWarn').style.display = 'none';
-    if (!text) { errEl.textContent = 'Please paste your workout program first.'; errEl.style.display = ''; return; }
-    try {
-      const selected = parseInt(numInput.value) || 21;
-      const days = cwParseText(text);
-      if (!days.length) {
-        errEl.textContent = 'No workout days found. Each day must start with a "Day X:" header.';
-        errEl.style.display = '';
-        document.getElementById('cwPreview').style.display = 'none';
-        return;
-      }
-      cwRenderPreview(days, selected);
-    } catch(e) {
-      errEl.textContent = 'Parse error: ' + e.message;
-      errEl.style.display = '';
-    }
-  }
-
-  document.getElementById('cwParseBtn').addEventListener('click', runCwParse);
-  textarea.addEventListener('paste', () => setTimeout(runCwParse, 60));
-  document.getElementById('cwClearBtn').addEventListener('click', () => {
-    textarea.value = '';
-    document.getElementById('cwPreview').style.display = 'none';
-    document.getElementById('cwError').style.display = 'none';
-    document.getElementById('cwWarn').style.display = 'none';
-    _cwDays = [];
-  });
-  document.getElementById('cwImportBtn').addEventListener('click', cwImport);
   cwRenderProgram();
 })();
 
