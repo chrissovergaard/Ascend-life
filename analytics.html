@@ -6,11 +6,11 @@
   <title>Analytics — Chriss Dashboard</title>
   <style>
     :root {
-      --text-primary: #FAFAFA;
-      --text-secondary: #B8B6B0;
-      --text-tertiary: #76746E;
-      --success: #6BE3A4;
-      --warning: #F2C063;
+      --text-primary: #FFFFFF;
+      --text-secondary: #D0D0D0;
+      --text-tertiary: #888888;
+      --success: #5FD45F;
+      --warning: #FFC107;
       --danger: #FF6B6B;
       --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -18,7 +18,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: #050506;
+      background-color: #0A0A0A;
       color: var(--text-primary);
       font-family: var(--font-body);
       min-height: 100vh;
@@ -30,7 +30,7 @@
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 75% 12%, rgba(107,227,164,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 12%, rgba(95,212,95,0.10) 0%, transparent 55%),
         radial-gradient(ellipse at 20% 85%, rgba(180,180,200,0.06) 0%, transparent 60%);
       filter: blur(40px);
       pointer-events: none; z-index: 0;
@@ -56,8 +56,8 @@
     /* ===== NAV ===== */
     .site-nav {
       display: flex; gap: 4px; margin-bottom: 22px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: #1a1a1a;
+      border: 1px solid #333333;
       border-radius: 12px; padding: 4px;
       width: fit-content;
     }
@@ -85,11 +85,10 @@
 
     /* ===== CARD ===== */
     .card {
-      background: rgba(255,255,255,0.04);
+      background: #1a1a1a;
+      border: 1px solid #333333;
       border-radius: 16px; padding: 20px 22px;
-      backdrop-filter: blur(24px) saturate(1.2);
-      -webkit-backdrop-filter: blur(24px) saturate(1.2);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
 
     /* ===== PERIOD FILTER ===== */
@@ -100,11 +99,11 @@
       font-family: var(--font-mono); font-size: 10px; font-weight: 700;
       letter-spacing: 0.08em; text-transform: uppercase;
       padding: 6px 14px; border-radius: 99px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+      border: 1px solid #333333;
+      background: transparent; color: #888888;
       cursor: pointer; transition: all 0.15s;
     }
-    .period-btn.is-active { background: var(--success); border-color: var(--success); color: #050506; }
+    .period-btn.is-active { background: #FFFFFF; border-color: #FFFFFF; color: #0A0A0A; }
     .period-btn:hover:not(.is-active) { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 
     /* ===== TAB BAR ===== */
@@ -139,8 +138,8 @@
       gap: 10px; margin-bottom: 20px;
     }
     .metric-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: #111111;
+      border: 1px solid #2a2a2a;
       border-radius: 14px; padding: 14px 16px;
       display: flex; flex-direction: column; gap: 4px;
       transition: background 0.15s;
@@ -164,11 +163,11 @@
     .insight {
       font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
       padding: 9px 13px; border-radius: 10px;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      background: #111111; border: 1px solid #2a2a2a;
       color: var(--text-secondary);
     }
-    .insight.good { background: rgba(107,227,164,0.06); border-color: rgba(107,227,164,0.22); color: var(--success); }
-    .insight.warn { background: rgba(242,192,99,0.06);  border-color: rgba(242,192,99,0.22);  color: var(--warning); }
+    .insight.good { background: rgba(95,212,95,0.06); border-color: rgba(95,212,95,0.22); color: var(--success); }
+    .insight.warn { background: rgba(255,193,7,0.06);  border-color: rgba(255,193,7,0.22);  color: var(--warning); }
     .insight.info { background: rgba(126,184,247,0.06); border-color: rgba(126,184,247,0.22); color: #7EB8F7; }
 
     /* ===== HEATMAP ===== */
@@ -178,7 +177,7 @@
     .heatmap-cell { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
     .heatmap-cell.done { background: var(--success); }
     .heatmap-cell.miss { background: rgba(255,107,107,0.25); }
-    .heatmap-cell.none { background: rgba(255,255,255,0.05); }
+    .heatmap-cell.none { background: rgba(255,255,255,0.06); }
     .heatmap-day-labels { display: flex; gap: 4px; padding-left: 92px; margin-bottom: 3px; }
     .heatmap-day-label  { font-family: var(--font-mono); font-size: 8px; color: var(--text-tertiary); width: 18px; text-align: center; flex-shrink: 0; }
 
@@ -208,8 +207,8 @@
       font-family: var(--font-mono); font-size: 10px; font-weight: 700;
       letter-spacing: 0.08em; text-transform: uppercase;
       padding: 7px 14px; border-radius: 99px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.04); color: var(--text-tertiary);
+      border: 1px solid #333333;
+      background: #0A0A0A; color: var(--text-tertiary);
       cursor: pointer; transition: all 0.15s; float: right; margin-top: -2px;
     }
     .export-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
@@ -225,9 +224,11 @@
 <div class="container">
 
   <nav class="site-nav">
-    <a href="index.html"    class="nav-link">Dashboard</a>
-    <a href="workout.html"  class="nav-link">Workouts</a>
+    <a href="index.html"     class="nav-link">Dashboard</a>
+    <a href="workout.html"   class="nav-link">Workout</a>
+    <a href="calendar.html"  class="nav-link">Calendar</a>
     <a href="analytics.html" class="nav-link is-active">Analytics</a>
+    <a href="nutrition.html" class="nav-link">Nutrition</a>
   </nav>
 
   <h1 class="dash-title">Analytics</h1>
@@ -610,7 +611,7 @@ function renderWorkouts() {
   mg.appendChild(mkMetric('🏋️', vol,                'Total Volume', null, null));
   mg.appendChild(mkMetric('📅', wm.weeklyFreq+'/wk','Frequency',   null, null));
 
-  setTimeout(()=>drawChart(document.getElementById('wk-chart'), last7Labels(), wm.trend7, '#6BE3A4','bar'),0);
+  setTimeout(()=>drawChart(document.getElementById('wk-chart'), last7Labels(), wm.trend7, '#5FD45F','bar'),0);
 
   const topWrap = document.getElementById('wk-top-wrap');
   if (wm.topEx.length>0) {
@@ -706,10 +707,10 @@ function renderGoals() {
   } else {
     gm.goals.forEach((g,i)=>{
       const pct=g.progress||0;
-      const color=pct>=80?'#6BE3A4':pct>=50?'#F2C063':'#FF6B6B';
+      const color=pct>=80?'#5FD45F':pct>=50?'#FFC107':'#FF6B6B';
       const wrap=document.createElement('div'); wrap.style.cssText='margin-bottom:12px';
       const row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px';
-      row.innerHTML='<span style="font-size:13px;font-weight:600;color:#FAFAFA"><span class="rank">'+(i+1)+'</span>'+g.name+'</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:'+color+'">'+pct+'%</span>';
+      row.innerHTML='<span style="font-size:13px;font-weight:600;color:#FFFFFF"><span class="rank">'+(i+1)+'</span>'+g.name+'</span><span style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:'+color+'">'+pct+'%</span>';
       const pb=document.createElement('div'); pb.className='prog-bar';
       const pf=document.createElement('div'); pf.className='prog-fill'; pf.style.cssText='width:'+pct+'%;background:'+color;
       pb.appendChild(pf); wrap.appendChild(row); wrap.appendChild(pb);

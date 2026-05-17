@@ -6,11 +6,11 @@
   <title>Nutrition Tracker — Chriss Dashboard</title>
   <style>
     :root {
-      --text-primary:   #FAFAFA;
-      --text-secondary: #B8B6B0;
-      --text-tertiary:  #76746E;
-      --success:  #6BE3A4;
-      --warning:  #F2C063;
+      --text-primary:   #FFFFFF;
+      --text-secondary: #D0D0D0;
+      --text-tertiary:  #888888;
+      --success:  #5FD45F;
+      --warning:  #FFC107;
       --danger:   #FF6B6B;
       --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -18,7 +18,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: #050506;
+      background-color: #0A0A0A;
       color: var(--text-primary);
       font-family: var(--font-body);
       min-height: 100vh;
@@ -29,7 +29,7 @@
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 80% 10%, rgba(242,192,99,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 10%, rgba(255,193,7,0.12) 0%, transparent 55%),
         radial-gradient(ellipse at 15% 88%, rgba(180,180,200,0.06) 0%, transparent 60%);
       filter: blur(40px);
       pointer-events: none; z-index: 0;
@@ -52,8 +52,8 @@
     /* ── NAV ── */
     .site-nav {
       display: flex; gap: 4px; margin-bottom: 20px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: #1a1a1a;
+      border: 1px solid #333333;
       border-radius: 12px; padding: 4px;
       width: fit-content; flex-wrap: wrap;
     }
@@ -63,8 +63,8 @@
       color: var(--text-tertiary); padding: 7px 14px; border-radius: 9px;
       transition: background 0.2s, color 0.2s; white-space: nowrap;
     }
-    .nav-link:hover     { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-    .nav-link.is-active { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .nav-link:hover     { background: #111111; color: var(--text-primary); }
+    .nav-link.is-active { background: #FFFFFF; color: #0A0A0A; }
 
     /* ── TITLE ── */
     .dash-title {
@@ -93,33 +93,32 @@
 
     /* ── CARD ── */
     .gm-card {
-      background: rgba(255,255,255,0.04);
+      background: #1a1a1a;
+      border: 1px solid #333333;
       border-radius: 16px; padding: 20px 22px;
-      backdrop-filter: blur(24px) saturate(1.2);
-      -webkit-backdrop-filter: blur(24px) saturate(1.2);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
       margin-bottom: 12px;
     }
 
     /* ── INPUTS ── */
     .goal-input {
       flex: 1;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #0A0A0A;
+      border: 1px solid #333333;
       border-radius: 12px; padding: 11px 14px;
-      color: var(--text-primary); font-family: var(--font-body);
+      color: #FFFFFF; font-family: var(--font-body);
       font-size: 13px; outline: none;
       transition: border-color 0.2s;
     }
-    .goal-input:focus { border-color: rgba(255,255,255,0.25); }
+    .goal-input:focus { border-color: #5FD45F; outline: none; }
     .goal-input::placeholder { color: var(--text-tertiary); }
     .goal-input[type="number"] { -moz-appearance: textfield; }
     .goal-input[type="number"]::-webkit-inner-spin-button,
     .goal-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
     .nt-select {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #0A0A0A;
+      border: 1px solid #333333;
       border-radius: 12px; padding: 11px 34px 11px 14px;
       color: var(--text-primary); font-family: var(--font-body);
       font-size: 13px; outline: none; cursor: pointer;
@@ -140,17 +139,17 @@
     .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 6px 16px rgba(0,0,0,0.4); }
 
     .wt-save-btn {
-      background: linear-gradient(180deg, #7EE8B0 0%, #5BC990 100%);
-      color: #050506; font-weight: 700; font-size: 13px;
+      background: #FFFFFF;
+      color: #0A0A0A; font-weight: 700; font-size: 13px;
       font-family: var(--font-body);
-      padding: 11px 20px; border-radius: 12px; border: none;
-      cursor: pointer; white-space: nowrap;
-      box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 4px 12px rgba(107,227,164,0.25);
+      padding: 11px 20px; border-radius: 16px; border: none;
+      cursor: pointer; white-space: nowrap; min-height: 44px;
+      box-shadow: 0 4px 12px rgba(95,212,95,0.25);
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .wt-save-btn:hover { transform: translateY(-1px); }
     .wt-cancel-btn {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      background: #111111; border: 1px solid #333333;
       color: var(--text-secondary); font-weight: 600; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 18px; border-radius: 12px;
@@ -188,12 +187,12 @@
     /* ── QUICK ADD ── */
     .nt-quick-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
     .nt-quick-btn {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
-      color: var(--text-secondary); font-family: var(--font-body); font-size: 12px; font-weight: 600;
-      padding: 7px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s;
+      background: #111111; border: 1px solid #333333;
+      color: #888888; font-family: var(--font-body); font-size: 12px; font-weight: 600;
+      padding: 7px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .nt-quick-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .nt-quick-btn:hover { background: #FFFFFF; color: #0A0A0A; border-color: #FFFFFF; }
 
     /* ── ADD FORM ── */
     .nt-add-form { display: flex; flex-direction: column; gap: 8px; }
@@ -212,10 +211,10 @@
 
     .nt-meal-item {
       padding: 12px 14px; border-radius: 12px;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      background: #111111; border: 1px solid #2a2a2a;
       margin-bottom: 6px; transition: background 0.15s;
     }
-    .nt-meal-item:hover { background: rgba(255,255,255,0.05); }
+    .nt-meal-item:hover { background: #1a1a1a; }
     .nt-meal-top { display: flex; align-items: center; gap: 10px; }
     .nt-meal-icon { font-size: 18px; flex-shrink: 0; }
     .nt-meal-info { flex: 1; min-width: 0; }
@@ -224,11 +223,11 @@
     .nt-meal-kcal { font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--warning); flex-shrink: 0; }
     .nt-meal-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .nt-meal-btn {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      background: #111111; border: 1px solid #2a2a2a;
       color: var(--text-tertiary); font-size: 11px; padding: 4px 9px;
       border-radius: 7px; cursor: pointer; transition: background 0.15s;
     }
-    .nt-meal-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .nt-meal-btn:hover { background: #2a2a2a; color: var(--text-primary); }
     .nt-meal-btn.del:hover { background: rgba(255,107,107,0.10); color: var(--danger); border-color: rgba(255,107,107,0.25); }
 
     .nt-meal-macros {
@@ -254,7 +253,7 @@
     .nt-totals-row {
       display: flex; gap: 16px; flex-wrap: wrap;
       padding: 10px 14px; border-radius: 10px;
-      background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+      background: #111111; border: 1px solid #2a2a2a;
       margin-top: 12px;
     }
     .nt-total-chip { display: flex; flex-direction: column; gap: 1px; }
@@ -274,7 +273,8 @@
 
   <nav class="site-nav">
     <a href="index.html"     class="nav-link">Dashboard</a>
-    <a href="workout.html"   class="nav-link">Workouts</a>
+    <a href="workout.html"   class="nav-link">Workout</a>
+    <a href="calendar.html"  class="nav-link">Calendar</a>
     <a href="analytics.html" class="nav-link">Analytics</a>
     <a href="nutrition.html" class="nav-link is-active">Nutrition</a>
   </nav>
@@ -309,8 +309,8 @@
           </div>
           <div class="nt-macro-row">
             <span class="nt-macro-label">Carbs</span>
-            <span class="nt-macro-val" id="ntCarbsVal" style="color:#F2C063">0g</span>
-            <div class="nt-macro-track"><div class="nt-macro-fill" id="ntCarbsFill" style="background:#F2C063"></div></div>
+            <span class="nt-macro-val" id="ntCarbsVal" style="color:#FFC107">0g</span>
+            <div class="nt-macro-track"><div class="nt-macro-fill" id="ntCarbsFill" style="background:#FFC107"></div></div>
             <span class="nt-macro-goal" id="ntCarbsGoalLabel">250g</span>
           </div>
           <div class="nt-macro-row">
@@ -382,7 +382,7 @@
       <div class="nt-totals-row" id="ntTotalsRow" style="display:none">
         <div class="nt-total-chip"><span class="nt-total-num" id="totKcal" style="color:var(--warning)">0</span><span class="nt-total-lbl">kcal total</span></div>
         <div class="nt-total-chip"><span class="nt-total-num" id="totProtein" style="color:#7EB8F7">0g</span><span class="nt-total-lbl">protein</span></div>
-        <div class="nt-total-chip"><span class="nt-total-num" id="totCarbs" style="color:#F2C063">0g</span><span class="nt-total-lbl">carbs</span></div>
+        <div class="nt-total-chip"><span class="nt-total-num" id="totCarbs" style="color:#FFC107">0g</span><span class="nt-total-lbl">carbs</span></div>
         <div class="nt-total-chip"><span class="nt-total-num" id="totFat" style="color:#C084FC">0g</span><span class="nt-total-lbl">fat</span></div>
       </div>
     </div>
@@ -490,7 +490,7 @@ function renderSummary() {
   const cPct    = goals.carbs   > 0 ? totals.carbs   / goals.carbs   : 0;
   const fPct    = goals.fat     > 0 ? totals.fat     / goals.fat     : 0;
 
-  const color = calPct >= 1.05 ? '#FF6B6B' : calPct >= 0.85 ? '#F2C063' : '#6BE3A4';
+  const color = calPct >= 1.05 ? '#FF6B6B' : calPct >= 0.85 ? '#FFC107' : '#5FD45F';
   setRing(calPct, color);
 
   document.getElementById('ntCalEaten').textContent    = totals.cal;
@@ -561,7 +561,7 @@ function renderMeals() {
       const macros = document.createElement('div'); macros.className='nt-meal-macros';
       const chips = [
         { label:'P', val:meal.protein||0, color:'#7EB8F7' },
-        { label:'C', val:meal.carbs||0,   color:'#F2C063' },
+        { label:'C', val:meal.carbs||0,   color:'#FFC107' },
         { label:'F', val:meal.fat||0,     color:'#C084FC' },
       ];
       chips.forEach(ch => {
