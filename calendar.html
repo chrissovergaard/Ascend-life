@@ -325,13 +325,54 @@
     }
 
     /* ── LEGEND ── */
-    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
-    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend { display: flex; gap: 8px 16px; flex-wrap: wrap; margin-top: 14px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .legend-label {
       font-family: var(--font-mono); font-size: 10px;
       color: var(--text-tertiary); letter-spacing: 0.06em;
     }
+    .legend-dot-btn {
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid transparent; padding: 0; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    .legend-dot-btn:hover {
+      transform: scale(1.35);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+    }
+    .legend-count {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-tertiary); opacity: 0.6;
+    }
+
+    /* ── COLOR PICKER MODAL ── */
+    .cp-palette { display: flex; flex-wrap: wrap; gap: 7px; }
+    .cp-swatch {
+      width: 26px; height: 26px; border-radius: 6px;
+      border: 2px solid transparent; cursor: pointer;
+      transition: transform 0.1s, border-color 0.1s; flex-shrink: 0;
+    }
+    .cp-swatch:hover { transform: scale(1.15); }
+    .cp-swatch.is-active { border-color: #fff; }
+    .cp-custom-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+    .cp-preview { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; border: 1px solid #333; }
+    .cp-hex-input {
+      flex: 1; background: #0A0A0A; border: 1px solid #333333;
+      border-radius: 10px; padding: 9px 12px; color: #FFFFFF;
+      font-family: var(--font-mono); font-size: 14px; outline: none;
+      transition: border-color 0.2s; letter-spacing: 0.08em;
+    }
+    .cp-hex-input:focus { border-color: var(--success); }
+    .cp-hex-input.is-error { border-color: var(--danger); }
+    input[type=color].cp-native { width: 40px; height: 40px; border: 1px solid #333; border-radius: 8px; background: none; cursor: pointer; padding: 2px; }
+    .cp-reset-btn {
+      background: none; border: 1px solid #333333; border-radius: 10px;
+      color: var(--text-tertiary); font-size: 11px; font-family: var(--font-mono);
+      padding: 8px 12px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    .cp-reset-btn:hover { color: var(--danger); border-color: rgba(255,107,107,0.3); }
 
     /* ── MODAL ── */
     .modal-bg {
@@ -435,12 +476,7 @@
 
           <div class="cal-grid" id="calGrid"></div>
 
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div><span class="legend-label">Workout</span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><span class="legend-label">Habit</span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#7CAEFF"></div><span class="legend-label">Event</span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#FFA500"></div><span class="legend-label">Program</span></div>
-          </div>
+          <div class="legend" id="legendContainer"></div>
         </div>
       </div>
 
@@ -483,6 +519,31 @@
   </div>
 
 </div><!-- /container -->
+
+<!-- COLOR PICKER MODAL -->
+<div class="modal-bg" id="colorPickerBg" onclick="colorPickerBgClick(event)">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title" id="colorPickerTitle">Edit Color</div>
+
+    <div style="margin-bottom:14px">
+      <div class="form-label" style="margin-bottom:8px">Quick Palette</div>
+      <div class="cp-palette" id="colorPalette"></div>
+    </div>
+
+    <div class="form-label" style="margin-bottom:6px">Custom</div>
+    <div class="cp-custom-row">
+      <input type="color" class="cp-native" id="cpNative">
+      <input type="text"  class="cp-hex-input" id="cpHex" placeholder="#5FD45F" maxlength="7">
+      <div class="cp-preview" id="cpPreview"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn-primary" style="background:var(--success);color:#0a0a0a" onclick="cpSave()">Save</button>
+      <button class="btn-secondary" onclick="cpClose()">Cancel</button>
+      <button class="cp-reset-btn" onclick="cpReset()">Reset</button>
+    </div>
+  </div>
+</div>
 
 <!-- ADD / EDIT MODAL -->
 <div class="modal-bg" id="evtModalBg" onclick="evtModalClickBg(event)">
@@ -573,18 +634,183 @@ let calMonth = new Date().getMonth(); // 0-indexed
 let selectedDate = todayStr();
 
 /* ─────────────────────────────────────────────
-   CATEGORY COLORS
+   CATEGORY COLORS — dynamic, user-customizable
 ───────────────────────────────────────────── */
-const CAT_COLORS = {
+const DEFAULT_COLORS = {
   Workout:  '#5FD45F',
   Habit:    '#FFC107',
   Health:   '#7CCAFF',
   Personal: '#C896FF',
   Work:     '#FFB464',
   Program:  '#FFA500',
+  Sport:    '#F39C12',
+  Rest:     '#95A5A6',
   Other:    '#888888'
 };
-function catColor(cat) { return CAT_COLORS[cat] || CAT_COLORS.Other; }
+
+let CAT_COLORS = { ...DEFAULT_COLORS };
+
+function loadColors() {
+  const saved = storeGet('lifeos_calendar_colors') || {};
+  CAT_COLORS = { ...DEFAULT_COLORS, ...saved };
+}
+
+function saveColor(cat, hex) {
+  const saved = storeGet('lifeos_calendar_colors') || {};
+  saved[cat] = hex;
+  storeSet('lifeos_calendar_colors', saved);
+  CAT_COLORS[cat] = hex;
+}
+
+function resetColor(cat) {
+  const saved = storeGet('lifeos_calendar_colors') || {};
+  delete saved[cat];
+  storeSet('lifeos_calendar_colors', saved);
+  CAT_COLORS[cat] = DEFAULT_COLORS[cat] || DEFAULT_COLORS.Other;
+}
+
+function catColor(cat) { return CAT_COLORS[cat] || DEFAULT_COLORS.Other; }
+
+/* ─── Get all unique event types (from events + defaults) ─── */
+function getEventTypes() {
+  const evts = loadEvents();
+  const counts = {};
+  evts.forEach(e => {
+    const cat = e.category || 'Other';
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+  Object.keys(DEFAULT_COLORS).forEach(cat => { if (!(cat in counts)) counts[cat] = 0; });
+  return Object.entries(counts)
+    .sort(([a, ac], [b, bc]) => bc - ac || a.localeCompare(b))
+    .map(([cat, count]) => ({ cat, count }));
+}
+
+/* ─── Render dynamic legend ─── */
+function renderLegend() {
+  const types = getEventTypes();
+  const container = document.getElementById('legendContainer');
+  container.innerHTML = '';
+  types.forEach(({ cat, count }) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+
+    const dotBtn = document.createElement('button');
+    dotBtn.className = 'legend-dot-btn';
+    dotBtn.style.background = catColor(cat);
+    dotBtn.title = `Click to edit ${cat} color`;
+    dotBtn.addEventListener('click', e => { e.stopPropagation(); openColorPicker(cat); });
+
+    const label = document.createElement('span');
+    label.className = 'legend-label';
+    label.textContent = cat;
+
+    if (count > 0) {
+      const cnt = document.createElement('span');
+      cnt.className = 'legend-count';
+      cnt.textContent = `(${count})`;
+      item.appendChild(dotBtn);
+      item.appendChild(label);
+      item.appendChild(cnt);
+    } else {
+      item.appendChild(dotBtn);
+      item.appendChild(label);
+    }
+    container.appendChild(item);
+  });
+}
+
+/* ─── Color Picker ─── */
+const CP_PALETTE = [
+  '#5FD45F','#FFC107','#FF6B6B','#7CCAFF','#FFA500',
+  '#C896FF','#FFB464','#F39C12','#95A5A6','#1ABC9C',
+  '#E74C3C','#3498DB','#9B59B6','#2ECC71','#E67E22','#34495E'
+];
+let _cpCat = null;
+
+function openColorPicker(cat) {
+  _cpCat = cat;
+  document.getElementById('colorPickerTitle').textContent = `Edit Color — ${cat}`;
+  const current = catColor(cat);
+  cpSetColor(current, false);
+
+  const palette = document.getElementById('colorPalette');
+  palette.innerHTML = '';
+  CP_PALETTE.forEach(hex => {
+    const sw = document.createElement('button');
+    sw.className = 'cp-swatch' + (hex.toLowerCase() === current.toLowerCase() ? ' is-active' : '');
+    sw.style.background = hex;
+    sw.addEventListener('click', () => {
+      palette.querySelectorAll('.cp-swatch').forEach(s => s.classList.remove('is-active'));
+      sw.classList.add('is-active');
+      cpSetColor(hex, false);
+    });
+    palette.appendChild(sw);
+  });
+
+  document.getElementById('colorPickerBg').classList.add('is-open');
+}
+
+function cpSetColor(hex, fromText) {
+  document.getElementById('cpPreview').style.background = hex;
+  if (!fromText) {
+    document.getElementById('cpHex').value = hex;
+    document.getElementById('cpHex').classList.remove('is-error');
+  }
+  document.getElementById('cpNative').value = hex;
+}
+
+function cpClose() {
+  document.getElementById('colorPickerBg').classList.remove('is-open');
+  _cpCat = null;
+}
+
+function colorPickerBgClick(e) {
+  if (e.target === document.getElementById('colorPickerBg')) cpClose();
+}
+
+function cpSave() {
+  if (!_cpCat) return;
+  const hex = document.getElementById('cpHex').value.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    document.getElementById('cpHex').classList.add('is-error');
+    return;
+  }
+  saveColor(_cpCat, hex);
+  cpClose();
+  renderAll();
+}
+
+function cpReset() {
+  if (!_cpCat) return;
+  const hex = DEFAULT_COLORS[_cpCat] || DEFAULT_COLORS.Other;
+  cpSetColor(hex, false);
+  document.getElementById('colorPalette').querySelectorAll('.cp-swatch').forEach(s => {
+    s.classList.toggle('is-active', s.style.background === hex || s.style.background === hexToRgb(hex));
+  });
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+/* Sync hex text input → preview + native */
+function cpHexChange() {
+  const v = document.getElementById('cpHex').value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    document.getElementById('cpHex').classList.remove('is-error');
+    cpSetColor(v, true);
+  } else {
+    document.getElementById('cpHex').classList.add('is-error');
+  }
+}
+
+/* Sync native color input → hex + preview */
+function cpNativeChange() {
+  const hex = document.getElementById('cpNative').value;
+  cpSetColor(hex, false);
+  document.getElementById('colorPalette').querySelectorAll('.cp-swatch').forEach(s => s.classList.remove('is-active'));
+}
 
 /* ─────────────────────────────────────────────
    BUILD EVENT MAP (date → [{…}])
@@ -666,10 +892,7 @@ function renderCalendar() {
       shown.forEach(e => {
         const dot = document.createElement('div');
         dot.className = 'cal-dot';
-        const cat = (e.category || 'general').toLowerCase();
-        if (cat === 'workout') dot.classList.add('workout');
-        else if (cat === 'habit') dot.classList.add('habit');
-        else { dot.classList.add('custom'); dot.style.background = catColor(e.category); }
+        dot.style.background = catColor(e.category || 'Other');
         dots.appendChild(dot);
       });
       if (dayEvts.length > 3) {
@@ -913,12 +1136,19 @@ function renderAll() {
   renderCalendar();
   renderDayEvents(selectedDate);
   renderUpcoming();
+  renderLegend();
 }
 
 /* ─────────────────────────────────────────────
    INIT
 ───────────────────────────────────────────── */
 (function init() {
+  loadColors();
+
+  // Wire color picker inputs
+  document.getElementById('cpHex').addEventListener('input', cpHexChange);
+  document.getElementById('cpNative').addEventListener('input', cpNativeChange);
+
   renderAll();
   selectDate(todayStr());
 })();
