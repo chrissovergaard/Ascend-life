@@ -407,11 +407,18 @@
     /* ===== IMPORT TRAINING PROGRAM ===== */
     .imp-card {
       background: #1a1a1a;
-      border: 1px solid #333333;
+      border: 1px solid rgba(255,165,0,0.3);
       border-radius: 16px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
       margin-bottom: 12px; overflow: hidden;
     }
+    .imp-date-input {
+      background: #0A0A0A; border: 1px solid #333333;
+      border-radius: 10px; padding: 9px 12px; color: #FFFFFF;
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600; outline: none;
+      transition: border-color 0.2s; color-scheme: dark; cursor: pointer;
+    }
+    .imp-date-input:focus { border-color: #FFA500; }
     .imp-toggle {
       display: flex; align-items: center; gap: 14px;
       padding: 18px 22px; cursor: pointer;
@@ -1205,48 +1212,44 @@
         <span class="imp-toggle-badge" id="impToggleBadge"></span>
       </div>
       <div class="imp-body" id="impBody">
-        <div class="imp-hint">
-          Accepts any format: day headers (<code>Monday</code>, <code>Chest Day</code>), inline days (<code>Monday: Bench 4x5 @ 70kg, Squats 3x5</code>), rest days (<code>Rest</code>), cardio (<code>30min Running</code>). Review and edit the parsed preview before importing.
+        <div class="cw-config-row" style="margin-bottom:14px;align-items:flex-end">
+          <div class="cw-config-item">
+            <div class="cw-config-label" style="color:#FFA500">Program Start Date</div>
+            <input type="date" id="impStartDate" class="imp-date-input">
+          </div>
+          <div class="cw-config-item">
+            <div class="cw-config-label">Workout Time</div>
+            <input type="time" id="impSchedTime" class="cw-time-input" value="18:00">
+          </div>
         </div>
-        <textarea class="imp-textarea" id="impTextarea" placeholder="Paste your training program — JSON or text format.
+        <div class="imp-hint">
+          Paste JSON with <code>name</code>, <code>exercises</code> (and optionally <code>day</code>, <code>week</code>, <code>cardio</code>), or use text format (Monday / Bench 4x5 @ 70kg). Dates are auto-calculated from your chosen start date.
+        </div>
+        <textarea class="imp-textarea" id="impTextarea" placeholder="Paste your training program — JSON or text.
 
 JSON format:
 [
   {
-    &quot;date&quot;: &quot;2026-05-19&quot;,
-    &quot;name&quot;: &quot;Push Day 1&quot;,
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Mandag Upper + Interval&quot;,
+    &quot;day&quot;: &quot;Mandag&quot;,
+    &quot;week&quot;: 1,
+    &quot;cardio&quot;: &quot;6x800m @ 4:10-4:20&quot;,
     &quot;exercises&quot;: [
       { &quot;name&quot;: &quot;Bench Press&quot;, &quot;sets&quot;: 4, &quot;reps&quot;: 5, &quot;weight&quot;: 70 },
-      { &quot;name&quot;: &quot;Overhead Press&quot;, &quot;sets&quot;: 3, &quot;reps&quot;: 8, &quot;weight&quot;: 40 }
+      { &quot;name&quot;: &quot;Pull-ups&quot;, &quot;sets&quot;: 3, &quot;reps&quot;: 8 }
+    ]
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;Tirsdag Lower&quot;,
+    &quot;day&quot;: &quot;Tirsdag&quot;,
+    &quot;week&quot;: 1,
+    &quot;exercises&quot;: [
+      { &quot;name&quot;: &quot;Squat&quot;, &quot;sets&quot;: 4, &quot;reps&quot;: 5, &quot;weight&quot;: 80 }
     ]
   }
-]
-
-Text format:
-Monday
-Bench Press: 4x5 @ 70kg
-Squats: 3x5 @ 80kg
-
-Wednesday
-Deadlift: 3x3 @ 100kg
-Thursday: Cardio 30min Running
-Friday: Rest"></textarea>
-        <div class="cw-config-row" style="margin-bottom:12px">
-          <div class="cw-config-item">
-            <div class="cw-config-label">Antal dage</div>
-            <input type="number" id="impSchedDays" class="cw-num-input" value="21" min="1" max="365">
-          </div>
-          <div class="cw-config-item">
-            <div class="cw-config-label">Workout tid</div>
-            <input type="time" id="impSchedTime" class="cw-time-input" value="18:00">
-          </div>
-          <div class="cw-config-item" style="justify-content:flex-end">
-            <label class="cw-check-wrap">
-              <input type="checkbox" id="impSchedRepeat">
-              <span>Gentag program</span>
-            </label>
-          </div>
-        </div>
+]"></textarea>
         <div class="imp-btn-row">
           <button class="imp-parse-btn" id="impParseBtn">⟳ Parse Program</button>
           <button class="imp-clear-btn" id="impClearBtn">Clear</button>
@@ -2267,32 +2270,44 @@ const IMP_DAY_NAMES = ['monday','tuesday','wednesday','thursday','friday','satur
                         'mon','tue','wed','thu','fri','sat','sun'];
 
 // ---- JSON import ----
-// Handles user's format: [{date, name, exercises:[{name,sets,reps,weight}]}]
+// Handles: [{name, day, week, cardio, exercises:[{name,sets,reps,weight}]}]
 // or {name, startDate, workouts:[...]}
 function impParseJSON(raw) {
   const list = Array.isArray(raw) ? raw : (raw.workouts || raw.days || []);
   if (!list.length) return null;
   const result = [];
   list.forEach((w, i) => {
-    const label = w.name || w.dayLabel || w.label || `Day ${i + 1}`;
-    const dateStr = w.date ? w.date.slice(0, 10) : (w.startDate ? w.startDate.slice(0, 10) : null);
-    const rawExs = w.exercises || w.workout || [];
-    if (!rawExs.length) {
-      result.push({ dayLabel: label, exercises: [{ type:'rest', name:'Rest', sets:null, reps:null, weight:null, duration:null }], _date: dateStr });
-      return;
+    // Build label: "Mandag — Upper + Interval" or just "Push Day 1"
+    const parts = [w.day, w.name].filter(Boolean);
+    const label = parts.join(' — ') || `Day ${i + 1}`;
+    const dateStr = w.date ? w.date.slice(0, 10) : null;
+
+    const exercises = [];
+
+    // Cardio string (e.g. "6x800m @ 4:10-4:20") → cardio exercise
+    if (w.cardio) {
+      exercises.push({ type:'cardio', name: w.cardio, sets:null, reps:null, weight:null, duration: null });
     }
-    const exercises = rawExs.map(ex => {
-      if (!ex.name) return null;
-      const name = ex.name;
-      const sets = parseInt(ex.sets) || null;
-      const reps = parseInt(ex.reps) || null;
+
+    // Strength exercises
+    (w.exercises || w.workout || []).forEach(ex => {
+      if (!ex.name) return;
+      const sets   = parseInt(ex.sets)    || null;
+      const reps   = parseInt(ex.reps)    || null;
       const weight = parseFloat(ex.weight) || null;
-      if (/cardio|run|cycling|swim|bike|rowing|walk/i.test(name) && !sets && !reps) {
-        return { type:'cardio', name, sets:null, reps:null, weight:null, duration: parseInt(ex.duration)||null };
+      const dur    = parseInt(ex.duration) || null;
+      const isCardio = /^(run|cardio|cycling|swim|bike|rowing|walk|hiit)/i.test(ex.name);
+      if ((isCardio && !sets && !reps) || dur) {
+        exercises.push({ type:'cardio', name: ex.name, sets:null, reps:null, weight:null, duration: dur });
+      } else {
+        exercises.push({ type:'strength', name: ex.name, sets, reps, weight, duration: null });
       }
-      return { type:'strength', name, sets, reps, weight, duration:null };
-    }).filter(Boolean);
-    if (exercises.length) result.push({ dayLabel: label, exercises, _date: dateStr });
+    });
+
+    if (!exercises.length) {
+      exercises.push({ type:'rest', name:'Rest', sets:null, reps:null, weight:null, duration:null });
+    }
+    result.push({ dayLabel: label, exercises, _date: dateStr, _meta: { week: w.week||null, type: w.type||null, id: w.id||null } });
   });
   return result.length ? result : null;
 }
@@ -2421,7 +2436,7 @@ function impParseProgram(text) {
 // ---- Preview ----
 let _impDays = [];
 
-function impRenderPreview(days) {
+function impRenderPreview(days, startDateStr) {
   _impDays = days;
   const preview  = document.getElementById('impPreview');
   const daysList = document.getElementById('impDaysList');
@@ -2429,6 +2444,14 @@ function impRenderPreview(days) {
 
   if (!days.length) { preview.style.display = 'none'; return; }
   preview.style.display = '';
+
+  // Compute dates from startDate
+  let startJs = null;
+  if (startDateStr) {
+    const [sy, sm, sd] = startDateStr.split('-').map(Number);
+    startJs = new Date(sy, sm - 1, sd);
+  }
+
   daysList.innerHTML = '';
 
   days.forEach((day, di) => {
@@ -2437,20 +2460,36 @@ function impRenderPreview(days) {
     card.dataset.di = di;
     if (day._date) card.dataset.date = day._date;
 
+    // Compute date for this day
+    let dateLabel = '';
+    if (startJs) {
+      const d = new Date(startJs); d.setDate(startJs.getDate() + di);
+      dateLabel = formatDate(dateToStr(d));
+    }
+
     // Day header row
     const hdr = document.createElement('div'); hdr.className = 'imp-day-hdr';
     const nameIn = document.createElement('input');
     nameIn.type = 'text'; nameIn.className = 'imp-day-name-input';
     nameIn.value = day.dayLabel; nameIn.placeholder = 'Day name';
 
+    if (dateLabel) {
+      const dateLbl = document.createElement('span');
+      dateLbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:#FFA500;flex-shrink:0;white-space:nowrap;';
+      dateLbl.textContent = dateLabel;
+      hdr.appendChild(nameIn); hdr.appendChild(dateLbl);
+    } else {
+      hdr.appendChild(nameIn);
+    }
+
     const delDay = document.createElement('button');
     delDay.className = 'imp-del-day-btn'; delDay.textContent = '✕ Remove';
     delDay.addEventListener('click', () => {
       _impDays.splice(di, 1);
-      impRenderPreview([..._impDays]);
+      impRenderPreview([..._impDays], document.getElementById('impStartDate')?.value);
     });
 
-    hdr.appendChild(nameIn); hdr.appendChild(delDay);
+    hdr.appendChild(delDay);
     card.appendChild(hdr);
 
     // Exercise rows
@@ -2502,7 +2541,7 @@ function impRenderPreview(days) {
       delEx.addEventListener('click', () => {
         _impDays[di].exercises.splice(ei, 1);
         if (_impDays[di].exercises.length === 0) _impDays.splice(di, 1);
-        impRenderPreview([..._impDays]);
+        impRenderPreview([..._impDays], document.getElementById('impStartDate')?.value);
       });
       row.appendChild(delEx);
       card.appendChild(row);
@@ -2580,33 +2619,53 @@ function impImportAndSchedule() {
   });
   storeSet('lifeos_programs', programs);
 
-  // Build calendar program
-  const time    = (document.getElementById('impSchedTime') || {}).value || '18:00';
-  const repeat  = (document.getElementById('impSchedRepeat') || {}).checked || false;
-  const hasDates = days.every(d => d._date);
-  const start   = new Date(); start.setDate(start.getDate() + 1);
+  // Start date: use picker value, fall back to today
+  const time        = (document.getElementById('impSchedTime') || {}).value || '18:00';
+  const pickerVal   = (document.getElementById('impStartDate') || {}).value;
+  const startDate   = pickerVal || dateToStr(new Date());
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const startJs     = new Date(sy, sm - 1, sd);
+
+  // Original first date from JSON (if present)
+  const origStartDate = days[0]?._date || null;
+
+  const programDays = days.map((day, i) => {
+    const d = new Date(startJs); d.setDate(startJs.getDate() + i);
+    return {
+      dayNumber: i + 1, label: day.dayLabel,
+      date: dateToStr(d),
+      week: day._meta?.week || null,
+      type: day._meta?.type || null,
+      exercises: day.exercises.map(e => ({ ...e })),
+      completed: false, completedDate: null, actual: null
+    };
+  });
 
   const program = {
     id: Date.now(), importedAt: new Date().toISOString(),
-    totalDays: days.length, workoutTime: time, repeat,
-    startDate: hasDates ? days[0]._date : dateToStr(start),
-    days: days.map((day, i) => {
-      let date;
-      if (day._date) {
-        date = day._date;
-      } else {
-        const d = new Date(start); d.setDate(start.getDate() + i);
-        date = dateToStr(d);
-      }
-      return {
-        dayNumber: i + 1, label: day.dayLabel,
-        date,
-        exercises: day.exercises.map(e => ({ ...e })),
-        completed: false, actual: null
-      };
-    })
+    name: `${days.length}-Day Training Program`,
+    totalDays: days.length, workoutTime: time, repeat: false,
+    startDate, originalStartDate: origStartDate,
+    importDate: dateToStr(new Date()),
+    days: programDays
   };
   storeSet('lifeos_custom_program', program);
+
+  // Also save in the richer lifeos_21day_program format
+  const prog21 = {
+    name: `${days.length}-Day Training Program`,
+    startDate, originalStartDate: origStartDate,
+    importDate: dateToStr(new Date()),
+    workouts: programDays.map(d => ({
+      id: d.dayNumber, date: d.date,
+      day: d.label.split(' — ')[0] || d.label,
+      week: d.week, name: d.label, type: d.type,
+      exercises: d.exercises.filter(e => e.type === 'strength'),
+      cardio: d.exercises.filter(e => e.type === 'cardio').map(e => e.name).join(', ') || null,
+      completed: false, completedDate: null
+    }))
+  };
+  storeSet('lifeos_21day_program', prog21);
 
   // Create calendar events (skip rest days) — use 'Program' category (orange)
   const events = storeGet('lifeos_events') || [];
@@ -2642,8 +2701,8 @@ function impImportAndSchedule() {
   let sEl = document.getElementById('impSchedSuccess');
   if (!sEl) { sEl = document.createElement('div'); sEl.id = 'impSchedSuccess'; body.insertBefore(sEl, body.firstChild); }
   sEl.className = 'cw-success';
-  sEl.innerHTML = `<div class="cw-success-main">${days.length} workout days imported!</div>
-    <div class="cw-success-sub">📅 ${evtCreated} calendar event${evtCreated !== 1 ? 's' : ''} created · Starting ${formatDate(program.startDate)}${repeat ? ' · Repeating' : ''}</div>`;
+  sEl.innerHTML = `<div class="cw-success-main">✓ ${days.length} workout${days.length!==1?'s':''} imported!</div>
+    <div class="cw-success-sub">📅 ${evtCreated} orange calendar event${evtCreated!==1?'s':''} created · Starting ${formatDate(program.startDate)}</div>`;
 }
 
 // ---- Saved programs ----
@@ -2733,6 +2792,18 @@ function impStartFromTemplate(prog) {
 
 // ---- Toggle + init ----
 (function initImport() {
+  // Default start date to today
+  const todayStr = dateToStr(new Date());
+  document.getElementById('impStartDate').value = todayStr;
+
+  // Show badge if program already active
+  const existing = storeGet('lifeos_custom_program');
+  if (existing?.days?.length) {
+    const badge = document.getElementById('impToggleBadge');
+    badge.textContent = `${existing.totalDays || existing.days.length} days active`;
+    badge.classList.add('is-visible');
+  }
+
   document.getElementById('impToggle').addEventListener('click', () => {
     const body = document.getElementById('impBody');
     const icon = document.getElementById('impToggleIcon');
@@ -2745,7 +2816,7 @@ function impStartFromTemplate(prog) {
     const text  = document.getElementById('impTextarea').value.trim();
     const errEl = document.getElementById('impError');
     errEl.style.display = 'none';
-    if (!text) { errEl.textContent = 'Please paste a training program first.'; errEl.style.display = ''; return; }
+    if (!text) { errEl.textContent = 'Paste your training program first.'; errEl.style.display = ''; return; }
     try {
       const days = impParseProgram(text);
       if (!days.length) {
@@ -2754,7 +2825,9 @@ function impStartFromTemplate(prog) {
         document.getElementById('impPreview').style.display = 'none';
         return;
       }
-      impRenderPreview(days);
+      // Show selected start date in preview header
+      const startVal = document.getElementById('impStartDate').value || todayStr;
+      impRenderPreview(days, startVal);
     } catch (e) {
       errEl.textContent = 'Parse error: ' + e.message;
       errEl.style.display = '';
@@ -2763,6 +2836,10 @@ function impStartFromTemplate(prog) {
 
   document.getElementById('impParseBtn').addEventListener('click', runParse);
   document.getElementById('impTextarea').addEventListener('paste', () => setTimeout(runParse, 50));
+  // Re-parse when start date changes so preview dates update
+  document.getElementById('impStartDate').addEventListener('change', () => {
+    if (_impDays.length) runParse();
+  });
   document.getElementById('impClearBtn').addEventListener('click', () => {
     document.getElementById('impTextarea').value = '';
     document.getElementById('impPreview').style.display = 'none';
@@ -2959,7 +3036,7 @@ function cwRenderProgram() {
   const done  = prog.days.filter(d => d.completed).length;
   const total = prog.days.length;
   const pct   = Math.round(done / total * 100);
-  document.getElementById('cwProgName').textContent    = `${total}-Day Program${prog.repeat ? ' · Repeating' : ''}`;
+  document.getElementById('cwProgName').textContent    = prog.name || `${total}-Day Program`;
   document.getElementById('cwProgCounter').textContent = `${done} / ${total} complete`;
   document.getElementById('cwProgFill').style.width   = `${pct}%`;
   document.getElementById('cwProgPct').textContent    = `${pct}%`;
