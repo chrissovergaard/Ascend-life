@@ -394,13 +394,13 @@
     .goal-row {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 14px; margin-bottom: 6px;
-      background: rgba(255,255,255,0.04);
+      background: #111111;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: background 0.2s ease;
+      border: 1px solid #333333;
+      transition: background 0.2s ease, border-color 0.2s;
       position: relative;
     }
-    .goal-row:hover { background: rgba(255,255,255,0.06); }
+    .goal-row:hover { background: #1a1a1a; border-color: #555555; }
     .goal-row.is-done { opacity: 0.45; background: rgba(95,212,95,0.04); }
     .goal-row.is-done .goal-text {
       text-decoration: line-through;
@@ -614,12 +614,12 @@
     }
     .gs-item {
       padding: 14px 16px; margin-bottom: 8px;
-      background: rgba(255,255,255,0.04);
+      background: #111111;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: background 0.2s;
+      border: 1px solid #333333;
+      transition: background 0.2s, border-color 0.2s;
     }
-    .gs-item:hover { background: rgba(255,255,255,0.07); }
+    .gs-item:hover { background: #1a1a1a; border-color: #555555; }
     .gs-item-header {
       display: flex; justify-content: space-between;
       align-items: center; margin-bottom: 8px;
@@ -645,7 +645,7 @@
     .gs-item-pct.is-complete { color: var(--success); }
     .gs-progress-track {
       height: 5px; border-radius: 3px;
-      background: rgba(255,255,255,0.08); overflow: hidden;
+      background: #222222; overflow: hidden;
     }
     .gs-progress-fill {
       height: 100%; border-radius: 3px;
@@ -830,11 +830,11 @@
 
     .hb-item {
       padding: 14px 16px; margin-bottom: 8px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 14px; border: 1px solid rgba(255,255,255,0.06);
-      transition: background 0.2s;
+      background: #111111;
+      border-radius: 14px; border: 1px solid #333333;
+      transition: background 0.2s, border-color 0.2s;
     }
-    .hb-item:hover { background: rgba(255,255,255,0.07); }
+    .hb-item:hover { background: #1a1a1a; border-color: #555555; }
     .hb-item.is-done-today {
       background: rgba(95,212,95,0.05); border-color: rgba(95,212,95,0.15);
     }
@@ -926,7 +926,7 @@
     .hb-dots { display: flex; gap: 3px; flex-wrap: wrap; }
     .hb-dot {
       width: 10px; height: 10px; border-radius: 2px;
-      background: rgba(255,255,255,0.07); transition: background 0.15s;
+      background: #222222; transition: background 0.15s;
       cursor: pointer; position: relative;
     }
     .hb-dot.done { background: #5FD45F; }
@@ -953,7 +953,7 @@
     }
     .hb-backfill-btn {
       font-family: var(--font-mono); font-size: 10px; background: none;
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;
+      border: 1px solid #333333; border-radius: 6px;
       padding: 4px 10px; color: var(--text-tertiary); cursor: pointer;
       transition: color 0.2s, border-color 0.2s; white-space: nowrap;
     }
@@ -1113,8 +1113,8 @@
     /* Calendar grid */
     .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
     .cal-month-label { font-family:var(--font-mono); font-size:13px; font-weight:800; letter-spacing:0.06em; color:var(--text-primary); text-transform:uppercase; }
-    .cal-nav { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:8px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); font-size:14px; transition:background 0.15s; }
-    .cal-nav:hover { background:rgba(255,255,255,0.10); color:var(--text-primary); }
+    .cal-nav { background:#111111; border:1px solid #333333; border-radius:8px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); font-size:14px; transition:background 0.15s, border-color 0.15s; }
+    .cal-nav:hover { background:#1a1a1a; border-color:#555555; color:var(--text-primary); }
     .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px; }
     .cal-wd { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); text-align:center; padding:4px 0; }
     .cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
