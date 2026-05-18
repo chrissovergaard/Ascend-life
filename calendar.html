@@ -142,15 +142,14 @@
       gap: 4px;
     }
     .cal-day {
-      aspect-ratio: 1;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: flex-start;
-      padding: 6px 4px 4px;
+      align-items: flex-start; justify-content: flex-start;
+      padding: 6px 5px 5px;
       border-radius: 10px;
       border: 1px solid transparent;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
-      min-height: 48px;
+      min-height: 52px;
       position: relative;
     }
     .cal-day:hover { background: #151515; border-color: #333333; }
@@ -164,26 +163,35 @@
       border-color: #FFFFFF;
     }
     .cal-day.is-selected .cal-day-num { color: #FFFFFF; font-weight: 700; }
-    .cal-day.is-selected .cal-dot { background: #FFFFFF; }
+    .cal-day.is-selected .cal-dot { background: #FFFFFF !important; }
+    .cal-day.is-selected .cal-dot-label { color: #FFFFFF; }
 
     .cal-day-num {
-      font-size: 13px; font-weight: 600;
+      font-size: 12px; font-weight: 600;
       color: var(--text-secondary);
-      line-height: 1;
+      line-height: 1; width: 100%; text-align: center; margin-bottom: 3px;
     }
     .cal-day.is-today .cal-day-num { color: var(--success); font-weight: 700; }
 
     .cal-dots {
-      display: flex; gap: 2px; flex-wrap: wrap;
-      justify-content: center; margin-top: 4px;
+      display: flex; flex-direction: column; gap: 2px;
+      width: 100%; margin-top: 2px;
+    }
+    .cal-dot-row {
+      display: flex; align-items: center; gap: 3px; width: 100%; min-width: 0;
     }
     .cal-dot {
-      width: 5px; height: 5px; border-radius: 50%;
+      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
     }
-    .cal-dot.workout { background: var(--success); }
-    .cal-dot.habit   { background: var(--warning); }
-    .cal-dot.custom  { background: #7CAEFF; }
-    .cal-dot.general { background: var(--text-tertiary); }
+    .cal-dot-label {
+      font-size: 8px; font-weight: 600; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 1; min-width: 0; line-height: 1.3;
+    }
+    .cal-dot-more {
+      font-size: 8px; font-weight: 700; color: var(--text-tertiary);
+      line-height: 1.3; padding-left: 8px;
+    }
 
     /* ── SIDE PANEL ── */
     .side-panel { display: flex; flex-direction: column; gap: 12px; }
@@ -883,21 +891,29 @@ function renderCalendar() {
     num.textContent = parseInt(dateStr.slice(8));
     cell.appendChild(num);
 
-    // Dots
+    // Event dots with titles
     const dayEvts = evtMap[dateStr] || [];
     if (dayEvts.length > 0) {
       const dots = document.createElement('div');
       dots.className = 'cal-dots';
       const shown = dayEvts.slice(0, 3);
       shown.forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'cal-dot-row';
         const dot = document.createElement('div');
         dot.className = 'cal-dot';
         dot.style.background = catColor(e.category || 'Other');
-        dots.appendChild(dot);
+        const label = document.createElement('span');
+        label.className = 'cal-dot-label';
+        label.textContent = e.title || '';
+        row.appendChild(dot);
+        row.appendChild(label);
+        dots.appendChild(row);
       });
       if (dayEvts.length > 3) {
         const more = document.createElement('div');
-        more.className = 'cal-dot general';
+        more.className = 'cal-dot-more';
+        more.textContent = '+' + (dayEvts.length - 3);
         dots.appendChild(more);
       }
       cell.appendChild(dots);
