@@ -599,8 +599,12 @@ function buildContext(data, a) {
   const goalLines = [];
   if (data.goals && data.goals.length) {
     goalLines.push('GOALS:');
-    data.goals.slice(0,8).forEach(function(g) {
-      goalLines.push('  - ' + g.title + (g.target ? ' (target: ' + g.target + ')' : '') + (g.deadline ? ' by ' + g.deadline : ''));
+    data.goals.slice(0,10).forEach(function(g) {
+      var label = g.name || g.title || g.text || '?';
+      var progress = (g.current !== undefined && g.target !== undefined)
+        ? ' — ' + g.current + ' / ' + g.target
+        : (g.target ? ' — target: ' + g.target : '');
+      goalLines.push('  - ' + label + progress);
     });
   }
 
@@ -639,19 +643,25 @@ function buildContext(data, a) {
     pocLines.length ? '' : '',
     Object.keys(a.prs).length ? 'PERSONAL RECORDS:\n' + Object.entries(a.prs).slice(0,10).map(function(ep){ return '  '+ep[0]+': '+ep[1].weight+'kg × '+ep[1].reps+' reps'; }).join('\n') : '',
     '',
-    'HABITS (' + a.habitsToday + '/' + a.totalHabits + ' today, ' + (a.habitPct !== null ? a.habitPct+'%' : '?') + ' 7-day):',
-    ...data.habits.slice(0,10).map(function(h){ return '  - '+h.name+' (streak: '+(h.currentStreak||0)+'d)'; }),
+    'HABITS (' + a.habitsToday + '/' + a.totalHabits + ' done today, ' + (a.habitPct !== null ? a.habitPct+'%' : '?') + ' 7-day adherence):',
+    ...data.habits.slice(0,15).map(function(h) {
+      var doneToday = (h.completedDates || []).indexOf(today) !== -1;
+      return '  ' + (doneToday ? '✓' : '✗') + ' ' + h.name + ' — streak: ' + (h.currentStreak||0) + 'd' + (h.category ? ' ['+h.category+']' : '');
+    }),
     '',
     'SLEEP & RECOVERY:',
-    '  Avg sleep (7d): ' + (a.avgSleep !== null ? a.avgSleep+'h' : 'no data'),
-    a.avgStress !== null ? '  Avg stress (7d): ' + a.avgStress + '/10' : '',
-    a.lastRec ? '  Last log: ' + a.lastRec.date + ' — ' + a.lastRec.sleep + 'h sleep, stress ' + a.lastRec.stress + '/10' : '',
+    '  Avg sleep 7d: ' + (a.avgSleep !== null ? a.avgSleep+'h' : 'no data') + (a.avgStress !== null ? ' | avg stress 7d: '+a.avgStress+'/10' : ''),
+    ...(data.recovery || []).slice(-7).reverse().map(function(r){
+      return '  ' + r.date + ': sleep ' + (r.sleep||'?') + 'h, stress ' + (r.stress||'?') + '/10' + (r.notes ? ' — '+r.notes : '');
+    }),
     '',
-    'NUTRITION:',
-    '  Targets: ' + ng.cal + ' kcal | protein: ' + ng.protein + 'g | carbs: ' + ng.carbs + 'g | fat: ' + ng.fat + 'g',
+    'NUTRITION — targets: ' + ng.cal + 'kcal / P:' + ng.protein + 'g / C:' + ng.carbs + 'g / F:' + ng.fat + 'g',
     mac.cal > 0
-      ? '  Today: ' + Math.round(mac.cal) + ' kcal | protein: ' + Math.round(mac.prot) + 'g | carbs: ' + Math.round(mac.carbs) + 'g | fat: ' + Math.round(mac.fat) + 'g'
+      ? '  Today total: ' + Math.round(mac.cal) + 'kcal | P:' + Math.round(mac.prot) + 'g / C:' + Math.round(mac.carbs) + 'g / F:' + Math.round(mac.fat) + 'g (' + Math.round(mac.cal/ng.cal*100) + '% of target)'
       : '  Today: nothing logged',
+    ...(todayMeals.length ? ['  Meals logged today:',
+      ...todayMeals.map(function(m){ return '    - ' + (m.name||'Meal') + ': ' + (m.cal||m.calories||0) + 'kcal | P:'+(m.protein||0)+'g C:'+(m.carbs||0)+'g F:'+(m.fat||0)+'g'; })
+    ] : []),
   ];
   return lines.filter(function(l){ return l !== undefined; }).join('\n');
 }
