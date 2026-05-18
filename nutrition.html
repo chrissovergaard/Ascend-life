@@ -9,7 +9,7 @@
       --text-primary:   #FFFFFF;
       --text-secondary: #D0D0D0;
       --text-tertiary:  #888888;
-      --success:  #5FD45F;
+      --success:  #FFFFFF;
       --warning:  #FFC107;
       --danger:   #FF6B6B;
       --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -18,7 +18,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: #0A0A0A;
+      background-color: #000000;
       color: var(--text-primary);
       font-family: var(--font-body);
       min-height: 100vh;
@@ -52,8 +52,8 @@
     /* ── NAV ── */
     .site-nav {
       display: flex; gap: 4px; margin-bottom: 20px;
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 12px; padding: 4px;
       width: fit-content; flex-wrap: wrap;
     }
@@ -64,7 +64,7 @@
       transition: background 0.2s, color 0.2s; white-space: nowrap;
     }
     .nav-link:hover     { background: #111111; color: var(--text-primary); }
-    .nav-link.is-active { background: #5FD45F; color: #0A0A0A; }
+    .nav-link.is-active { background: #FFFFFF; color: #000000; }
 
     /* ── TITLE ── */
     .dash-title {
@@ -93,8 +93,8 @@
 
     /* ── CARD ── */
     .gm-card {
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 16px; padding: 20px 22px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
       margin-bottom: 12px;
@@ -103,22 +103,22 @@
     /* ── INPUTS ── */
     .goal-input {
       flex: 1;
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 12px; padding: 11px 14px;
       color: #FFFFFF; font-family: var(--font-body);
       font-size: 13px; outline: none;
       transition: border-color 0.2s;
     }
-    .goal-input:focus { border-color: #5FD45F; outline: none; }
+    .goal-input:focus { border-color: #FFFFFF; outline: none; }
     .goal-input::placeholder { color: var(--text-tertiary); }
     .goal-input[type="number"] { -moz-appearance: textfield; }
     .goal-input[type="number"]::-webkit-inner-spin-button,
     .goal-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
     .nt-select {
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 12px; padding: 11px 34px 11px 14px;
       color: var(--text-primary); font-family: var(--font-body);
       font-size: 13px; outline: none; cursor: pointer;
@@ -128,28 +128,28 @@
     }
 
     .goal-add-btn {
-      background: linear-gradient(180deg, #5FD45F 0%, #4ab84a 100%);
+      background: #FFFFFF;
       color: #0A0A0A; font-weight: 700; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 20px; border-radius: 12px; border: none;
       cursor: pointer; white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(95,212,95,0.25);
+      box-shadow: 0 4px 12px rgba(255,255,255,0.12);
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(95,212,95,0.35); }
+    .goal-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(255,255,255,0.15); }
 
     .wt-save-btn {
-      background: #5FD45F;
+      background: #FFFFFF;
       color: #0A0A0A; font-weight: 700; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 20px; border-radius: 16px; border: none;
       cursor: pointer; white-space: nowrap; min-height: 44px;
-      box-shadow: 0 4px 12px rgba(95,212,95,0.25);
+      box-shadow: 0 4px 12px rgba(255,255,255,0.12);
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .wt-save-btn:hover { transform: translateY(-1px); }
     .wt-cancel-btn {
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       color: var(--text-secondary); font-weight: 600; font-size: 13px;
       font-family: var(--font-body);
       padding: 11px 18px; border-radius: 12px;
@@ -187,12 +187,12 @@
     /* ── QUICK ADD ── */
     .nt-quick-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
     .nt-quick-btn {
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       color: #888888; font-family: var(--font-body); font-size: 12px; font-weight: 600;
       padding: 7px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .nt-quick-btn:hover { background: #1a1a1a; color: var(--text-primary); border-color: #555555; }
+    .nt-quick-btn:hover { background: #1a1a1a; color: var(--text-primary); border-color: #333333; }
 
     /* ── ADD FORM ── */
     .nt-add-form { display: flex; flex-direction: column; gap: 8px; }
@@ -211,7 +211,7 @@
 
     .nt-meal-item {
       padding: 12px 14px; border-radius: 12px;
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       margin-bottom: 6px; transition: background 0.15s;
     }
     .nt-meal-item:hover { background: #1a1a1a; }
@@ -223,7 +223,7 @@
     .nt-meal-kcal { font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--warning); flex-shrink: 0; }
     .nt-meal-actions { display: flex; gap: 4px; flex-shrink: 0; }
     .nt-meal-btn {
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       color: var(--text-tertiary); font-size: 11px; padding: 4px 9px;
       border-radius: 7px; cursor: pointer; transition: background 0.15s;
     }
@@ -253,7 +253,7 @@
     .nt-totals-row {
       display: flex; gap: 16px; flex-wrap: wrap;
       padding: 10px 14px; border-radius: 10px;
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       margin-top: 12px;
     }
     .nt-total-chip { display: flex; flex-direction: column; gap: 1px; }
@@ -491,7 +491,7 @@ function renderSummary() {
   const cPct    = goals.carbs   > 0 ? totals.carbs   / goals.carbs   : 0;
   const fPct    = goals.fat     > 0 ? totals.fat     / goals.fat     : 0;
 
-  const color = calPct >= 1.05 ? '#FF6B6B' : calPct >= 0.85 ? '#FFC107' : '#5FD45F';
+  const color = calPct >= 1.05 ? '#FF6B6B' : calPct >= 0.85 ? '#FFC107' : '#FFFFFF';
   setRing(calPct, color);
 
   document.getElementById('ntCalEaten').textContent    = totals.cal;

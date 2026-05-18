@@ -9,7 +9,7 @@
       --text-primary: #FFFFFF;
       --text-secondary: #D0D0D0;
       --text-tertiary: #888888;
-      --success: #5FD45F;
+      --success: #FFFFFF;
       --warning: #FFC107;
       --danger: #FF6B6B;
       --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -18,7 +18,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: #0A0A0A;
+      background-color: #000000;
       color: var(--text-primary);
       font-family: var(--font-body);
       min-height: 100vh;
@@ -31,7 +31,7 @@
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 70% 10%, rgba(95,212,95,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 10%, rgba(255,255,255,0.04) 0%, transparent 55%),
         radial-gradient(ellipse at 20% 85%, rgba(180,180,200,0.04) 0%, transparent 60%);
       pointer-events: none; z-index: 0;
     }
@@ -49,8 +49,8 @@
     /* ── NAV ── */
     .site-nav {
       display: flex; gap: 4px; margin-bottom: 20px;
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 12px; padding: 4px;
       width: fit-content; flex-wrap: wrap;
     }
@@ -61,7 +61,7 @@
       transition: background 0.2s, color 0.2s; white-space: nowrap;
     }
     .nav-link:hover     { background: rgba(255,255,255,0.06); color: var(--text-primary); }
-    .nav-link.is-active { background: #5FD45F; color: #0A0A0A; }
+    .nav-link.is-active { background: #FFFFFF; color: #000000; }
 
     /* ── TITLE ── */
     .dash-title {
@@ -90,8 +90,8 @@
 
     /* ── CARD ── */
     .card {
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 16px;
       padding: 20px 22px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
@@ -118,7 +118,7 @@
       font-size: 18px; font-weight: 700; color: var(--text-primary);
     }
     .cal-nav-btn {
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       color: var(--text-secondary); border-radius: 10px;
       width: 36px; height: 36px; cursor: pointer;
       font-size: 16px; display: flex; align-items: center; justify-content: center;
@@ -153,15 +153,15 @@
       min-height: 48px;
       position: relative;
     }
-    .cal-day:hover { background: #151515; border-color: #555555; }
+    .cal-day:hover { background: #151515; border-color: #333333; }
     .cal-day.is-other-month { opacity: 0.3; pointer-events: none; }
     .cal-day.is-today {
       background: #1f2a1f;
       border-color: var(--success);
     }
     .cal-day.is-selected {
-      background: #5FD45F;
-      border-color: #5FD45F;
+      background: #FFFFFF;
+      border-color: #FFFFFF;
     }
     .cal-day.is-selected .cal-day-num { color: #0A0A0A; }
     .cal-day.is-selected .cal-dot { background: #0A0A0A; }
@@ -197,7 +197,7 @@
     .evt-list { display: flex; flex-direction: column; gap: 8px; }
     .evt-item {
       background: #111111;
-      border: 1px solid #333333;
+      border: 1px solid #1C1C1C;
       border-radius: 12px;
       padding: 12px 14px;
       display: flex; align-items: flex-start; gap: 10px;
@@ -243,7 +243,7 @@
       letter-spacing: 0.10em; text-transform: uppercase;
       padding: 2px 7px; border-radius: 99px;
     }
-    .cat-badge.Workout  { background: rgba(95,212,95,0.15);  color: var(--success); }
+    .cat-badge.Workout  { background: rgba(255,255,255,0.1);  color: var(--success); }
     .cat-badge.Habit    { background: rgba(255,193,7,0.15);  color: var(--warning); }
     .cat-badge.Health   { background: rgba(127,202,255,0.15);color: #7CCAFF; }
     .cat-badge.Personal { background: rgba(200,150,255,0.15);color: #C896FF; }
@@ -261,8 +261,8 @@
       color: var(--text-tertiary);
     }
     .form-input {
-      background: #0A0A0A;
-      border: 1px solid #333333;
+      background: #0E0E0E;
+      border: 1px solid #1C1C1C;
       border-radius: 10px; padding: 10px 12px;
       color: var(--text-primary); font-family: var(--font-body);
       font-size: 13px; outline: none;
@@ -275,7 +275,7 @@
     textarea.form-input { resize: vertical; min-height: 60px; }
 
     .btn-primary {
-      background: #5FD45F; color: #0A0A0A;
+      background: #FFFFFF; color: #000000;
       border: none; border-radius: 12px;
       padding: 11px 20px; font-family: var(--font-body);
       font-size: 13px; font-weight: 700; cursor: pointer;
@@ -286,7 +286,7 @@
 
     .btn-secondary {
       background: #111111; color: var(--text-secondary);
-      border: 1px solid #333333; border-radius: 12px;
+      border: 1px solid #1C1C1C; border-radius: 12px;
       padding: 10px 16px; font-family: var(--font-body);
       font-size: 13px; font-weight: 600; cursor: pointer;
       transition: background 0.15s, color 0.15s;
@@ -302,7 +302,7 @@
     .upcoming-item:last-child { border-bottom: none; padding-bottom: 0; }
     .upcoming-date {
       flex-shrink: 0; width: 44px; text-align: center;
-      background: #111111; border: 1px solid #333333;
+      background: #111111; border: 1px solid #1C1C1C;
       border-radius: 10px; padding: 6px 4px;
     }
     .upcoming-day-num {
@@ -359,7 +359,7 @@
     .cp-custom-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
     .cp-preview { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; border: 1px solid #333; }
     .cp-hex-input {
-      flex: 1; background: #0A0A0A; border: 1px solid #333333;
+      flex: 1; background: #080808; border: 1px solid #1C1C1C;
       border-radius: 10px; padding: 9px 12px; color: #FFFFFF;
       font-family: var(--font-mono); font-size: 14px; outline: none;
       transition: border-color 0.2s; letter-spacing: 0.08em;
@@ -368,7 +368,7 @@
     .cp-hex-input.is-error { border-color: var(--danger); }
     input[type=color].cp-native { width: 40px; height: 40px; border: 1px solid #333; border-radius: 8px; background: none; cursor: pointer; padding: 2px; }
     .cp-reset-btn {
-      background: none; border: 1px solid #333333; border-radius: 10px;
+      background: none; border: 1px solid #1C1C1C; border-radius: 10px;
       color: var(--text-tertiary); font-size: 11px; font-family: var(--font-mono);
       padding: 8px 12px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
     }
@@ -383,7 +383,7 @@
     }
     .modal-bg.is-open { display: flex; }
     .modal {
-      background: #0A0A0A; border: 1px solid #333333;
+      background: #080808; border: 1px solid #1C1C1C;
       border-radius: 20px; padding: 28px;
       width: 100%; max-width: 440px;
       max-height: 90vh; overflow-y: auto;
@@ -416,7 +416,7 @@
     .form-toggle { display: none; }
     .form-toggle.is-open { display: flex; flex-direction: column; gap: 10px; }
     .toggle-btn {
-      background: none; border: 1px solid #333333;
+      background: none; border: 1px solid #1C1C1C;
       border-radius: 10px; padding: 9px 14px;
       color: var(--text-tertiary); font-family: var(--font-body);
       font-size: 12px; font-weight: 600; cursor: pointer;
@@ -424,7 +424,7 @@
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       width: 100%;
     }
-    .toggle-btn:hover { background: #151515; color: var(--text-primary); border-color: #555555; }
+    .toggle-btn:hover { background: #151515; color: var(--text-primary); border-color: #333333; }
 
     @media (max-width: 520px) {
       body { padding: 20px 16px 48px; }
@@ -533,7 +533,7 @@
     <div class="form-label" style="margin-bottom:6px">Custom</div>
     <div class="cp-custom-row">
       <input type="color" class="cp-native" id="cpNative">
-      <input type="text"  class="cp-hex-input" id="cpHex" placeholder="#5FD45F" maxlength="7">
+      <input type="text"  class="cp-hex-input" id="cpHex" placeholder="#FFFFFF" maxlength="7">
       <div class="cp-preview" id="cpPreview"></div>
     </div>
 
@@ -637,7 +637,7 @@ let selectedDate = todayStr();
    CATEGORY COLORS — dynamic, user-customizable
 ───────────────────────────────────────────── */
 const DEFAULT_COLORS = {
-  Workout:  '#5FD45F',
+  Workout:  '#FFFFFF',
   Habit:    '#FFC107',
   Health:   '#7CCAFF',
   Personal: '#C896FF',
@@ -721,7 +721,7 @@ function renderLegend() {
 
 /* ─── Color Picker ─── */
 const CP_PALETTE = [
-  '#5FD45F','#FFC107','#FF6B6B','#7CCAFF','#FFA500',
+  '#FFFFFF','#FFC107','#FF6B6B','#7CCAFF','#FFA500',
   '#C896FF','#FFB464','#F39C12','#95A5A6','#1ABC9C',
   '#E74C3C','#3498DB','#9B59B6','#2ECC71','#E67E22','#34495E'
 ];
