@@ -1316,25 +1316,11 @@ JSON format:
     </div>
   </div>
 
-  <!-- ==================== QUICK ADD ==================== -->
-  <div class="section">
-    <div class="section-title">Quick Add</div>
-
+  <!-- ==================== ACTIVE WORKOUT (shown when workout started from template) ==================== -->
+  <div class="section" id="wtActiveSection" style="display:none">
+    <div class="section-title">Active Workout</div>
     <div class="gm-card" id="wtActiveCard">
-      <div id="wtStartState">
-        <div class="gm-header">
-          <div class="gm-header-left">
-            <div class="gm-eyebrow">New Workout</div>
-          </div>
-        </div>
-        <div class="wt-start-form">
-          <input type="text" class="goal-input" id="wtWorkoutName" placeholder="Workout name… (e.g. Chest Day)">
-          <button class="goal-add-btn" id="wtStartBtn">▶ Start</button>
-        </div>
-        <div class="wt-quick-btns" id="wtQuickNames"></div>
-      </div>
-
-      <div id="wtActiveState" style="display:none">
+      <div id="wtActiveState">
         <div class="gm-header">
           <div class="gm-header-left">
             <div class="gm-eyebrow" id="wtActiveDate"></div>
@@ -1823,10 +1809,9 @@ function calc1RM(weight, reps) {
 
 // ---- Active workout state ----
 function startWorkout(name) {
-  const n = (name || document.getElementById('wtWorkoutName').value).trim();
+  const n = (name || '').trim();
   if (!n) return;
   currentWorkout = { name: n, startTime: Date.now(), exercises: [], notes: '', manualDuration: null, editingId: null };
-  document.getElementById('wtWorkoutName').value = '';
   wtRenderActive();
 }
 
@@ -1922,16 +1907,13 @@ function wtReadBack() {
 
 // ---- Render functions ----
 function wtRenderActive() {
-  const startEl  = document.getElementById('wtStartState');
-  const activeEl = document.getElementById('wtActiveState');
+  const section = document.getElementById('wtActiveSection');
   if (!currentWorkout) {
-    startEl.style.display  = '';
-    activeEl.style.display = 'none';
+    section.style.display = 'none';
     clearInterval(wtTimerInterval); wtTimerInterval = null;
     return;
   }
-  startEl.style.display  = 'none';
-  activeEl.style.display = '';
+  section.style.display = '';
 
   const nameEl = document.getElementById('wtActiveName');
   nameEl.textContent = currentWorkout.name;
@@ -3959,18 +3941,11 @@ const CONFIG = {
 
 // ==================== INIT ====================
 (function initWorkoutTracker() {
-  const qn = document.getElementById('wtQuickNames');
-  WT_QUICK_NAMES.forEach(n => {
-    const b = document.createElement('button'); b.className = 'wt-quick-btn'; b.textContent = n;
-    b.addEventListener('click', () => startWorkout(n)); qn.appendChild(b);
-  });
   const qe = document.getElementById('wtQuickExercises');
   WT_QUICK_EXERCISES.forEach(n => {
     const b = document.createElement('button'); b.className = 'wt-quick-btn'; b.textContent = n;
     b.addEventListener('click', () => addExercise(n)); qe.appendChild(b);
   });
-  document.getElementById('wtStartBtn').addEventListener('click', () => startWorkout());
-  document.getElementById('wtWorkoutName').addEventListener('keydown', e => { if (e.key === 'Enter') startWorkout(); });
   document.getElementById('wtAddExerciseBtn').addEventListener('click', () => addExercise());
   document.getElementById('wtExerciseName').addEventListener('keydown', e => { if (e.key === 'Enter') addExercise(); });
   document.getElementById('wtSaveBtn').addEventListener('click', saveWorkout);
