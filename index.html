@@ -1410,58 +1410,31 @@
     <div class="section-title">Recovery Monitor</div>
     <div class="gm-card" id="recoveryCard">
 
-      <!-- 4-metric grid -->
-      <div class="rm-grid" id="rmMetricsGrid">
+      <!-- 3-metric grid -->
+      <div class="gm-garmin-grid" id="rmMetricsGrid">
 
-        <!-- Sleep -->
-        <div class="rm-metric">
-          <div class="rm-ring-wrap">
-            <svg viewBox="0 0 80 80">
-              <circle class="rm-ring-bg"   cx="40" cy="40" r="34"/>
-              <circle class="rm-ring-fill" cx="40" cy="40" r="34" id="rmSleepRing"/>
-            </svg>
-            <div class="rm-ring-label">
-              <span class="rm-ring-pct"  id="rmSleepPct">—</span>
-              <span class="rm-ring-name">SLEEP</span>
-            </div>
-          </div>
-          <div class="rm-metric-sub"    id="rmSleepSub">No data</div>
-          <div class="rm-metric-status rm-status-mid" id="rmSleepStatus">—</div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🛌</div>
+          <div class="gm-stat-value" id="rmSleepVal">—</div>
+          <div class="gm-stat-label">Sleep</div>
+          <div class="gm-stat-sub" id="rmSleepSub">timer</div>
         </div>
 
-        <!-- Body Temp -->
-        <div class="rm-metric">
-          <div class="rm-temp-display"  id="rmTempDisplay">—°C</div>
-          <div class="rm-ring-name" style="margin-top:4px">SKIN TEMP</div>
-          <div class="rm-metric-sub"    id="rmTempSub">No data</div>
-          <div class="rm-metric-status rm-status-mid" id="rmTempStatus">—</div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon" id="rmStressIcon">😐</div>
+          <div class="gm-stat-value" id="rmStressVal">—</div>
+          <div class="gm-stat-label">Stress</div>
+          <div class="gm-stat-sub">/ 100</div>
         </div>
 
-        <!-- Stress -->
-        <div class="rm-metric">
-          <div class="rm-stress-display" id="rmStressDisplay">—</div>
-          <div class="rm-ring-name" style="margin-top:4px">STRESS</div>
-          <div class="rm-metric-sub"     id="rmStressSub">Not set</div>
-          <div class="rm-metric-status rm-status-mid" id="rmStressStatus">—</div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">⚡</div>
+          <div class="gm-stat-value" id="rmScoreVal">—</div>
+          <div class="gm-stat-label">Recovery Score</div>
+          <div class="gm-stat-sub" id="rmScoreSub">%</div>
         </div>
 
-        <!-- Recovery Score -->
-        <div class="rm-metric">
-          <div class="rm-ring-wrap">
-            <svg viewBox="0 0 80 80">
-              <circle class="rm-ring-bg"   cx="40" cy="40" r="34"/>
-              <circle class="rm-ring-fill" cx="40" cy="40" r="34" id="rmScoreRing"/>
-            </svg>
-            <div class="rm-ring-label">
-              <span class="rm-ring-pct"  id="rmScorePct">—</span>
-              <span class="rm-ring-name">RECOVERY</span>
-            </div>
-          </div>
-          <div class="rm-metric-sub"    id="rmScoreSub">Log today's data</div>
-          <div class="rm-metric-status rm-status-mid" id="rmScoreStatus">—</div>
-        </div>
-
-      </div><!-- /rm-grid -->
+      </div>
 
       <!-- Garmin stat tiles -->
       <div class="gm-garmin-grid" id="garminGrid" style="margin-top:10px">
@@ -1546,10 +1519,6 @@
           <div class="rm-input-group">
             <div class="rm-input-label">Sleep hours last night</div>
             <input type="number" class="goal-input" id="rmSleepInput" placeholder="e.g. 7.5" min="0" max="16" step="0.5">
-          </div>
-          <div class="rm-input-group">
-            <div class="rm-input-label">Body temperature (°C)</div>
-            <input type="number" class="goal-input" id="rmTempInput"  placeholder="e.g. 36.6" min="34" max="42" step="0.1">
           </div>
           <div class="rm-input-group">
             <div class="rm-input-label">Stress level (0–100)</div>
@@ -2946,20 +2915,18 @@ function getTodayGarmin() {
 }
 
 function updateRecovery() {
-  const sleepRaw  = document.getElementById('rmSleepInput').value;
-  const tempRaw   = document.getElementById('rmTempInput').value;
-  const stress    = document.getElementById('rmStressInput').value;
-  const notes     = document.getElementById('rmNotesInput').value.trim();
-  const sleep     = sleepRaw !== '' ? parseFloat(sleepRaw) : null;
-  const bodyTemp  = tempRaw  !== '' ? parseFloat(tempRaw)  : null;
+  const sleepRaw = document.getElementById('rmSleepInput').value;
+  const stress   = document.getElementById('rmStressInput').value;
+  const notes    = document.getElementById('rmNotesInput').value.trim();
+  const sleep    = sleepRaw !== '' ? parseFloat(sleepRaw) : null;
 
   // Recovery entry
-  if (sleep !== null || bodyTemp !== null || stress !== '') {
+  if (sleep !== null || stress !== '') {
     const today   = getActiveDateString();
     const history = loadRecoveryHistory();
     const idx     = history.findIndex(r => r.date === today);
-    const score   = calculateRecoveryScore(sleep, bodyTemp, stress !== '' ? stress : null);
-    const entry   = { date: today, sleep, bodyTemp, stressLevel: stress !== '' ? parseFloat(stress) : null, recoveryScore: score, notes };
+    const score   = calculateRecoveryScore(sleep, null, stress !== '' ? stress : null);
+    const entry   = { date: today, sleep, stressLevel: stress !== '' ? parseFloat(stress) : null, recoveryScore: score, notes };
     if (idx !== -1) history[idx] = entry; else history.push(entry);
     storeSet('lifeos_recovery', history);
   }
@@ -2997,7 +2964,6 @@ function updateRecovery() {
 
   // Clear inputs
   document.getElementById('rmSleepInput').value  = '';
-  document.getElementById('rmTempInput').value   = '';
   document.getElementById('rmStressInput').value = '';
   document.getElementById('rmNotesInput').value  = '';
   document.getElementById('gInRhr').value        = '';
@@ -3070,82 +3036,39 @@ function renderRecovery() {
   const today  = getTodayRecovery();
   const alerts = getSmartAlerts();
 
-  // Sleep ring
-  const sleepRing = document.getElementById('rmSleepRing');
-  const sleepPct  = document.getElementById('rmSleepPct');
-  const sleepSub  = document.getElementById('rmSleepSub');
-  const sleepStat = document.getElementById('rmSleepStatus');
+  // Sleep tile
+  const sleepVal = document.getElementById('rmSleepVal');
+  const sleepSub = document.getElementById('rmSleepSub');
   if (today && today.sleep != null) {
-    const pct = Math.min(100, Math.round((today.sleep / 8) * 100));
-    const sc  = getColorByRecoveryScore(pct >= 80 ? 80 : pct >= 60 ? 65 : 40);
-    setRing(sleepRing, pct, sc.color);
-    sleepPct.textContent  = pct + '%'; sleepPct.style.color = sc.color;
-    sleepSub.textContent  = today.sleep + 'h last night';
-    sleepStat.textContent = pct >= 80 ? 'Good' : pct >= 60 ? 'Fair' : 'Low';
-    sleepStat.className   = 'rm-metric-status rm-status-' + sc.cls;
+    const sc = getColorByRecoveryScore(Math.min(100, Math.round((today.sleep / 8) * 100)) >= 80 ? 80 : Math.min(100, Math.round((today.sleep / 8) * 100)) >= 60 ? 65 : 40);
+    sleepVal.textContent = today.sleep + 'h'; sleepVal.className = 'gm-stat-value ' + (sc.cls === 'high' ? 'gm-good' : sc.cls === 'mid' ? 'gm-mid' : 'gm-bad');
+    sleepSub.textContent = today.sleep >= 7.5 ? 'God søvn' : today.sleep >= 6 ? 'Nogenlunde' : 'For lidt';
   } else {
-    setRing(sleepRing, 0, 'rgba(255,255,255,0.1)');
-    sleepPct.textContent = '—'; sleepPct.style.color = '';
-    sleepSub.textContent = 'No data'; sleepStat.textContent = '—';
-    sleepStat.className  = 'rm-metric-status rm-status-mid';
+    sleepVal.textContent = '—'; sleepVal.className = 'gm-stat-value'; sleepSub.textContent = 'timer';
   }
 
-  // Body temp
-  const tempDisp = document.getElementById('rmTempDisplay');
-  const tempSub  = document.getElementById('rmTempSub');
-  const tempStat = document.getElementById('rmTempStatus');
-  if (today && today.bodyTemp != null) {
-    const t = today.bodyTemp;
-    let cls, label, sub;
-    if      (t < 36.0)  { cls='low';  label='Low';    sub='Below normal'; }
-    else if (t <= 37.0) { cls='high'; label='Normal'; sub='Normal range'; }
-    else if (t <= 37.5) { cls='mid';  label='Warm';   sub='Slightly elevated'; }
-    else                { cls='low';  label='High';   sub='Elevated — hydrate'; }
-    tempDisp.textContent = t.toFixed(1) + '°C';
-    tempDisp.style.color = cls==='high' ? '#FFFFFF' : cls==='mid' ? '#FFC107' : '#FF6B6B';
-    tempSub.textContent = sub; tempStat.textContent = label;
-    tempStat.className  = 'rm-metric-status rm-status-' + cls;
-  } else {
-    tempDisp.textContent = '—°C'; tempDisp.style.color = '';
-    tempSub.textContent = 'No data'; tempStat.textContent = '—';
-    tempStat.className  = 'rm-metric-status rm-status-mid';
-  }
-
-  // Stress (0–100 numeric)
-  const stressDisp = document.getElementById('rmStressDisplay');
-  const stressSub  = document.getElementById('rmStressSub');
-  const stressStat = document.getElementById('rmStressStatus');
+  // Stress tile
+  const stressVal  = document.getElementById('rmStressVal');
+  const stressIcon = document.getElementById('rmStressIcon');
   if (today && today.stressLevel != null) {
     const sv = parseFloat(today.stressLevel);
-    const sCls  = sv <= 25 ? 'high' : sv <= 50 ? 'mid' : 'low';
-    const sLbl  = sv <= 25 ? 'Low' : sv <= 50 ? 'Moderate' : sv <= 75 ? 'High' : 'Very High';
-    const sIcon = sv <= 25 ? '😌' : sv <= 50 ? '😐' : sv <= 75 ? '😤' : '😰';
-    stressDisp.textContent = sIcon;
-    stressSub.textContent  = sv + '/100 — ' + sLbl;
-    stressStat.textContent = sLbl;
-    stressStat.className   = 'rm-metric-status rm-status-' + sCls;
+    stressVal.textContent  = sv;
+    stressVal.className    = 'gm-stat-value ' + (sv <= 25 ? 'gm-good' : sv <= 50 ? 'gm-mid' : 'gm-bad');
+    stressIcon.textContent = sv <= 25 ? '😌' : sv <= 50 ? '😐' : sv <= 75 ? '😤' : '😰';
   } else {
-    stressDisp.textContent = '—';
-    stressSub.textContent = 'Not set'; stressStat.textContent = '—';
-    stressStat.className  = 'rm-metric-status rm-status-mid';
+    stressVal.textContent = '—'; stressVal.className = 'gm-stat-value'; stressIcon.textContent = '😐';
   }
 
-  // Recovery score ring
-  const scoreRing = document.getElementById('rmScoreRing');
-  const scorePct  = document.getElementById('rmScorePct');
-  const scoreSub  = document.getElementById('rmScoreSub');
-  const scoreStat = document.getElementById('rmScoreStatus');
+  // Recovery score tile
+  const scoreVal = document.getElementById('rmScoreVal');
+  const scoreSub = document.getElementById('rmScoreSub');
   if (today) {
     const sc = getColorByRecoveryScore(today.recoveryScore);
-    setRing(scoreRing, today.recoveryScore, sc.color);
-    scorePct.textContent = today.recoveryScore + '%'; scorePct.style.color = sc.color;
-    scoreSub.textContent = today.recoveryScore >= 80 ? 'Fully recovered' : today.recoveryScore >= 60 ? 'Moderate recovery' : 'Under-recovered';
-    scoreStat.textContent = sc.label; scoreStat.className = 'rm-metric-status rm-status-' + sc.cls;
+    scoreVal.textContent = today.recoveryScore + '%';
+    scoreVal.className   = 'gm-stat-value ' + (sc.cls === 'high' ? 'gm-good' : sc.cls === 'mid' ? 'gm-mid' : 'gm-bad');
+    scoreSub.textContent = today.recoveryScore >= 80 ? 'Fuldt restitueret' : today.recoveryScore >= 60 ? 'Moderat' : 'Under-restitueret';
   } else {
-    setRing(scoreRing, 0, 'rgba(255,255,255,0.1)');
-    scorePct.textContent = '—'; scorePct.style.color = '';
-    scoreSub.textContent = "Log today's data"; scoreStat.textContent = '—';
-    scoreStat.className  = 'rm-metric-status rm-status-mid';
+    scoreVal.textContent = '—'; scoreVal.className = 'gm-stat-value'; scoreSub.textContent = '%';
   }
 
   // Alerts
