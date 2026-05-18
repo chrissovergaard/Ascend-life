@@ -385,13 +385,18 @@
     <div class="modal-title">⚙ Coach Settings</div>
 
     <div class="form-group">
-      <label class="form-label" for="settingApiKey">Anthropic API Key (optional)</label>
-      <input type="password" id="settingApiKey" class="form-input" placeholder="sk-ant-api03-...">
+      <label class="form-label" for="settingOllamaUrl">Ollama URL</label>
+      <input type="text" id="settingOllamaUrl" class="form-input" placeholder="http://localhost:11434">
       <div class="form-hint">
-        Stored locally — only sent to api.anthropic.com.<br>
-        Get one at <a href="#" onclick="return false" style="color:var(--success)">console.anthropic.com</a>.
-        Without a key, the coach uses smart rule-based analysis.
+        Download &amp; install Ollama at <a href="https://ollama.ai" target="_blank" style="color:var(--success)">ollama.ai</a>, then run:<br>
+        <code style="font-family:var(--font-mono);background:#111;padding:2px 5px;border-radius:3px;font-size:10px">ollama pull llama3.2</code>
       </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="settingOllamaModel">Model</label>
+      <input type="text" id="settingOllamaModel" class="form-input" placeholder="llama3.2">
+      <div class="form-hint">Recommended: llama3.2 (fast) or mistral (smart). Must be pulled first.</div>
     </div>
 
     <div class="form-group">
@@ -539,8 +544,38 @@ function analyze(data) {
 ───────────────────────────────────────────── */
 function buildContext(data, a) {
   const p = data.profile || {};
+  const today = nowStr();
+
+  // Calendar: today's events and upcoming week
+  const todayEvts = (data.events || []).filter(e => e.date === today);
+  const wkEnd = toDateStr(new Date(Date.now() + 6 * 86400000));
+  const weekEvts = (data.events || []).filter(e => e.date > today && e.date <= wkEnd)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Today's nutrition macros
+  const todayMeals = (data.nutrition || []).filter(n => n.date === today);
+  const mac = todayMeals.reduce((acc, n) => ({
+    cal:   acc.cal   + (n.calories || 0),
+    prot:  acc.prot  + (n.protein  || 0),
+    carbs: acc.carbs + (n.carbs    || 0),
+    fat:   acc.fat   + (n.fat      || 0)
+  }), { cal: 0, prot: 0, carbs: 0, fat: 0 });
+
   const lines = [
     `USER: ${p.name||'Chris'}${p.age?`, age ${p.age}`:''}${p.weight?`, ${p.weight}kg`:''}, ${p.height||'?'}cm`,
+    ``,
+    `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`,
+    ``,
+    todayEvts.length
+      ? `TODAY'S EVENTS:
+${todayEvts.map(e=>`  - ${e.title}${e.time?' at '+e.time:''}${e.category?' ['+e.category+']':''}`).join('
+')}`
+      : 'No calendar events today',
+    weekEvts.length
+      ? `UPCOMING THIS WEEK:
+${weekEvts.slice(0,5).map(e=>`  - ${e.date.slice(5)}: ${e.title}${e.category?' ['+e.category+']':''}`).join('
+')}`
+      : '',
     ``,
     `WORKOUTS THIS WEEK: ${a.workoutsThisWeek} (last week: ${a.workoutsLastWeek})`,
     a.daysSince !== null ? `Days since last workout: ${a.daysSince}` : 'No workouts logged yet',
@@ -575,7 +610,7 @@ function buildContext(data, a) {
     a.lastRec ? `Last recovery log: ${a.lastRec.date} — sleep ${a.lastRec.sleep}h, stress ${a.lastRec.stress}/10` : '',
     ``,
     a.prog ? `PROGRAM: ${a.prog.done}/${a.prog.total} days (${a.prog.pct}%), ${a.prog.left} days remaining` : 'No active training program',
-    a.todayKcal > 0 ? `\nNUTRITION: ${a.todayKcal} kcal logged today` : '',
+    mac.cal > 0 ? `\nNUTRITION TODAY: ${Math.round(mac.cal)} kcal | protein: ${Math.round(mac.prot)}g | carbs: ${Math.round(mac.carbs)}g | fat: ${Math.round(mac.fat)}g` : 'Nutrition: nothing logged today',
     ``,
     Object.keys(a.prs).length ? `TOP PRs:\n${Object.entries(a.prs).slice(0,8).map(([e,pr])=>`  - ${e}: ${pr.weight}kg × ${pr.reps}`).join('\n')}` : '',
     ``,
@@ -630,50 +665,106 @@ When answering, be intelligent: the SAME data should produce DIFFERENT answers f
 }
 
 /* ─────────────────────────────────────────────
-   ANTHROPIC API
+   OLLAMA AI
 ───────────────────────────────────────────── */
-async function callClaude(history, systemPrompt) {
-  const key = (storeGet('coach_settings') || {}).apiKey;
-  if (!key) return { noKey: true };
+function renderStreamingBubble() {
+  const container = document.getElementById('chatMessages');
+  const el = document.createElement('div');
+  el.className = 'msg coach';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = `Coach · ${fmtTime(new Date())}`;
+  el.appendChild(bubble);
+  el.appendChild(timeEl);
+  container.insertBefore(el, document.getElementById('typingIndicator'));
+  container.scrollTop = container.scrollHeight;
+  return { bubble, timeEl };
+}
 
-  // Build alternating messages (last 20, must start with user)
-  const raw = history.slice(-20).map(m => ({
+async function callOllama(history, systemPrompt) {
+  const s   = storeGet('coach_settings') || {};
+  const url = (s.ollamaUrl   || 'http://localhost:11434').replace(/\/$/, '');
+  const mdl = (s.ollamaModel || 'llama3.2').trim() || 'llama3.2';
+
+  const sysMsg = { role: 'system', content: systemPrompt };
+  let hist = history.slice(-20).map(m => ({
     role: m.role === 'coach' ? 'assistant' : 'user',
     content: m.content
   }));
-
-  // Ensure starts with user
-  let msgs = raw;
-  while (msgs.length && msgs[0].role === 'assistant') msgs = msgs.slice(1);
-  if (!msgs.length) return { error: 'no messages' };
+  while (hist.length && hist[0].role === 'assistant') hist = hist.slice(1);
+  if (!hist.length) return { error: 'no messages' };
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`${url}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: msgs
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: mdl, messages: [sysMsg, ...hist], stream: true }),
+      signal: AbortSignal.timeout(90000)
     });
     if (!res.ok) {
-      const errBody = await res.json().catch(()=>({}));
-      console.warn('Claude API', res.status, errBody);
-      return { error: `API error ${res.status}: ${errBody?.error?.message || res.statusText}` };
+      const txt = await res.text().catch(() => res.statusText);
+      return { error: `Ollama ${res.status}: ${txt.slice(0, 120)}` };
     }
-    const d = await res.json();
-    return { text: d.content?.[0]?.text || '' };
-  } catch(e) {
-    console.warn('Claude API error:', e);
-    return { error: e.message || 'Network error' };
+    return { stream: res.body };
+  } catch (e) {
+    return (e.name === 'TypeError' || e.name === 'TimeoutError')
+      ? { offline: true }
+      : { error: e.message };
   }
+}
+
+async function checkOllama() {
+  const s   = storeGet('coach_settings') || {};
+  const url = (s.ollamaUrl || 'http://localhost:11434').replace(/\/$/, '');
+  try {
+    const res = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    return res.ok;
+  } catch { return false; }
+}
+
+async function streamToNewBubble(history, systemPrompt, fallbackFn) {
+  const result = await callOllama(history, systemPrompt);
+  hideTyping();
+
+  if (result.offline) {
+    const msg = fallbackFn ? fallbackFn() : { content: 'Ollama is offline. Start Ollama and run: ollama pull llama3.2', tone: 'warning' };
+    addMessage({ role:'coach', content: msg.content, tone: msg.tone || 'warning', time: fmtTime(new Date()), ts: Date.now() });
+    return;
+  }
+  if (result.error) {
+    addMessage({ role:'coach', content:`Error: ${result.error}`, tone:'danger', time:fmtTime(new Date()), ts:Date.now() });
+    return;
+  }
+
+  const { bubble, timeEl } = renderStreamingBubble();
+  const reader  = result.stream.getReader();
+  const decoder = new TextDecoder();
+  let fullText  = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.trim()) continue;
+        try {
+          const chunk = JSON.parse(line);
+          if (chunk.message?.content) {
+            fullText += chunk.message.content;
+            bubble.textContent = fullText;
+            const c = document.getElementById('chatMessages');
+            c.scrollTop = c.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+  } catch { if (!fullText) fullText = fallbackFn ? fallbackFn().content : 'Response interrupted.'; bubble.textContent = fullText; }
+
+  timeEl.textContent = `Coach · ${fmtTime(new Date())}`;
+  const msg = { role:'coach', content:fullText, tone:'normal', time:fmtTime(new Date()), ts:Date.now() };
+  messages.push(msg);
+  saveHistory();
 }
 
 /* ─────────────────────────────────────────────
@@ -916,27 +1007,8 @@ async function sendMessage() {
 
   const data = loadAllData();
   const a    = analyze(data);
-  const result = await callClaude(messages, buildSystemPrompt(data, a));
 
-  hideTyping();
-
-  if (result.noKey) {
-    addMessage({
-      role: 'coach',
-      content: 'Add your Anthropic API key in ⚙ Settings to unlock intelligent coaching. Without it I can\'t give you personalized feedback.',
-      tone: 'warning',
-      time: fmtTime(new Date())
-    });
-  } else if (result.error) {
-    addMessage({
-      role: 'coach',
-      content: `Something went wrong: ${result.error}\n\nCheck your API key in ⚙ Settings.`,
-      tone: 'danger',
-      time: fmtTime(new Date())
-    });
-  } else {
-    addMessage({ role:'coach', content: result.text, tone:'normal', time:fmtTime(new Date()) });
-  }
+  await streamToNewBubble(messages, buildSystemPrompt(data, a), () => ruleResponse(text, a));
 
   busy = false;
   document.getElementById('sendBtn').disabled = false;
@@ -991,28 +1063,37 @@ function renderStats(a) {
 /* ─────────────────────────────────────────────
    SETTINGS
 ───────────────────────────────────────────── */
-function updateApiBadge() {
-  const key = (storeGet('coach_settings') || {}).apiKey;
+async function updateApiBadge() {
   const el  = document.getElementById('apiBadge');
   const txt = document.getElementById('apiBadgeText');
-  if (key) { el.className='api-badge is-ai'; txt.textContent='AI Connected'; }
-  else     { el.className='api-badge';        txt.textContent='Rule-based'; }
+  el.className = 'api-badge'; txt.textContent = 'Checking…';
+  const online = await checkOllama();
+  const s = storeGet('coach_settings') || {};
+  if (online) {
+    el.className = 'api-badge is-ai';
+    txt.textContent = `Ollama · ${(s.ollamaModel || 'llama3.2')}`;
+  } else {
+    el.className = 'api-badge';
+    txt.textContent = 'Ollama Offline';
+  }
 }
 
 function openSettings() {
   const s = storeGet('coach_settings') || {};
-  document.getElementById('settingApiKey').value = s.apiKey || '';
-  document.getElementById('settingTone').value   = s.tone || 'honest';
-  document.getElementById('settingName').value   = s.name || (loadAllData().profile?.name) || '';
+  document.getElementById('settingOllamaUrl').value   = s.ollamaUrl   || 'http://localhost:11434';
+  document.getElementById('settingOllamaModel').value = s.ollamaModel || 'llama3.2';
+  document.getElementById('settingTone').value        = s.tone        || 'honest';
+  document.getElementById('settingName').value        = s.name        || (loadAllData().profile?.name) || '';
   document.getElementById('settingsModal').classList.add('is-open');
 }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('is-open'); }
 function settingsBgClick(e) { if (e.target===document.getElementById('settingsModal')) closeSettings(); }
 function saveSettings() {
   storeSet('coach_settings', {
-    apiKey: document.getElementById('settingApiKey').value.trim(),
-    tone:   document.getElementById('settingTone').value,
-    name:   document.getElementById('settingName').value.trim()
+    ollamaUrl:   document.getElementById('settingOllamaUrl').value.trim()   || 'http://localhost:11434',
+    ollamaModel: document.getElementById('settingOllamaModel').value.trim() || 'llama3.2',
+    tone:        document.getElementById('settingTone').value,
+    name:        document.getElementById('settingName').value.trim()
   });
   updateApiBadge();
   closeSettings();
@@ -1052,33 +1133,11 @@ function clearHistory() {
 
   if (newSess) {
     showTyping();
-
-    const hasKey = !!(storeGet('coach_settings') || {}).apiKey;
-    let opContent, opTone;
-
-    if (hasKey) {
-      // Use Claude for the opening greeting
-      const greetHistory = [{
-        role: 'user',
-        content: 'Start our session. Give me a brief, personalized greeting based on my current data. Be direct — 2-3 sentences max.'
-      }];
-      const result = await callClaude(greetHistory, buildSystemPrompt(data, a));
-      if (result.text) {
-        opContent = result.text;
-        opTone = 'normal';
-      } else {
-        const op = openingMessage(a);
-        opContent = op.content; opTone = op.tone;
-      }
-    } else {
-      const op = openingMessage(a);
-      opContent = op.content; opTone = op.tone;
-    }
-
-    hideTyping();
-    const msg = { role:'coach', content:opContent, tone:opTone, time:fmtTime(new Date()), ts:Date.now() };
-    addMessage(msg);
-
+    const greetHistory = [{
+      role: 'user',
+      content: 'Start our session. Give me a brief, personalized greeting based on my current data. Be direct — 2-3 sentences max.'
+    }];
+    await streamToNewBubble(greetHistory, buildSystemPrompt(data, a), () => openingMessage(a));
     if (!history.length) document.getElementById('quickPrompts').style.display = '';
   }
 })();
