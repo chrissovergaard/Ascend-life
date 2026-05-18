@@ -685,8 +685,11 @@ function buildContext(data, a) {
         if (todayG.battery  != null)  lines2.push('  Body Battery today: '   + todayG.battery  + '/100');
         if (todayG.hrv)               lines2.push('  HRV Status: '           + todayG.hrv);
         if (todayG.steps    != null)  lines2.push('  Steps today: '          + todayG.steps.toLocaleString());
+        if (todayG.resp     != null)  lines2.push('  Respiration: '          + todayG.resp     + ' breaths/min');
+        if (todayG.spo2     != null)  lines2.push('  Pulse Ox (SpO2): '      + todayG.spo2     + '%');
         if (todayG.health)            lines2.push('  Health Status: '        + todayG.health);
         if (todayG.recovery != null)  lines2.push('  Recovery time needed: ' + todayG.recovery + 'h');
+        if (todayG.snapshot)          lines2.push('  Health Snapshot: '      + todayG.snapshot);
       } else {
         lines2.push('  No Garmin data logged today');
       }

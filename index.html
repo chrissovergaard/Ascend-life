@@ -1463,6 +1463,64 @@
 
       </div><!-- /rm-grid -->
 
+      <!-- Garmin stat tiles -->
+      <div class="gm-garmin-grid" id="garminGrid" style="margin-top:10px">
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">❤️</div>
+          <div class="gm-stat-value" id="gStatRhr">—</div>
+          <div class="gm-stat-label">Resting HR</div>
+          <div class="gm-stat-sub">bpm</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">⚡</div>
+          <div class="gm-stat-value" id="gStatBattery">—</div>
+          <div class="gm-stat-label">Body Battery</div>
+          <div class="gm-stat-sub">/ 100</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">📶</div>
+          <div class="gm-stat-value" id="gStatHrv" style="font-size:13px">—</div>
+          <div class="gm-stat-label">HRV Status</div>
+          <div class="gm-stat-sub">&nbsp;</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">👟</div>
+          <div class="gm-stat-value" id="gStatSteps" style="font-size:16px">—</div>
+          <div class="gm-stat-label">Steps</div>
+          <div class="gm-stat-sub">today</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🫁</div>
+          <div class="gm-stat-value" id="gStatResp">—</div>
+          <div class="gm-stat-label">Respiration</div>
+          <div class="gm-stat-sub">ånd/min</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🩸</div>
+          <div class="gm-stat-value" id="gStatSpO2">—</div>
+          <div class="gm-stat-label">Pulse Ox</div>
+          <div class="gm-stat-sub">%</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🩺</div>
+          <div class="gm-stat-value" id="gStatHealth" style="font-size:13px">—</div>
+          <div class="gm-stat-label">Health Status</div>
+          <div class="gm-stat-sub">&nbsp;</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🔋</div>
+          <div class="gm-stat-value" id="gStatRecovery">—</div>
+          <div class="gm-stat-label">Recovery</div>
+          <div class="gm-stat-sub">timer</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">📸</div>
+          <div class="gm-stat-value" id="gStatSnapshot" style="font-size:13px">—</div>
+          <div class="gm-stat-label">Health Snapshot</div>
+          <div class="gm-stat-sub">&nbsp;</div>
+        </div>
+      </div>
+
       <!-- Smart Alerts -->
       <div class="rm-alerts" id="rmAlerts"></div>
 
@@ -1494,81 +1552,21 @@
             <input type="number" class="goal-input" id="rmTempInput"  placeholder="e.g. 36.6" min="34" max="42" step="0.1">
           </div>
           <div class="rm-input-group">
-            <div class="rm-input-label">Stress level</div>
-            <select class="hb-select" id="rmStressInput" style="width:100%">
-              <option value="">— Select —</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Very High">Very High</option>
-            </select>
+            <div class="rm-input-label">Stress level (0–100)</div>
+            <input type="number" class="goal-input" id="rmStressInput" placeholder="f.eks. 35" min="0" max="100">
           </div>
         </div>
         <div class="rm-input-row">
-          <input type="text" class="goal-input" id="rmNotesInput" placeholder="Notes (optional)…" style="flex:1">
-          <button class="goal-add-btn" id="rmUpdateBtn">Update Recovery</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Garmin Daily Stats -->
-  <div class="section">
-    <div class="section-title">Garmin Daily Stats</div>
-    <div class="gm-card">
-
-      <div class="gm-garmin-grid" id="garminGrid">
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">❤️</div>
-          <div class="gm-stat-value" id="gStatRhr">—</div>
-          <div class="gm-stat-label">Resting HR</div>
-          <div class="gm-stat-sub" id="gStatRhrSub">bpm</div>
-        </div>
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">⚡</div>
-          <div class="gm-stat-value" id="gStatBattery">—</div>
-          <div class="gm-stat-label">Body Battery</div>
-          <div class="gm-stat-sub" id="gStatBatterySub">/ 100</div>
-        </div>
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">📶</div>
-          <div class="gm-stat-value" id="gStatHrv" style="font-size:14px">—</div>
-          <div class="gm-stat-label">HRV Status</div>
-          <div class="gm-stat-sub" id="gStatHrvSub"></div>
-        </div>
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">👟</div>
-          <div class="gm-stat-value" id="gStatSteps">—</div>
-          <div class="gm-stat-label">Steps</div>
-          <div class="gm-stat-sub" id="gStatStepsSub">today</div>
-        </div>
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">🩺</div>
-          <div class="gm-stat-value" id="gStatHealth" style="font-size:14px">—</div>
-          <div class="gm-stat-label">Health Status</div>
-          <div class="gm-stat-sub" id="gStatHealthSub"></div>
-        </div>
-        <div class="gm-stat-tile">
-          <div class="gm-stat-icon">🔋</div>
-          <div class="gm-stat-value" id="gStatRecovery">—</div>
-          <div class="gm-stat-label">Recovery</div>
-          <div class="gm-stat-sub" id="gStatRecoverySub">hours</div>
-        </div>
-      </div>
-
-      <div class="gm-garmin-form">
-        <div class="gm-garmin-row">
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">Resting HR (bpm)</div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Resting HR (bpm)</div>
             <input type="number" class="goal-input" id="gInRhr" placeholder="f.eks. 52" min="30" max="120">
           </div>
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">Body Battery (0–100)</div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Body Battery (0–100)</div>
             <input type="number" class="goal-input" id="gInBattery" placeholder="f.eks. 78" min="0" max="100">
           </div>
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">HRV Status</div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">HRV Status</div>
             <select class="hb-select" id="gInHrv" style="width:100%">
               <option value="">— Vælg —</option>
               <option value="Poor">Poor</option>
@@ -1578,13 +1576,23 @@
             </select>
           </div>
         </div>
-        <div class="gm-garmin-row">
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">Steps</div>
+        <div class="rm-input-row">
+          <div class="rm-input-group">
+            <div class="rm-input-label">Steps</div>
             <input type="number" class="goal-input" id="gInSteps" placeholder="f.eks. 8400" min="0">
           </div>
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">Health Status</div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Respiration (ånd/min)</div>
+            <input type="number" class="goal-input" id="gInResp" placeholder="f.eks. 14" min="5" max="40">
+          </div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Pulse Ox (%)</div>
+            <input type="number" class="goal-input" id="gInSpO2" placeholder="f.eks. 97" min="80" max="100">
+          </div>
+        </div>
+        <div class="rm-input-row">
+          <div class="rm-input-group">
+            <div class="rm-input-label">Health Status</div>
             <select class="hb-select" id="gInHealth" style="width:100%">
               <option value="">— Vælg —</option>
               <option value="Poor">Poor</option>
@@ -1593,13 +1601,24 @@
               <option value="Excellent">Excellent</option>
             </select>
           </div>
-          <div class="gm-garmin-group">
-            <div class="gm-garmin-lbl">Recovery (timer)</div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Recovery (timer)</div>
             <input type="number" class="goal-input" id="gInRecovery" placeholder="f.eks. 20" min="0" max="96">
           </div>
+          <div class="rm-input-group">
+            <div class="rm-input-label">Health Snapshot</div>
+            <select class="hb-select" id="gInSnapshot" style="width:100%">
+              <option value="">— Vælg —</option>
+              <option value="Poor">Poor</option>
+              <option value="Fair">Fair</option>
+              <option value="Good">Good</option>
+              <option value="Excellent">Excellent</option>
+            </select>
+          </div>
         </div>
-        <div class="gm-garmin-row" style="justify-content:flex-end">
-          <button class="goal-add-btn" id="gSaveBtn">Gem Garmin data</button>
+        <div class="rm-input-row">
+          <input type="text" class="goal-input" id="rmNotesInput" placeholder="Notes (optional)…" style="flex:1">
+          <button class="goal-add-btn" id="rmUpdateBtn">Gem recovery data</button>
         </div>
       </div>
 
@@ -2811,8 +2830,11 @@ function calculateRecoveryScore(sleep, bodyTemp, stressLevel) {
     else if (bodyTemp < 36.0 || bodyTemp > 37.2) tempScore = 15;
     else if (bodyTemp < 36.1 || bodyTemp > 37.0) tempScore = 22;
   }
-  const stressMap   = { Low: 30, Medium: 20, High: 10, 'Very High': 3 };
-  const stressScore = stressLevel ? (stressMap[stressLevel] || 15) : 15;
+  let stressScore = 15;
+  if (stressLevel != null && stressLevel !== '') {
+    const s = parseFloat(stressLevel);
+    if (!isNaN(s)) stressScore = s <= 25 ? 30 : s <= 50 ? 20 : s <= 75 ? 10 : 3;
+  }
   return sleepScore + tempScore + stressScore;
 }
 
@@ -2861,7 +2883,7 @@ function getSmartAlerts() {
       alerts.push('😴 Low sleep detected — reduce training intensity today');
     if (todayRec.bodyTemp != null && todayRec.bodyTemp > 37.2)
       alerts.push('🔥 Temperature elevated — extra hydration needed');
-    if (todayRec.stressLevel === 'Very High')
+    if (todayRec.stressLevel != null && parseFloat(todayRec.stressLevel) > 70)
       alerts.push('🧠 High stress detected — consider recovery activities and meditation');
   }
   return alerts;
@@ -2916,29 +2938,6 @@ function renderRecoveryChart() {
   }
 }
 
-function updateRecovery() {
-  const sleepRaw  = document.getElementById('rmSleepInput').value;
-  const tempRaw   = document.getElementById('rmTempInput').value;
-  const stress    = document.getElementById('rmStressInput').value;
-  const notes     = document.getElementById('rmNotesInput').value.trim();
-  const sleep     = sleepRaw  !== '' ? parseFloat(sleepRaw)  : null;
-  const bodyTemp  = tempRaw   !== '' ? parseFloat(tempRaw)   : null;
-  if (sleep === null && bodyTemp === null && !stress) return;
-  const today   = getActiveDateString();
-  const history = loadRecoveryHistory();
-  const idx     = history.findIndex(r => r.date === today);
-  const score   = calculateRecoveryScore(sleep, bodyTemp, stress || null);
-  const entry   = { date: today, sleep, bodyTemp, stressLevel: stress || null, recoveryScore: score, notes };
-  if (idx !== -1) history[idx] = entry; else history.push(entry);
-  storeSet('lifeos_recovery', history);
-  document.getElementById('rmSleepInput').value  = '';
-  document.getElementById('rmTempInput').value   = '';
-  document.getElementById('rmStressInput').value = '';
-  document.getElementById('rmNotesInput').value  = '';
-  renderRecovery();
-  window.dispatchEvent(new CustomEvent('data-changed'));
-}
-
 // ── Garmin Daily Stats ──
 
 function loadGarminHistory() { return storeGet('lifeos_garmin') || []; }
@@ -2946,35 +2945,72 @@ function getTodayGarmin() {
   return loadGarminHistory().find(function(r) { return r.date === getActiveDateString(); }) || null;
 }
 
-function saveGarmin() {
+function updateRecovery() {
+  const sleepRaw  = document.getElementById('rmSleepInput').value;
+  const tempRaw   = document.getElementById('rmTempInput').value;
+  const stress    = document.getElementById('rmStressInput').value;
+  const notes     = document.getElementById('rmNotesInput').value.trim();
+  const sleep     = sleepRaw !== '' ? parseFloat(sleepRaw) : null;
+  const bodyTemp  = tempRaw  !== '' ? parseFloat(tempRaw)  : null;
+
+  // Recovery entry
+  if (sleep !== null || bodyTemp !== null || stress !== '') {
+    const today   = getActiveDateString();
+    const history = loadRecoveryHistory();
+    const idx     = history.findIndex(r => r.date === today);
+    const score   = calculateRecoveryScore(sleep, bodyTemp, stress !== '' ? stress : null);
+    const entry   = { date: today, sleep, bodyTemp, stressLevel: stress !== '' ? parseFloat(stress) : null, recoveryScore: score, notes };
+    if (idx !== -1) history[idx] = entry; else history.push(entry);
+    storeSet('lifeos_recovery', history);
+  }
+
+  // Garmin entry
   var rhr      = document.getElementById('gInRhr').value;
   var battery  = document.getElementById('gInBattery').value;
   var hrv      = document.getElementById('gInHrv').value;
   var steps    = document.getElementById('gInSteps').value;
+  var resp     = document.getElementById('gInResp').value;
+  var spo2     = document.getElementById('gInSpO2').value;
   var health   = document.getElementById('gInHealth').value;
   var recovery = document.getElementById('gInRecovery').value;
-  if (!rhr && !battery && !hrv && !steps && !health && !recovery) return;
-  var today   = getActiveDateString();
-  var history = loadGarminHistory();
-  var idx     = history.findIndex(function(r) { return r.date === today; });
-  var existing = idx !== -1 ? history[idx] : {};
-  var entry = {
-    date:     today,
-    rhr:      rhr      !== '' ? parseInt(rhr,10)      : existing.rhr      || null,
-    battery:  battery  !== '' ? parseInt(battery,10)  : existing.battery  || null,
-    hrv:      hrv      || existing.hrv      || null,
-    steps:    steps    !== '' ? parseInt(steps,10)    : existing.steps    || null,
-    health:   health   || existing.health   || null,
-    recovery: recovery !== '' ? parseInt(recovery,10) : existing.recovery || null
-  };
-  if (idx !== -1) history[idx] = entry; else history.push(entry);
-  storeSet('lifeos_garmin', history);
-  document.getElementById('gInRhr').value      = '';
-  document.getElementById('gInBattery').value  = '';
-  document.getElementById('gInHrv').value      = '';
-  document.getElementById('gInSteps').value    = '';
-  document.getElementById('gInHealth').value   = '';
-  document.getElementById('gInRecovery').value = '';
+  var snapshot = document.getElementById('gInSnapshot').value;
+  if (rhr || battery || hrv || steps || resp || spo2 || health || recovery || snapshot) {
+    var gToday   = getActiveDateString();
+    var gHistory = loadGarminHistory();
+    var gIdx     = gHistory.findIndex(function(r) { return r.date === gToday; });
+    var ex       = gIdx !== -1 ? gHistory[gIdx] : {};
+    var gEntry   = {
+      date:     gToday,
+      rhr:      rhr      !== '' ? parseInt(rhr,10)      : (ex.rhr      ?? null),
+      battery:  battery  !== '' ? parseInt(battery,10)  : (ex.battery  ?? null),
+      hrv:      hrv      || ex.hrv      || null,
+      steps:    steps    !== '' ? parseInt(steps,10)    : (ex.steps    ?? null),
+      resp:     resp     !== '' ? parseFloat(resp)      : (ex.resp     ?? null),
+      spo2:     spo2     !== '' ? parseFloat(spo2)      : (ex.spo2     ?? null),
+      health:   health   || ex.health   || null,
+      recovery: recovery !== '' ? parseInt(recovery,10) : (ex.recovery ?? null),
+      snapshot: snapshot || ex.snapshot || null
+    };
+    if (gIdx !== -1) gHistory[gIdx] = gEntry; else gHistory.push(gEntry);
+    storeSet('lifeos_garmin', gHistory);
+  }
+
+  // Clear inputs
+  document.getElementById('rmSleepInput').value  = '';
+  document.getElementById('rmTempInput').value   = '';
+  document.getElementById('rmStressInput').value = '';
+  document.getElementById('rmNotesInput').value  = '';
+  document.getElementById('gInRhr').value        = '';
+  document.getElementById('gInBattery').value    = '';
+  document.getElementById('gInHrv').value        = '';
+  document.getElementById('gInSteps').value      = '';
+  document.getElementById('gInResp').value       = '';
+  document.getElementById('gInSpO2').value       = '';
+  document.getElementById('gInHealth').value     = '';
+  document.getElementById('gInRecovery').value   = '';
+  document.getElementById('gInSnapshot').value   = '';
+
+  renderRecovery();
   renderGarmin();
   window.dispatchEvent(new CustomEvent('data-changed'));
 }
@@ -3002,32 +3038,32 @@ function healthColor(v) {
 
 function renderGarmin() {
   var g = getTodayGarmin();
-  var set = function(id, val, unit, colorCls) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = val !== null && val !== undefined ? val : '—';
-    el.className = 'gm-stat-value' + (colorCls ? ' ' + colorCls : '');
-    if (id.endsWith('Sub') && unit) el.textContent = unit;
-  };
+  var allIds = ['gStatRhr','gStatBattery','gStatHrv','gStatSteps','gStatResp','gStatSpO2','gStatHealth','gStatRecovery','gStatSnapshot'];
   if (!g) {
-    ['gStatRhr','gStatBattery','gStatHrv','gStatSteps','gStatHealth','gStatRecovery'].forEach(function(id) {
+    allIds.forEach(function(id) {
       var el = document.getElementById(id);
       if (el) { el.textContent = '—'; el.className = 'gm-stat-value'; }
     });
     return;
   }
-  var rhrEl = document.getElementById('gStatRhr');
-  if (rhrEl) { rhrEl.textContent = g.rhr !== null ? g.rhr : '—'; rhrEl.className = 'gm-stat-value ' + garminColor(g.rhr, 50, 65); }
-  var batEl = document.getElementById('gStatBattery');
-  if (batEl) { batEl.textContent = g.battery !== null ? g.battery : '—'; batEl.className = 'gm-stat-value ' + garminColor(g.battery, 25, 50); }
-  var hrvEl = document.getElementById('gStatHrv');
-  if (hrvEl) { hrvEl.textContent = g.hrv || '—'; hrvEl.className = 'gm-stat-value ' + hrvColor(g.hrv); if (g.hrv) hrvEl.style.fontSize='14px'; }
-  var stpEl = document.getElementById('gStatSteps');
-  if (stpEl) { stpEl.textContent = g.steps !== null ? g.steps.toLocaleString() : '—'; stpEl.className = 'gm-stat-value ' + garminColor(g.steps, 5000, 8000); }
-  var hlEl = document.getElementById('gStatHealth');
-  if (hlEl) { hlEl.textContent = g.health || '—'; hlEl.className = 'gm-stat-value ' + healthColor(g.health); if (g.health) hlEl.style.fontSize='14px'; }
-  var recEl = document.getElementById('gStatRecovery');
-  if (recEl) { recEl.textContent = g.recovery !== null ? g.recovery : '—'; recEl.className = 'gm-stat-value ' + garminColor(g.recovery, 12, 20); }
+  function setTile(id, text, cls) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'gm-stat-value' + (cls ? ' ' + cls : '');
+  }
+  // RHR: lower is better — good ≤55, mid ≤65
+  setTile('gStatRhr',      g.rhr      != null ? g.rhr      : '—', g.rhr != null ? (g.rhr <= 55 ? 'gm-good' : g.rhr <= 65 ? 'gm-mid' : 'gm-bad') : '');
+  setTile('gStatBattery',  g.battery  != null ? g.battery  : '—', garminColor(g.battery, 25, 50));
+  setTile('gStatHrv',      g.hrv      || '—',                      hrvColor(g.hrv));
+  setTile('gStatSteps',    g.steps    != null ? g.steps.toLocaleString() : '—', garminColor(g.steps, 5000, 8000));
+  // Respiration: 12-20 is normal — flag outside that
+  setTile('gStatResp',     g.resp     != null ? g.resp     : '—', g.resp != null ? (g.resp >= 12 && g.resp <= 20 ? 'gm-good' : g.resp < 25 ? 'gm-mid' : 'gm-bad') : '');
+  // SpO2: 95%+ good, 92-95 mid, below bad
+  setTile('gStatSpO2',     g.spo2     != null ? g.spo2+'%' : '—', g.spo2 != null ? (g.spo2 >= 95 ? 'gm-good' : g.spo2 >= 92 ? 'gm-mid' : 'gm-bad') : '');
+  setTile('gStatHealth',   g.health   || '—',                      healthColor(g.health));
+  setTile('gStatRecovery', g.recovery != null ? g.recovery : '—', garminColor(g.recovery, 12, 20));
+  setTile('gStatSnapshot', g.snapshot || '—',                      healthColor(g.snapshot));
 }
 
 function renderRecovery() {
@@ -3075,18 +3111,19 @@ function renderRecovery() {
     tempStat.className  = 'rm-metric-status rm-status-mid';
   }
 
-  // Stress
+  // Stress (0–100 numeric)
   const stressDisp = document.getElementById('rmStressDisplay');
   const stressSub  = document.getElementById('rmStressSub');
   const stressStat = document.getElementById('rmStressStatus');
-  const iconMap = { Low:'😌', Medium:'😐', High:'😤', 'Very High':'😰' };
-  const clsMap  = { Low:'high', Medium:'mid', High:'low', 'Very High':'low' };
-  const numMap  = { Low:'2/10', Medium:'5/10', High:'7/10', 'Very High':'9/10' };
-  if (today && today.stressLevel) {
-    stressDisp.textContent = iconMap[today.stressLevel] || '—';
-    stressSub.textContent  = today.stressLevel + ' — ' + (numMap[today.stressLevel] || '');
-    stressStat.textContent = today.stressLevel;
-    stressStat.className   = 'rm-metric-status rm-status-' + (clsMap[today.stressLevel] || 'mid');
+  if (today && today.stressLevel != null) {
+    const sv = parseFloat(today.stressLevel);
+    const sCls  = sv <= 25 ? 'high' : sv <= 50 ? 'mid' : 'low';
+    const sLbl  = sv <= 25 ? 'Low' : sv <= 50 ? 'Moderate' : sv <= 75 ? 'High' : 'Very High';
+    const sIcon = sv <= 25 ? '😌' : sv <= 50 ? '😐' : sv <= 75 ? '😤' : '😰';
+    stressDisp.textContent = sIcon;
+    stressSub.textContent  = sv + '/100 — ' + sLbl;
+    stressStat.textContent = sLbl;
+    stressStat.className   = 'rm-metric-status rm-status-' + sCls;
   } else {
     stressDisp.textContent = '—';
     stressSub.textContent = 'Not set'; stressStat.textContent = '—';
@@ -3511,8 +3548,6 @@ renderHabits();
 
 document.getElementById('rmUpdateBtn').addEventListener('click', updateRecovery);
 renderRecovery();
-
-document.getElementById('gSaveBtn').addEventListener('click', saveGarmin);
 renderGarmin();
 
 renderRecommendations();
