@@ -895,6 +895,35 @@
     .poc-rot-mini.del:hover { color: var(--danger); }
     .poc-rot-today-btn { background: rgba(255,255,255,0.04); border: 1px solid #1C1C1C; color: var(--text-tertiary); font-size: 9px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 8px; border-radius: 999px; cursor: pointer; text-transform: uppercase; font-family: inherit; }
     .poc-rot-today-tag { font-size: 8px; font-weight: 800; letter-spacing: 0.10em; color: var(--success); padding: 2px 6px; border-radius: 999px; background: rgba(255,255,255,0.08); }
+    /* Exercise cards */
+    .poc-ex-card { background: #0E0E0E; border: 1px solid #1C1C1C; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+    .poc-ex-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .poc-ex-card-name { font-size: 15px; font-weight: 700; color: var(--text-primary); flex: 1; line-height: 1.3; }
+    .poc-ex-card-plan { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin-bottom: 10px; }
+
+    .poc-rx-inline { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 9px; margin-bottom: 10px; background: #111111; border: 1px solid #1C1C1C; }
+    .poc-rx-inline.rx-up { background: linear-gradient(90deg, rgba(110,231,183,0.06), transparent); border-color: rgba(110,231,183,0.18); }
+    .poc-rx-inline.rx-down { background: linear-gradient(90deg, rgba(255,107,107,0.06), transparent); border-color: rgba(255,107,107,0.18); }
+    .poc-rx-inline-text { flex: 1; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .poc-rx-inline-tag { flex-shrink: 0; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+    .poc-rx-inline-tag.up { background: rgba(110,231,183,0.12); color: var(--success); }
+    .poc-rx-inline-tag.down { background: rgba(255,107,107,0.12); color: var(--danger); }
+    .poc-rx-inline-tag.hold { background: rgba(255,193,7,0.12); color: var(--warning); }
+
+    .poc-sets-today { margin-bottom: 10px; }
+    .poc-set-row-logged { display: grid; grid-template-columns: 26px 1fr auto; gap: 6px; align-items: center; padding: 5px 8px; font-size: 12px; background: #111111; border-radius: 6px; margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+    .poc-set-row-num { font-size: 9px; font-weight: 800; letter-spacing: 0.10em; color: var(--text-tertiary); text-transform: uppercase; font-family: var(--font-mono); }
+    .poc-set-row-val { font-weight: 700; }
+    .poc-set-row-del { background: transparent; border: none; color: #555; font-size: 14px; cursor: pointer; padding: 0 4px; line-height: 1; }
+    .poc-set-row-del:hover { color: var(--danger); }
+
+    .poc-log-inline-wt { display: grid; grid-template-columns: auto 1fr auto; gap: 4px; margin-bottom: 8px; align-items: stretch; }
+
+    .poc-card-stats-toggle { width: 100%; text-align: left; background: transparent; border: none; border-top: 1px solid #1C1C1C; color: var(--text-tertiary); font-size: 10px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; cursor: pointer; padding: 8px 0 0; margin-top: 10px; display: flex; align-items: center; gap: 6px; font-family: inherit; transition: color 0.15s; }
+    .poc-card-stats-toggle:hover { color: var(--text-secondary); }
+    .poc-card-stats-body { padding-top: 10px; }
+
+
 
     @media (max-width: 480px) {
       .poc-log-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -1085,115 +1114,27 @@ JSON format:
   <div class="section-title">Progressive Overload Coach</div>
   <div class="gm-card">
 
-    <button class="poc-day-pill" id="pocDayPill" type="button" onclick="pocGoToToday()">
+    <button class="poc-day-pill" id="pocDayPill" type="button">
       <span id="pocDayDate">−</span>
       <span style="color:#666">·</span>
       <span class="poc-day-split" id="pocDaySplit">−</span>
     </button>
 
-    <div style="margin-bottom:16px">
-      <div class="poc-seg-row">
-        <span class="poc-seg-label">Gym</span>
-        <div class="poc-seg-ctrl" id="pocGymSeg"></div>
-      </div>
+    <!-- Fallback: manual day picker (shown when no calendar workout) -->
+    <div id="pocFallbackPicker" style="display:none;margin-bottom:16px">
       <div class="poc-seg-row" style="margin-bottom:0">
         <span class="poc-seg-label">Day</span>
         <div class="poc-seg-ctrl" id="pocDaySeg"></div>
       </div>
     </div>
 
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">Exercise</div>
-      <div class="poc-ex-bar">
-        <select class="poc-ex-select" id="pocExSelect" onchange="pocSelectEx(this.value)"></select>
-        <button class="poc-icon-btn" id="pocAddExBtn" onclick="pocOpenAddEx()" title="Add exercise" aria-label="Add exercise">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button class="poc-icon-btn" id="pocEditExBtn" onclick="pocOpenEditEx()" title="Edit exercise" aria-label="Edit">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-        </button>
-      </div>
-      <div id="pocNoEx" class="poc-no-ex" style="display:none">No exercises here yet — tap + to add one.</div>
-    </div>
+    <!-- Exercise cards -->
+    <div id="pocExCardList"></div>
 
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">Log today's top set</div>
-      <div id="pocBwBanner" class="poc-bw-banner" style="display:none">Bodyweight — log reps only</div>
-      <div id="pocLastSet" class="poc-last-set" style="display:none">
-        <span class="poc-last-label">Last time</span>
-        <span id="pocLastVal" class="poc-last-val">−</span>
-        <span id="pocLastMeta" class="poc-last-meta">−</span>
-      </div>
-      <div class="poc-log-grid" id="pocLogGrid">
-        <div class="poc-field" id="pocWtField">
-          <label id="pocWtLabel">Weight (kg)</label>
-          <div class="poc-wt-row">
-            <button class="poc-wt-step-btn" id="pocWtDown" type="button">−</button>
-            <input type="number" class="poc-wt-input" id="pocWtInput" step="0.5" inputmode="decimal" placeholder="0">
-            <button class="poc-wt-step-btn" id="pocWtUp" type="button">+</button>
-          </div>
-        </div>
-        <div class="poc-field">
-          <label>Reps</label>
-          <div class="poc-reps-row" id="pocRepsRow">
-            <button type="button" class="poc-reps-pill" data-v="4">4</button>
-            <button type="button" class="poc-reps-pill" data-v="5">5</button>
-            <button type="button" class="poc-reps-pill" data-v="6">6</button>
-            <button type="button" class="poc-reps-pill" data-v="7">7</button>
-            <button type="button" class="poc-reps-pill is-active" data-v="8">8</button>
-            <button type="button" class="poc-reps-pill" data-v="9">9</button>
-            <button type="button" class="poc-reps-pill" data-v="10">10</button>
-            <button type="button" class="poc-reps-pill" data-v="11">11</button>
-            <button type="button" class="poc-reps-pill" data-v="12">12</button>
-          </div>
-        </div>
-      </div>
-      <button class="wt-save-btn" id="pocLogBtn" style="width:100%">Log set</button>
-    </div>
+    <button class="poc-add-row-btn" onclick="pocOpenAddEx()" style="margin-bottom:16px">+ Add exercise</button>
 
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">Next session</div>
-      <div id="pocRxWrap"></div>
-    </div>
-
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">Stats</div>
-      <div class="poc-stats-row">
-        <div class="poc-stat-box">
-          <div class="poc-stat-label">Est. 1RM</div>
-          <div class="poc-stat-val" id="pocOneRm">−</div>
-        </div>
-        <div class="poc-stat-box">
-          <div class="poc-stat-label">Best set</div>
-          <div class="poc-stat-val" id="pocBestSet">−</div>
-        </div>
-        <div class="poc-stat-box">
-          <div class="poc-stat-label">Sessions</div>
-          <div class="poc-stat-val" id="pocSessions">−</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">Trend (last 10 sessions)</div>
-      <svg id="pocSparkline" viewBox="0 0 300 60" preserveAspectRatio="none" style="width:100%;height:60px;display:block">
-        <defs>
-          <linearGradient id="pocSparkGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
-            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div id="pocSparkEmpty" class="poc-spark-empty">Need 2+ sessions for trend</div>
-    </div>
-
-    <div style="margin-bottom:18px">
-      <div class="poc-sub-title">History</div>
-      <div id="pocHistory"><div class="poc-empty">No logs yet.</div></div>
-    </div>
-
+    <!-- Today's workout summary -->
     <div>
-      <div class="poc-sub-title">Today's workout</div>
       <div class="poc-today-wo" id="pocTodayWo">
         <div class="poc-tw-head">
           <div>
@@ -1206,8 +1147,6 @@ JSON format:
           </div>
           <button class="poc-tw-done-tag" id="pocTwDoneBtn" type="button">Mark done</button>
         </div>
-        <ul class="poc-tw-list" id="pocTwList"></ul>
-        <div id="pocTwEmpty" class="poc-empty">No sets logged today.</div>
       </div>
       <button class="pr-toggle-btn" id="pocPastToggle" onclick="pocTogglePast()">
         <span class="pr-toggle-icon" id="pocPastIcon">▶</span>
@@ -1219,7 +1158,7 @@ JSON format:
 
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid #1C1C1C;display:flex;justify-content:flex-end">
       <button class="poc-icon-btn" id="pocSettingsBtn" onclick="pocOpenSettings()" title="Settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
   </div>
@@ -1232,10 +1171,6 @@ JSON format:
     <div class="poc-modal-field">
       <label>Name</label>
       <input type="text" class="goal-input" id="pocExName" placeholder="e.g. Incline DB press" style="font-size:14px;background:#080808">
-    </div>
-    <div class="poc-modal-field">
-      <label>Gym</label>
-      <div class="poc-modal-seg" id="pocExGymSeg"></div>
     </div>
     <div class="poc-modal-field">
       <label>Day</label>
@@ -1298,11 +1233,6 @@ JSON format:
         <button data-u="kg">kg</button>
         <button data-u="lb">lb</button>
       </div>
-    </div>
-    <div class="poc-set-section">
-      <h4>Gyms</h4>
-      <div class="poc-set-list" id="pocSetGyms"></div>
-      <button class="poc-add-row-btn" id="pocSetAddGym">+ Add gym</button>
     </div>
     <div class="poc-set-section">
       <h4>Days</h4>
@@ -2855,417 +2785,566 @@ function cwStartDay(di, day) {
 })();
 
 // ==================== PROGRESSIVE OVERLOAD COACH ====================
-const POC_CONFIG = {
-  units: "kg",
-  gyms: [
-    { id: "home", name: "Home Gym" },
-    { id: "comm", name: "Commercial Gym" }
-  ],
-  days: [
-    { id: "push", name: "Push" },
-    { id: "pull", name: "Pull" },
-    { id: "legs", name: "Legs" }
-  ],
-  splitRotation: ["Push", "Pull", "Legs", "Rest"],
-  splitAnchor: { date: "2026-05-12", index: 3 },
-  defaultExercises: [
-    { name: "Bench press",       gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5,  startWeight: 60 },
-    { name: "Overhead press",    gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5,  startWeight: 35 },
-    { name: "Tricep pushdown",   gym: "comm", day: "push", repMin: 8, repMax: 12, step: 2.5,  startWeight: 25 },
-    { name: "Pull-ups",          gym: "both", day: "pull", repMin: 5, repMax: 10, step: 1,    startWeight: 0,  bw: true },
-    { name: "Barbell row",       gym: "comm", day: "pull", repMin: 6, repMax: 10, step: 2.5,  startWeight: 50 },
-    { name: "Bicep curl",        gym: "comm", day: "pull", repMin: 8, repMax: 12, step: 1.25, startWeight: 15 },
-    { name: "Back squat",        gym: "comm", day: "legs", repMin: 5, repMax: 8,  step: 5,    startWeight: 80 },
-    { name: "Romanian deadlift", gym: "comm", day: "legs", repMin: 6, repMax: 10, step: 5,    startWeight: 60 },
-    { name: "Leg press",         gym: "comm", day: "legs", repMin: 8, repMax: 12, step: 5,    startWeight: 100 }
-  ]
-};
-
 (function pocInit() {
   const LS_KEY = 'lifeos_poc';
   const WO_DONE_KEY = 'lifeos_poc_done';
 
   function pocUid() { return 'ex_' + Date.now() + '_' + Math.floor(Math.random() * 9999); }
-  function pocEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function pocEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function pocDateKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+  // Migrate old flat log format { date, weight, reps } to day-centric { date, sets: [{weight, reps}] }
+  function pocMigrateLogsFormat(logs) {
+    if (!logs || typeof logs !== 'object') return {};
+    var result = {};
+    Object.keys(logs).forEach(function(exId) {
+      var entries = logs[exId];
+      if (!Array.isArray(entries) || !entries.length) { result[exId] = []; return; }
+      if (entries[0] && entries[0].sets) { result[exId] = entries; return; }
+      var dayMap = {};
+      entries.forEach(function(e) {
+        if (!dayMap[e.date]) dayMap[e.date] = [];
+        dayMap[e.date].push({ weight: e.weight || 0, reps: e.reps || 0 });
+      });
+      result[exId] = Object.keys(dayMap).sort().map(function(date) { return { date: date, sets: dayMap[date] }; });
+    });
+    return result;
+  }
 
   function pocNormalize(s) {
     s = s || {};
-    s.units = s.units || POC_CONFIG.units || 'kg';
-    s.gyms  = (Array.isArray(s.gyms) && s.gyms.length) ? s.gyms : POC_CONFIG.gyms.slice();
-    s.days  = (Array.isArray(s.days) && s.days.length) ? s.days : POC_CONFIG.days.slice();
+    s.units = s.units || 'kg';
+    s.days = (Array.isArray(s.days) && s.days.length) ? s.days : [
+      { id: 'push', name: 'Push' }, { id: 'pull', name: 'Pull' }, { id: 'legs', name: 'Legs' }
+    ];
     if (!Array.isArray(s.exercises)) {
-      s.exercises = POC_CONFIG.defaultExercises.map((e, i) => Object.assign({ id: 'seed_' + i + '_' + Date.now() }, e));
+      s.exercises = [
+        { id: 'seed_0', name: 'Bench press',       day: 'push', repMin: 5, repMax: 8,  step: 2.5,  startWeight: 60,  bw: false },
+        { id: 'seed_1', name: 'Overhead press',    day: 'push', repMin: 5, repMax: 8,  step: 2.5,  startWeight: 35,  bw: false },
+        { id: 'seed_2', name: 'Tricep pushdown',   day: 'push', repMin: 8, repMax: 12, step: 2.5,  startWeight: 25,  bw: false },
+        { id: 'seed_3', name: 'Pull-ups',          day: 'pull', repMin: 5, repMax: 10, step: 1,    startWeight: 0,   bw: true  },
+        { id: 'seed_4', name: 'Barbell row',       day: 'pull', repMin: 6, repMax: 10, step: 2.5,  startWeight: 50,  bw: false },
+        { id: 'seed_5', name: 'Bicep curl',        day: 'pull', repMin: 8, repMax: 12, step: 1.25, startWeight: 15,  bw: false },
+        { id: 'seed_6', name: 'Back squat',        day: 'legs', repMin: 5, repMax: 8,  step: 5,    startWeight: 80,  bw: false },
+        { id: 'seed_7', name: 'Romanian deadlift', day: 'legs', repMin: 6, repMax: 10, step: 5,    startWeight: 60,  bw: false },
+        { id: 'seed_8', name: 'Leg press',         day: 'legs', repMin: 8, repMax: 12, step: 5,    startWeight: 100, bw: false }
+      ];
     }
-    s.logs = (s.logs && typeof s.logs === 'object') ? s.logs : {};
-    s.filterGym = s.filterGym || s.gyms[0].id;
+    s.logs = pocMigrateLogsFormat(s.logs);
     s.filterDay = s.filterDay || s.days[0].id;
     if (!Array.isArray(s.splitRotation) || !s.splitRotation.length) {
-      s.splitRotation = POC_CONFIG.splitRotation.slice();
+      s.splitRotation = ['Push', 'Pull', 'Legs', 'Rest'];
     }
     if (!s.splitAnchor || !s.splitAnchor.date || s.splitAnchor.index == null) {
-      s.splitAnchor = { date: POC_CONFIG.splitAnchor.date, index: POC_CONFIG.splitAnchor.index };
+      s.splitAnchor = { date: '2026-05-12', index: 3 };
     }
     return s;
   }
 
   function pocLoad() {
-    try { const raw = localStorage.getItem(LS_KEY); if (raw) return pocNormalize(JSON.parse(raw)); } catch (e) {}
+    try { var raw = localStorage.getItem(LS_KEY); if (raw) return pocNormalize(JSON.parse(raw)); } catch (e) {}
     return pocNormalize({});
   }
   function pocSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {} }
 
-  let st = pocLoad();
-  let pocCurrentExId = null;
-  let pocSelectedReps = 8;
-  let pocPastOpen = false;
+  var st = pocLoad();
+  var pocSelectedExId = null;
+  var pocPastOpen = false;
+  var pocCardReps = {};
+  var pocTodayCalWo = undefined; // cached per render cycle
 
-  function pocGetUnit() { return st.units; }
+  function pocGetUnit() { return st.units || 'kg'; }
 
   function pocGetLogs(exId) {
-    const logs = st.logs[exId];
-    if (!Array.isArray(logs)) return [];
-    return logs.slice().sort((a, b) => a.date.localeCompare(b.date));
+    var entries = st.logs[exId];
+    if (!Array.isArray(entries)) return [];
+    return entries.slice().sort(function(a, b) { return a.date.localeCompare(b.date); });
   }
 
-  function pocGetTodayLogs() {
-    const today = pocDateKey();
-    const result = [];
-    for (const exId of Object.keys(st.logs)) {
-      const ex = st.exercises.find(e => e.id === exId);
-      if (!ex) continue;
-      const log = (st.logs[exId] || []).find(l => l.date === today);
-      if (log) result.push({ ex, log });
-    }
-    return result;
+  function pocGetTodaySets(exId) {
+    var today = pocDateKey();
+    var dayEntry = (st.logs[exId] || []).find(function(e) { return e.date === today; });
+    return dayEntry ? dayEntry.sets : [];
+  }
+
+  function pocBestSet(dayEntry) {
+    if (!dayEntry || !dayEntry.sets || !dayEntry.sets.length) return { weight: 0, reps: 0 };
+    return dayEntry.sets.reduce(function(best, s) {
+      return pocEst1RM(s.weight || 0, s.reps || 0) > pocEst1RM(best.weight || 0, best.reps || 0) ? s : best;
+    }, dayEntry.sets[0]);
   }
 
   function pocEst1RM(w, r) { if (!r || r < 2) return w || 0; return (w || 0) * (1 + r / 30); }
   function pocRoundStep(v, s) { return Math.round(v / s) * s; }
 
   function pocGetRx(ex, logs) {
-    const u = pocGetUnit();
+    var u = pocGetUnit();
     if (!logs.length) {
-      const w = ex.bw ? null : (ex.startWeight || 20);
+      var w = ex.bw ? null : (ex.startWeight || 20);
       return { type: 'start', weight: w, reps: ex.repMin || 6, reason: 'No history — start here.', tag: 'First session' };
     }
-    const last = logs[logs.length - 1];
-    const recent = logs.slice(-5);
-    const lw = last.weight, lr = last.reps;
+    var last = logs[logs.length - 1];
+    var lastBest = pocBestSet(last);
+    var lw = lastBest.weight, lr = lastBest.reps;
 
-    if (recent.length >= 3) {
-      const last3 = recent.slice(-3);
-      if (last3.every(l => l.reps < (ex.repMin || 6))) {
-        const newW = ex.bw ? null : pocRoundStep((lw || 0) * 0.9, ex.step || 2.5);
+    if (logs.length >= 3) {
+      var last3 = logs.slice(-3).map(function(l) { return pocBestSet(l); });
+      if (last3.every(function(s) { return s.reps < (ex.repMin || 6); })) {
+        var newW = ex.bw ? null : pocRoundStep((lw || 0) * 0.9, ex.step || 2.5);
         return { type: 'down', weight: newW, reps: ex.repMin || 6, reason: 'Missed rep target 3× in a row — deload to ' + newW + u + '.', tag: 'Deload' };
       }
     }
-
     if (!ex.bw && lr < (ex.repMax || 12)) {
       return { type: 'hold', weight: lw, reps: lr + 1, reason: 'Hit ' + lr + ' reps — aim for ' + (lr + 1) + ' next session.', tag: 'Progress reps' };
     }
-
-    const step = ex.step || 2.5;
     if (ex.bw) {
-      return { type: 'up', weight: null, reps: ex.repMin || 6, reason: 'Hit ' + lr + ' reps — add weight or resistance next session.', tag: 'Level up' };
+      return { type: 'up', weight: null, reps: ex.repMin || 6, reason: 'Hit ' + lr + ' reps — add weight or resistance.', tag: 'Level up' };
     }
-    const newW = pocRoundStep((lw || 0) + step, step);
-    return { type: 'up', weight: newW, reps: ex.repMin || 6, reason: 'Hit ' + lr + ' reps at ' + lw + u + ' — increase to ' + newW + u + '.', tag: 'Add weight' };
+    var step = ex.step || 2.5;
+    var newWt = pocRoundStep((lw || 0) + step, step);
+    return { type: 'up', weight: newWt, reps: ex.repMin || 6, reason: 'Hit ' + lr + ' reps at ' + lw + u + ' — increase to ' + newWt + u + '.', tag: 'Add weight' };
   }
 
-  function pocGetFilteredExercises() {
-    return st.exercises.filter(e => {
-      const gymMatch = !e.gym || e.gym === 'both' || e.gym === st.filterGym;
-      const dayMatch = !e.day || e.day === st.filterDay;
-      return gymMatch && dayMatch;
+  function pocLogSet(exId, weight, reps) {
+    var today = pocDateKey();
+    if (!st.logs[exId]) st.logs[exId] = [];
+    var dayEntry = st.logs[exId].find(function(e) { return e.date === today; });
+    if (!dayEntry) {
+      dayEntry = { date: today, sets: [] };
+      st.logs[exId].push(dayEntry);
+    }
+    dayEntry.sets.push({ weight: weight, reps: reps });
+    pocSave();
+  }
+
+  function pocDeleteSet(exId, dateKey, setIdx) {
+    var dayEntry = (st.logs[exId] || []).find(function(e) { return e.date === dateKey; });
+    if (!dayEntry) return;
+    dayEntry.sets.splice(setIdx, 1);
+    if (!dayEntry.sets.length) {
+      st.logs[exId] = st.logs[exId].filter(function(e) { return e.date !== dateKey; });
+    }
+    pocSave();
+  }
+
+  // ---- Calendar integration ----
+  function pocGetTodayFromCalendar() {
+    var today = pocDateKey();
+    var events = [];
+    try { events = JSON.parse(localStorage.getItem('lifeos_events') || '[]'); } catch(e) {}
+    var todayEvent = events.find(function(e) {
+      return e.date === today && (e.category === 'Program' || e.category === 'Workout');
     });
+    if (!todayEvent) return null;
+
+    var prog = null;
+    try { prog = JSON.parse(localStorage.getItem('lifeos_custom_program') || 'null'); } catch(e) {}
+    if (prog && Array.isArray(prog.days)) {
+      var day = prog.days.find(function(d) { return d.date === today; });
+      if (day && Array.isArray(day.exercises)) {
+        return {
+          name: day.label ? ('Day ' + day.dayNumber + ': ' + day.label) : todayEvent.title,
+          exercises: day.exercises.filter(function(e) { return e.type !== 'cardio'; })
+        };
+      }
+    }
+
+    var prog21 = null;
+    try { prog21 = JSON.parse(localStorage.getItem('lifeos_21day_program') || 'null'); } catch(e) {}
+    if (prog21 && Array.isArray(prog21.workouts)) {
+      var workout = prog21.workouts.find(function(w) { return w.date === today; });
+      if (workout && Array.isArray(workout.exercises)) {
+        return { name: workout.name || todayEvent.title, exercises: workout.exercises };
+      }
+    }
+
+    return { name: todayEvent.title, exercises: [] };
   }
 
-  function pocGetCurrentEx() {
-    const filtered = pocGetFilteredExercises();
-    if (!filtered.length) return null;
-    let ex = filtered.find(e => e.id === pocCurrentExId);
-    if (!ex) { ex = filtered[0]; pocCurrentExId = ex.id; }
-    return ex;
+  function pocEnsureCalendarExercises(calExercises) {
+    var changed = false;
+    calExercises.forEach(function(calEx) {
+      if (!calEx.name) return;
+      var exists = st.exercises.find(function(e) { return e.name.toLowerCase() === calEx.name.toLowerCase(); });
+      if (!exists) {
+        var reps = parseInt(calEx.reps) || 8;
+        st.exercises.push({
+          id: pocUid(),
+          name: calEx.name,
+          day: 'push',
+          repMin: Math.max(reps - 2, 3),
+          repMax: reps + 2,
+          step: 2.5,
+          startWeight: parseFloat(calEx.weight) || 20,
+          bw: false
+        });
+        changed = true;
+      }
+    });
+    if (changed) pocSave();
+  }
+
+  function pocFindExByName(name) {
+    return st.exercises.find(function(e) { return e.name.toLowerCase() === name.toLowerCase(); });
+  }
+
+  function pocGetDisplayExercises() {
+    if (pocTodayCalWo && pocTodayCalWo.exercises && pocTodayCalWo.exercises.length) {
+      return pocTodayCalWo.exercises.map(function(calEx) {
+        return pocFindExByName(calEx.name) || { id: pocUid(), name: calEx.name, repMin: 6, repMax: 10, step: 2.5, startWeight: 20, bw: false };
+      });
+    }
+    return st.exercises.filter(function(e) { return !e.day || e.day === st.filterDay; });
   }
 
   function pocGetTodaySplit() {
-    const today = pocDateKey();
-    const rot = st.splitRotation;
+    var today = pocDateKey();
+    var rot = st.splitRotation;
     if (!rot.length) return '−';
-    const anchor = st.splitAnchor;
-    const anchorDate = new Date(anchor.date + 'T00:00:00');
-    const todayDate = new Date(today + 'T00:00:00');
-    const diff = Math.round((todayDate - anchorDate) / 86400000);
-    const idx = ((anchor.index + diff) % rot.length + rot.length) % rot.length;
+    var anchor = st.splitAnchor;
+    var anchorDate = new Date(anchor.date + 'T00:00:00');
+    var todayDate = new Date(today + 'T00:00:00');
+    var diff = Math.round((todayDate - anchorDate) / 86400000);
+    var idx = ((anchor.index + diff) % rot.length + rot.length) % rot.length;
     return rot[idx];
   }
 
   function pocTimeAgo(dateKey) {
-    const today = pocDateKey();
+    var today = pocDateKey();
     if (dateKey === today) return 'today';
-    const d0 = new Date(today + 'T00:00:00');
-    const d1 = new Date(dateKey + 'T00:00:00');
-    const diff = Math.round((d0 - d1) / 86400000);
+    var d0 = new Date(today + 'T00:00:00');
+    var d1 = new Date(dateKey + 'T00:00:00');
+    var diff = Math.round((d0 - d1) / 86400000);
     if (diff === 1) return 'yesterday';
     if (diff < 7) return diff + 'd ago';
     if (diff < 30) return Math.round(diff / 7) + 'w ago';
     return Math.round(diff / 30) + 'mo ago';
   }
 
-  // ---- Render functions ----
-
-  function pocRenderDayPill() {
-    const today = new Date();
-    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // ---- Render header ----
+  function pocRenderHeader() {
+    var today = new Date();
+    var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     document.getElementById('pocDayDate').textContent = DAYS[today.getDay()] + ', ' + MONTHS[today.getMonth()] + ' ' + today.getDate();
-    const split = pocGetTodaySplit();
-    const splitEl = document.getElementById('pocDaySplit');
-    splitEl.textContent = split;
-    splitEl.className = 'poc-day-split' + (split.toLowerCase() === 'rest' ? ' is-rest' : '');
-  }
 
-  window.pocGoToToday = function() {
-    const split = pocGetTodaySplit();
-    const matchDay = st.days.find(d => d.name.toLowerCase() === split.toLowerCase());
-    if (matchDay) {
-      st.filterDay = matchDay.id;
-      pocCurrentExId = null;
-      pocSave();
-      pocRenderAll();
+    if (pocTodayCalWo) {
+      document.getElementById('pocDaySplit').textContent = pocTodayCalWo.name;
+      document.getElementById('pocDaySplit').className = 'poc-day-split';
+      document.getElementById('pocFallbackPicker').style.display = 'none';
     } else {
-      pocOpenRot();
+      var split = pocGetTodaySplit();
+      document.getElementById('pocDaySplit').textContent = split;
+      document.getElementById('pocDaySplit').className = 'poc-day-split' + (split.toLowerCase() === 'rest' ? ' is-rest' : '');
+      document.getElementById('pocFallbackPicker').style.display = '';
+      pocRenderFallbackPicker();
     }
-  };
-
-  function pocRenderFilters() {
-    const gymSeg = document.getElementById('pocGymSeg');
-    const daySeg = document.getElementById('pocDaySeg');
-    gymSeg.innerHTML = st.gyms.map(g =>
-      '<button class="poc-seg-btn' + (g.id === st.filterGym ? ' is-active' : '') + '" data-gym="' + pocEsc(g.id) + '">' + pocEsc(g.name) + '</button>'
-    ).join('');
-    daySeg.innerHTML = st.days.map(d =>
-      '<button class="poc-seg-btn' + (d.id === st.filterDay ? ' is-active' : '') + '" data-day="' + pocEsc(d.id) + '">' + pocEsc(d.name) + '</button>'
-    ).join('');
-    gymSeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      st.filterGym = b.dataset.gym; pocCurrentExId = null; pocSave(); pocRenderAll();
-    }));
-    daySeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      st.filterDay = b.dataset.day; pocCurrentExId = null; pocSave(); pocRenderAll();
-    }));
   }
 
-  function pocRenderExSelect() {
-    const sel = document.getElementById('pocExSelect');
-    const noEx = document.getElementById('pocNoEx');
-    const filtered = pocGetFilteredExercises();
-    sel.innerHTML = '';
-    if (!filtered.length) {
-      noEx.style.display = '';
-      sel.style.display = 'none';
-      document.getElementById('pocEditExBtn').disabled = true;
-      return;
-    }
-    noEx.style.display = 'none';
-    sel.style.display = '';
-    document.getElementById('pocEditExBtn').disabled = false;
-    const ex = pocGetCurrentEx();
-    filtered.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = e.id;
-      opt.textContent = e.name;
-      opt.selected = e.id === (ex && ex.id);
-      sel.appendChild(opt);
-    });
-  }
-
-  window.pocSelectEx = function(id) {
-    pocCurrentExId = id;
-    pocRenderAll();
-  };
-
-  function pocRenderRx() {
-    const wrap = document.getElementById('pocRxWrap');
-    const ex = pocGetCurrentEx();
-    if (!ex) { wrap.innerHTML = '<div class="poc-rx-empty">Select an exercise above.</div>'; return; }
-    const logs = pocGetLogs(ex.id);
-    const rx = pocGetRx(ex, logs);
-    const u = pocGetUnit();
-    const tagClass = { up: 'up', down: 'down', hold: 'hold', start: '' }[rx.type] || '';
-    let headline = ex.bw ? ('<span>' + (rx.reps || '−') + '</span> reps') : ('<span>' + (rx.weight !== null ? rx.weight : '−') + u + '</span> × ' + rx.reps);
-    const cardClass = rx.type === 'up' ? 'rx-up' : rx.type === 'down' ? 'rx-down' : '';
-    wrap.innerHTML = '<div class="poc-rx-card ' + cardClass + '"><div class="poc-rx-label">Recommendation</div><div class="poc-rx-headline">' + headline + '</div><span class="poc-rx-tag ' + tagClass + '">' + pocEsc(rx.tag) + '</span><p class="poc-rx-reason">' + pocEsc(rx.reason) + '</p></div>';
-  }
-
-  function pocRenderLogSection() {
-    const ex = pocGetCurrentEx();
-    const u = pocGetUnit();
-    const isBw = ex && ex.bw;
-    const logGrid = document.getElementById('pocLogGrid');
-    logGrid.classList.toggle('bw-mode', !!isBw);
-    document.getElementById('pocBwBanner').style.display = isBw ? '' : 'none';
-    document.getElementById('pocWtField').style.display = isBw ? 'none' : '';
-    if (ex) document.getElementById('pocWtLabel').textContent = 'Weight (' + u + ')';
-    const lastSetEl = document.getElementById('pocLastSet');
-    if (ex) {
-      const logs = pocGetLogs(ex.id);
-      if (logs.length) {
-        const last = logs[logs.length - 1];
-        document.getElementById('pocLastVal').textContent = isBw ? (last.reps + ' reps') : (last.weight + u + ' × ' + last.reps);
-        document.getElementById('pocLastMeta').textContent = pocTimeAgo(last.date);
-        lastSetEl.style.display = '';
-        if (!isBw && !document.getElementById('pocWtInput').value) {
-          document.getElementById('pocWtInput').value = last.weight;
-        }
-      } else {
-        lastSetEl.style.display = 'none';
-      }
-    } else {
-      lastSetEl.style.display = 'none';
-    }
-    document.getElementById('pocRepsRow').querySelectorAll('.poc-reps-pill').forEach(btn => {
-      btn.classList.toggle('is-active', parseInt(btn.dataset.v, 10) === pocSelectedReps);
-    });
-  }
-
-  function pocRenderStats() {
-    const ex = pocGetCurrentEx();
-    const u = pocGetUnit();
-    if (!ex) {
-      ['pocOneRm','pocBestSet','pocSessions'].forEach(id => document.getElementById(id).textContent = '−');
-      return;
-    }
-    const logs = pocGetLogs(ex.id);
-    document.getElementById('pocSessions').textContent = logs.length || '0';
-    if (!logs.length) {
-      document.getElementById('pocOneRm').textContent = '−';
-      document.getElementById('pocBestSet').textContent = '−';
-      return;
-    }
-    const best = logs.reduce((b, l) => pocEst1RM(l.weight || 0, l.reps || 0) > pocEst1RM(b.weight || 0, b.reps || 0) ? l : b, logs[0]);
-    const oneRm = Math.round(pocEst1RM(best.weight || 0, best.reps || 0));
-    document.getElementById('pocOneRm').textContent = ex.bw ? '−' : (oneRm + u);
-    document.getElementById('pocBestSet').textContent = ex.bw ? (best.reps + ' reps') : (best.weight + u + '×' + best.reps);
-  }
-
-  function pocRenderSparkline() {
-    const svg = document.getElementById('pocSparkline');
-    const emptyEl = document.getElementById('pocSparkEmpty');
-    const ex = pocGetCurrentEx();
-    if (!ex) { svg.style.display = 'none'; emptyEl.style.display = ''; return; }
-    const logs = pocGetLogs(ex.id).slice(-10);
-    if (logs.length < 2) { svg.style.display = 'none'; emptyEl.style.display = ''; return; }
-    svg.style.display = 'block'; emptyEl.style.display = 'none';
-    const vals = logs.map(l => ex.bw ? (l.reps || 0) : pocEst1RM(l.weight || 0, l.reps || 0));
-    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-    const range = max - min || 1;
-    const W = 300, H = 60, pad = 6;
-    const xFor = i => pad + (i / (vals.length - 1)) * (W - pad * 2);
-    const yFor = v => H - pad - ((v - min) / range) * (H - pad * 2);
-    const pts = vals.map((v, i) => ({ x: xFor(i), y: yFor(v) }));
-    let path = 'M ' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
-    for (let i = 1; i < pts.length; i++) {
-      const cx = (pts[i-1].x + pts[i].x) / 2;
-      path += ' C ' + cx.toFixed(1) + ' ' + pts[i-1].y.toFixed(1) + ', ' + cx.toFixed(1) + ' ' + pts[i].y.toFixed(1) + ', ' + pts[i].x.toFixed(1) + ' ' + pts[i].y.toFixed(1);
-    }
-    const areaPath = path + ' L ' + pts[pts.length-1].x.toFixed(1) + ' ' + H + ' L ' + pts[0].x.toFixed(1) + ' ' + H + ' Z';
-    const defs = '<defs><linearGradient id="pocSparkGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.18)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>';
-    let html = defs + '<path fill="url(#pocSparkGrad)" d="' + areaPath + '"/>';
-    html += '<path fill="none" stroke="var(--text-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d="' + path + '"/>';
-    pts.forEach((p, i) => {
-      const isLast = i === pts.length - 1;
-      html += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (isLast ? 4 : 2.5) + '" fill="' + (isLast ? '#FFFFFF' : 'var(--text-primary)') + '"' + (isLast ? ' stroke="#000" stroke-width="1.5"' : '') + '/>';
-    });
-    svg.innerHTML = html;
-  }
-
-  function pocRenderHistory() {
-    const container = document.getElementById('pocHistory');
-    const ex = pocGetCurrentEx();
-    if (!ex) { container.innerHTML = '<div class="poc-empty">Select an exercise to see history.</div>'; return; }
-    const allLogs = pocGetLogs(ex.id);
-    const logs = allLogs.slice().reverse().slice(0, 12);
-    if (!logs.length) { container.innerHTML = '<div class="poc-empty">No logs yet.</div>'; return; }
-    const u = pocGetUnit();
-    container.innerHTML = logs.map((l, i) => {
-      const setStr = ex.bw ? (l.reps + ' reps') : (l.weight + u + ' × ' + l.reps);
-      const realIdx = allLogs.length - 1 - i;
-      return '<div class="poc-hist-row"><span class="poc-hist-date">' + l.date.slice(5) + '</span><span class="poc-hist-set">' + pocEsc(setStr) + '</span><button class="poc-hist-del" data-exid="' + pocEsc(ex.id) + '" data-i="' + realIdx + '" title="Delete">×</button></div>';
+  function pocRenderFallbackPicker() {
+    var seg = document.getElementById('pocDaySeg');
+    seg.innerHTML = st.days.map(function(d) {
+      return '<button class="poc-seg-btn' + (d.id === st.filterDay ? ' is-active' : '') + '" data-day="' + pocEsc(d.id) + '">' + pocEsc(d.name) + '</button>';
     }).join('');
-    container.querySelectorAll('.poc-hist-del').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const exId = btn.dataset.exid;
-        const idx = parseInt(btn.dataset.i, 10);
-        if (!confirm('Delete this entry?')) return;
-        if (st.logs[exId]) st.logs[exId].splice(idx, 1);
-        pocSave(); pocRenderAll();
+    seg.querySelectorAll('button').forEach(function(b) {
+      b.addEventListener('click', function() {
+        st.filterDay = b.dataset.day;
+        pocSave();
+        pocRenderAll();
       });
     });
   }
 
+  // ---- Render exercise cards ----
+  function pocRenderExCards() {
+    var container = document.getElementById('pocExCardList');
+    if (pocTodayCalWo && pocTodayCalWo.exercises && pocTodayCalWo.exercises.length) {
+      pocEnsureCalendarExercises(pocTodayCalWo.exercises);
+    }
+
+    var displayExs = pocGetDisplayExercises();
+    if (!displayExs.length) {
+      container.innerHTML = '<div class="poc-no-ex">No exercises here yet — use the button below to add one.</div>';
+      return;
+    }
+
+    var u = pocGetUnit();
+    var today = pocDateKey();
+
+    container.innerHTML = displayExs.map(function(ex) {
+      var realEx = st.exercises.find(function(e) { return e.id === ex.id; }) || ex;
+      var exId = realEx.id;
+      var isBw = !!realEx.bw;
+
+      // Plan info from calendar
+      var planHtml = '';
+      if (pocTodayCalWo && pocTodayCalWo.exercises && pocTodayCalWo.exercises.length) {
+        var calEx = pocTodayCalWo.exercises.find(function(ce) { return ce.name.toLowerCase() === realEx.name.toLowerCase(); });
+        if (calEx) {
+          var parts = [];
+          if (calEx.sets) parts.push(calEx.sets + ' sets');
+          if (calEx.reps) parts.push(calEx.reps + ' reps');
+          if (calEx.weight && !isBw) parts.push('@ ' + calEx.weight + u);
+          if (parts.length) planHtml = '<div class="poc-ex-card-plan">Plan: ' + pocEsc(parts.join(' · ')) + '</div>';
+        }
+      }
+
+      // PO recommendation
+      var logs = pocGetLogs(exId);
+      var rx = pocGetRx(realEx, logs);
+      var rxClass = rx.type === 'up' ? 'rx-up' : rx.type === 'down' ? 'rx-down' : '';
+      var tagClass = { up: 'up', down: 'down', hold: 'hold', start: '' }[rx.type] || '';
+      var rxText = isBw ? (rx.reps + ' reps') : ((rx.weight !== null ? rx.weight : '−') + u + ' × ' + rx.reps);
+      var rxHtml = '<div class="poc-rx-inline ' + rxClass + '"><span class="poc-rx-inline-text">' + pocEsc(rxText) + '</span><span class="poc-rx-inline-tag ' + tagClass + '">' + pocEsc(rx.tag) + '</span></div>';
+
+      // Today's logged sets
+      var todaySets = pocGetTodaySets(exId);
+      var setsHtml = '';
+      if (todaySets.length) {
+        setsHtml = '<div class="poc-sets-today">' + todaySets.map(function(s, i) {
+          var val = isBw ? (s.reps + ' reps') : (s.weight + u + ' × ' + s.reps);
+          return '<div class="poc-set-row-logged"><span class="poc-set-row-num">S' + (i+1) + '</span><span class="poc-set-row-val">' + pocEsc(val) + '</span><button class="poc-set-row-del" data-exid="' + pocEsc(exId) + '" data-date="' + today + '" data-i="' + i + '">×</button></div>';
+        }).join('') + '</div>';
+      }
+
+      // Default weight
+      var lastTodaySet = todaySets.length ? todaySets[todaySets.length - 1] : null;
+      var defaultWt = lastTodaySet ? lastTodaySet.weight : (rx.weight !== null ? rx.weight : '');
+      var defaultReps = lastTodaySet ? lastTodaySet.reps : (rx.reps || 8);
+      if (!pocCardReps[exId]) pocCardReps[exId] = defaultReps;
+
+      // Reps pills
+      var repOptions = [4,5,6,7,8,9,10,11,12];
+      var selReps = pocCardReps[exId] || 8;
+      var repsPills = repOptions.map(function(r) {
+        return '<button type="button" class="poc-reps-pill' + (r === selReps ? ' is-active' : '') + '" data-exid="' + pocEsc(exId) + '" data-v="' + r + '">' + r + '</button>';
+      }).join('');
+
+      // Weight input
+      var wtField = isBw ? '' :
+        '<div class="poc-log-inline-wt">' +
+        '<button class="poc-wt-step-btn" data-exid="' + pocEsc(exId) + '" data-action="down">−</button>' +
+        '<input type="number" class="poc-wt-input" id="pocWt_' + pocEsc(exId) + '" step="0.5" inputmode="decimal" placeholder="0" value="' + pocEsc(String(defaultWt)) + '">' +
+        '<button class="poc-wt-step-btn" data-exid="' + pocEsc(exId) + '" data-action="up">+</button>' +
+        '</div>';
+
+      // Stats toggle
+      var isSelected = pocSelectedExId === exId;
+      var statsHtml = buildStatsHtml(realEx, isSelected);
+
+      return '<div class="poc-ex-card" data-exid="' + pocEsc(exId) + '">' +
+        '<div class="poc-ex-card-head"><div><div class="poc-ex-card-name">' + pocEsc(realEx.name) + '</div>' + planHtml + '</div>' +
+        '<button class="poc-icon-btn" data-edit-exid="' + pocEsc(exId) + '" title="Edit" style="width:34px;height:34px;flex-shrink:0">' +
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>' +
+        '</button></div>' +
+        rxHtml + setsHtml +
+        '<div>' + wtField +
+        '<div class="poc-reps-row" style="margin-bottom:8px">' + repsPills + '</div>' +
+        '<button class="wt-save-btn" data-log-exid="' + pocEsc(exId) + '" style="width:100%">Log set</button>' +
+        '</div>' +
+        statsHtml +
+        '</div>';
+    }).join('');
+
+    // Attach event listeners
+    container.querySelectorAll('.poc-set-row-del').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        pocDeleteSet(btn.dataset.exid, btn.dataset.date, parseInt(btn.dataset.i, 10));
+        pocRenderExCards();
+        pocRenderTodayWo();
+      });
+    });
+
+    container.querySelectorAll('.poc-reps-pill').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var exId = btn.dataset.exid;
+        pocCardReps[exId] = parseInt(btn.dataset.v, 10);
+        var card = container.querySelector('[data-exid="' + exId + '"]');
+        if (card) card.querySelectorAll('.poc-reps-pill').forEach(function(p) {
+          p.classList.toggle('is-active', parseInt(p.dataset.v, 10) === pocCardReps[exId]);
+        });
+      });
+    });
+
+    container.querySelectorAll('.poc-wt-step-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var exId = btn.dataset.exid;
+        var inp = document.getElementById('pocWt_' + exId);
+        if (!inp) return;
+        var ex = st.exercises.find(function(e) { return e.id === exId; });
+        var step = (ex && ex.step) || 2.5;
+        var val = parseFloat(inp.value) || 0;
+        inp.value = btn.dataset.action === 'down'
+          ? Math.max(0, Math.round((val - step) * 100) / 100)
+          : Math.round((val + step) * 100) / 100;
+      });
+    });
+
+    container.querySelectorAll('[data-log-exid]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var exId = btn.dataset.logExid;
+        var ex = st.exercises.find(function(e) { return e.id === exId; });
+        if (!ex) return;
+        var isBw = !!ex.bw;
+        var weight = 0;
+        if (!isBw) {
+          var inp = document.getElementById('pocWt_' + exId);
+          if (!inp) return;
+          weight = parseFloat(inp.value);
+          if (isNaN(weight) || inp.value.trim() === '') return;
+        }
+        var reps = pocCardReps[exId] || 8;
+        pocLogSet(exId, isBw ? 0 : weight, reps);
+        pocSelectedExId = exId;
+        pocTodayCalWo = pocGetTodayFromCalendar();
+        pocRenderExCards();
+        pocRenderTodayWo();
+      });
+    });
+
+    container.querySelectorAll('[data-edit-exid]').forEach(function(btn) {
+      btn.addEventListener('click', function() { pocOpenEditExById(btn.dataset.editExid); });
+    });
+
+    container.querySelectorAll('[data-stats-toggle]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        pocSelectedExId = pocSelectedExId === btn.dataset.statsToggle ? null : btn.dataset.statsToggle;
+        pocRenderExCards();
+      });
+    });
+  }
+
+  function buildStatsHtml(ex, isOpen) {
+    var exId = ex.id;
+    var u = pocGetUnit();
+    var toggleLabel = (isOpen ? '▼' : '▶') + ' Stats';
+    var bodyHtml = '';
+    if (isOpen) {
+      var logs = pocGetLogs(exId);
+      var oneRm = '−', bestSetStr = '−', sessions = String(logs.length || 0);
+      if (logs.length) {
+        var best = logs.reduce(function(b, l) {
+          var bs = pocBestSet(l), bb = pocBestSet(b);
+          return pocEst1RM(bs.weight || 0, bs.reps || 0) > pocEst1RM(bb.weight || 0, bb.reps || 0) ? l : b;
+        }, logs[0]);
+        var bestS = pocBestSet(best);
+        oneRm = ex.bw ? '−' : (Math.round(pocEst1RM(bestS.weight || 0, bestS.reps || 0)) + u);
+        bestSetStr = ex.bw ? (bestS.reps + ' reps') : (bestS.weight + u + '×' + bestS.reps);
+      }
+      bodyHtml += '<div class="poc-stats-row" style="margin-bottom:10px">' +
+        '<div class="poc-stat-box"><div class="poc-stat-label">Est. 1RM</div><div class="poc-stat-val">' + oneRm + '</div></div>' +
+        '<div class="poc-stat-box"><div class="poc-stat-label">Best set</div><div class="poc-stat-val">' + bestSetStr + '</div></div>' +
+        '<div class="poc-stat-box"><div class="poc-stat-label">Sessions</div><div class="poc-stat-val">' + sessions + '</div></div>' +
+        '</div>';
+      bodyHtml += buildSparklineHtml(ex);
+      bodyHtml += buildHistoryHtml(ex);
+    }
+    return '<button class="poc-card-stats-toggle" data-stats-toggle="' + pocEsc(exId) + '">' + toggleLabel + '</button>' +
+      (isOpen ? '<div class="poc-card-stats-body">' + bodyHtml + '</div>' : '');
+  }
+
+  function buildSparklineHtml(ex) {
+    var logs = pocGetLogs(ex.id).slice(-10);
+    if (logs.length < 2) return '<div class="poc-spark-empty">Need 2+ sessions for trend</div>';
+    var vals = logs.map(function(l) {
+      var bs = pocBestSet(l);
+      return ex.bw ? (bs.reps || 0) : pocEst1RM(bs.weight || 0, bs.reps || 0);
+    });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var range = max - min || 1;
+    var W = 300, H = 60, pad = 6;
+    var xFor = function(i) { return pad + (i / (vals.length - 1)) * (W - pad * 2); };
+    var yFor = function(v) { return H - pad - ((v - min) / range) * (H - pad * 2); };
+    var pts = vals.map(function(v, i) { return { x: xFor(i), y: yFor(v) }; });
+    var path = 'M ' + pts[0].x.toFixed(1) + ' ' + pts[0].y.toFixed(1);
+    for (var i = 1; i < pts.length; i++) {
+      var cx = (pts[i-1].x + pts[i].x) / 2;
+      path += ' C ' + cx.toFixed(1) + ' ' + pts[i-1].y.toFixed(1) + ', ' + cx.toFixed(1) + ' ' + pts[i].y.toFixed(1) + ', ' + pts[i].x.toFixed(1) + ' ' + pts[i].y.toFixed(1);
+    }
+    var areaPath = path + ' L ' + pts[pts.length-1].x.toFixed(1) + ' ' + H + ' L ' + pts[0].x.toFixed(1) + ' ' + H + ' Z';
+    var gradId = 'pocSparkGrad_' + ex.id.replace(/[^a-z0-9]/gi, '_');
+    var defs = '<defs><linearGradient id="' + gradId + '" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.18)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>';
+    var svgHtml = defs + '<path fill="url(#' + gradId + ')" d="' + areaPath + '"/>';
+    svgHtml += '<path fill="none" stroke="var(--text-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="' + path + '"/>';
+    pts.forEach(function(p, i) {
+      var isLast = i === pts.length - 1;
+      svgHtml += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + (isLast ? 4 : 2.5) + '" fill="' + (isLast ? '#FFFFFF' : 'var(--text-primary)') + '"' + (isLast ? ' stroke="#000" stroke-width="1.5"' : '') + '/>';
+    });
+    return '<svg viewBox="0 0 300 60" preserveAspectRatio="none" style="width:100%;height:60px;display:block;margin-bottom:10px">' + svgHtml + '</svg>';
+  }
+
+  function buildHistoryHtml(ex) {
+    var logs = pocGetLogs(ex.id);
+    if (!logs.length) return '<div class="poc-empty">No logs yet.</div>';
+    var u = pocGetUnit();
+    var recent = logs.slice().reverse().slice(0, 10);
+    var html = '<div>';
+    recent.forEach(function(day) {
+      var bs = pocBestSet(day);
+      var bestStr = ex.bw ? (bs.reps + ' reps') : (bs.weight + u + ' × ' + bs.reps);
+      var setsCount = day.sets ? day.sets.length : 1;
+      html += '<div class="poc-hist-row"><span class="poc-hist-date">' + day.date.slice(5) + '</span><span class="poc-hist-set">' + pocEsc(bestStr) + '</span><span style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)">' + setsCount + (setsCount === 1 ? ' set' : ' sets') + '</span></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // ---- Today's workout summary ----
   function pocRenderTodayWo() {
-    const todayKey = pocDateKey();
-    const todayLogs = pocGetTodayLogs();
-    const u = pocGetUnit();
-    let doneKeys = [];
-    try { const raw = localStorage.getItem(WO_DONE_KEY); doneKeys = raw ? JSON.parse(raw) : []; } catch (e) {}
-    const isDone = doneKeys.includes(todayKey);
-    const today = new Date();
-    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    document.getElementById('pocTwDate').textContent = DAYS[today.getDay()] + ', ' + MONTHS[today.getMonth()] + ' ' + today.getDate();
-    let totalSets = 0, totalVol = 0;
-    todayLogs.forEach(function(item) { totalSets++; if (!item.ex.bw) totalVol += (item.log.weight || 0) * (item.log.reps || 0); });
+    var today = pocDateKey();
+    var u = pocGetUnit();
+    var totalSets = 0, totalVol = 0;
+    Object.keys(st.logs).forEach(function(exId) {
+      var dayEntry = (st.logs[exId] || []).find(function(e) { return e.date === today; });
+      if (!dayEntry) return;
+      totalSets += dayEntry.sets.length;
+      dayEntry.sets.forEach(function(s) { if (s.weight) totalVol += s.weight * (s.reps || 0); });
+    });
     document.getElementById('pocTwSets').textContent = totalSets;
     document.getElementById('pocTwVol').textContent = totalVol > 0 ? Math.round(totalVol) + u : '0 ' + u;
-    const doneBtn = document.getElementById('pocTwDoneBtn');
+    var today2 = new Date();
+    var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('pocTwDate').textContent = DAYS[today2.getDay()] + ', ' + MONTHS[today2.getMonth()] + ' ' + today2.getDate();
+    var doneKeys = [];
+    try { var raw = localStorage.getItem(WO_DONE_KEY); doneKeys = raw ? JSON.parse(raw) : []; } catch (e) {}
+    var isDone = doneKeys.includes(today);
+    var doneBtn = document.getElementById('pocTwDoneBtn');
     doneBtn.textContent = isDone ? '✓ Done' : 'Mark done';
     doneBtn.className = 'poc-tw-done-tag' + (isDone ? ' is-done' : '');
-    const list = document.getElementById('pocTwList');
-    const emptyEl = document.getElementById('pocTwEmpty');
-    if (!todayLogs.length) {
-      list.innerHTML = '';
-      emptyEl.style.display = '';
-    } else {
-      emptyEl.style.display = 'none';
-      list.innerHTML = todayLogs.map(function(item) {
-        const meta = item.ex.bw ? (item.log.reps + ' reps') : (item.log.weight + u + ' × ' + item.log.reps);
-        return '<li class="poc-tw-row"><span class="poc-tw-name">' + pocEsc(item.ex.name) + '</span><span class="poc-tw-meta">' + pocEsc(meta) + '</span></li>';
-      }).join('');
-    }
   }
 
   function pocRenderPastWorkouts() {
-    const pastBody = document.getElementById('pocPastBody');
-    const pastCount = document.getElementById('pocPastCount');
-    const todayKey = pocDateKey();
-    const dayMap = {};
-    for (const exId of Object.keys(st.logs)) {
-      const ex = st.exercises.find(e => e.id === exId);
-      if (!ex) continue;
-      for (const log of (st.logs[exId] || [])) {
-        if (log.date === todayKey) continue;
-        if (!dayMap[log.date]) dayMap[log.date] = [];
-        dayMap[log.date].push({ ex, log });
-      }
-    }
-    const days = Object.keys(dayMap).sort().reverse();
+    var pastBody = document.getElementById('pocPastBody');
+    var pastCount = document.getElementById('pocPastCount');
+    var todayKey = pocDateKey();
+    var dayMap = {};
+    Object.keys(st.logs).forEach(function(exId) {
+      var ex = st.exercises.find(function(e) { return e.id === exId; });
+      (st.logs[exId] || []).forEach(function(dayEntry) {
+        if (dayEntry.date === todayKey) return;
+        if (!dayMap[dayEntry.date]) dayMap[dayEntry.date] = [];
+        var bs = pocBestSet(dayEntry);
+        dayMap[dayEntry.date].push({ ex: ex || { name: exId }, log: bs, sets: dayEntry.sets.length });
+      });
+    });
+    var days = Object.keys(dayMap).sort().reverse();
     pastCount.textContent = days.length + ' days';
     if (!days.length) { pastBody.innerHTML = '<div class="poc-empty">No past workouts yet.</div>'; return; }
-    const u = pocGetUnit();
-    let doneKeys = [];
-    try { const raw = localStorage.getItem(WO_DONE_KEY); doneKeys = raw ? JSON.parse(raw) : []; } catch (e) {}
-    const DAYS_W = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    pastBody.innerHTML = days.slice(0, 20).map(d => {
-      const entries = dayMap[d];
-      const vol = entries.reduce((s, item) => s + (item.ex.bw ? 0 : (item.log.weight || 0) * (item.log.reps || 0)), 0);
-      const isDone = doneKeys.includes(d);
-      const parts = d.split('-').map(Number);
-      const dt = new Date(parts[0], parts[1]-1, parts[2]);
-      const dateStr = DAYS_W[dt.getDay()] + ', ' + MONTHS[dt.getMonth()] + ' ' + parts[2];
-      return '<div class="poc-past-day"><div class="poc-past-day-h"><span class="poc-past-day-date">' + pocEsc(dateStr) + '</span><span class="poc-past-day-summary">' + entries.length + ' sets' + (vol > 0 ? ' · ' + Math.round(vol) + u : '') + '</span>' + (isDone ? '<span class="poc-past-done">DONE</span>' : '') + '</div></div>';
+    var u = pocGetUnit();
+    var doneKeys = [];
+    try { var raw2 = localStorage.getItem(WO_DONE_KEY); doneKeys = raw2 ? JSON.parse(raw2) : []; } catch (e) {}
+    var DAYS_W = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MONTHS2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    pastBody.innerHTML = days.slice(0, 20).map(function(d) {
+      var entries = dayMap[d];
+      var totalSets = entries.reduce(function(s, item) { return s + (item.sets || 1); }, 0);
+      var vol = entries.reduce(function(s, item) { return s + ((item.log.weight || 0) * (item.log.reps || 0)); }, 0);
+      var isDone = doneKeys.includes(d);
+      var parts = d.split('-').map(Number);
+      var dt = new Date(parts[0], parts[1]-1, parts[2]);
+      var dateStr = DAYS_W[dt.getDay()] + ', ' + MONTHS2[dt.getMonth()] + ' ' + parts[2];
+      return '<div class="poc-past-day"><div class="poc-past-day-h"><span class="poc-past-day-date">' + pocEsc(dateStr) + '</span><span class="poc-past-day-summary">' + totalSets + ' sets' + (vol > 0 ? ' · ' + Math.round(vol) + u : '') + '</span>' + (isDone ? '<span class="poc-past-done">DONE</span>' : '') + '</div></div>';
     }).join('');
   }
 
@@ -3277,20 +3356,15 @@ const POC_CONFIG = {
   };
 
   function pocRenderAll() {
-    pocRenderDayPill();
-    pocRenderFilters();
-    pocRenderExSelect();
-    pocRenderLogSection();
-    pocRenderRx();
-    pocRenderStats();
-    pocRenderSparkline();
-    pocRenderHistory();
+    pocTodayCalWo = pocGetTodayFromCalendar();
+    pocRenderHeader();
+    pocRenderExCards();
     pocRenderTodayWo();
     if (pocPastOpen) pocRenderPastWorkouts();
   }
 
   // ---- Add/Edit Exercise Modal ----
-  let pocEditingExId = null;
+  var pocEditingExId = null;
 
   window.pocOpenAddEx = function() {
     pocEditingExId = null;
@@ -3305,14 +3379,14 @@ const POC_CONFIG = {
     document.getElementById('pocExNumFields').style.display = '';
     document.getElementById('pocExStepField').style.display = '';
     document.getElementById('pocExDelete').style.display = 'none';
-    pocRenderExModalSegs(st.filterGym, st.filterDay);
+    pocRenderExModalDaySeg(st.filterDay);
     document.getElementById('pocExModalBg').classList.add('is-open');
   };
 
-  window.pocOpenEditEx = function() {
-    const ex = pocGetCurrentEx();
+  function pocOpenEditExById(exId) {
+    var ex = st.exercises.find(function(e) { return e.id === exId; });
     if (!ex) return;
-    pocEditingExId = ex.id;
+    pocEditingExId = exId;
     document.getElementById('pocExModalTitle').textContent = 'Edit exercise';
     document.getElementById('pocExName').value = ex.name;
     document.getElementById('pocExBw').checked = !!ex.bw;
@@ -3320,58 +3394,47 @@ const POC_CONFIG = {
     document.getElementById('pocExRepMin').value = ex.repMin || 6;
     document.getElementById('pocExRepMax').value = ex.repMax || 8;
     document.getElementById('pocExStep').value = ex.step || 2.5;
-    const bw = !!ex.bw;
+    var bw = !!ex.bw;
     document.getElementById('pocExStartWtField').style.display = bw ? 'none' : '';
     document.getElementById('pocExNumFields').style.display = bw ? 'none' : '';
     document.getElementById('pocExStepField').style.display = bw ? 'none' : '';
     document.getElementById('pocExDelete').style.display = '';
-    pocRenderExModalSegs(ex.gym, ex.day);
+    pocRenderExModalDaySeg(ex.day);
     document.getElementById('pocExModalBg').classList.add('is-open');
-  };
+  }
 
-  function pocRenderExModalSegs(selGym, selDay) {
-    const gymSeg = document.getElementById('pocExGymSeg');
-    const daySeg = document.getElementById('pocExDaySeg');
-    gymSeg.innerHTML = [{ id: 'both', name: 'Both' }].concat(st.gyms).map(g =>
-      '<button type="button" class="' + (g.id === selGym ? 'is-active' : '') + '" data-g="' + pocEsc(g.id) + '">' + pocEsc(g.name) + '</button>'
-    ).join('');
-    daySeg.innerHTML = st.days.map(d =>
-      '<button type="button" class="' + (d.id === selDay ? 'is-active' : '') + '" data-d="' + pocEsc(d.id) + '">' + pocEsc(d.name) + '</button>'
-    ).join('');
-    gymSeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      gymSeg.querySelectorAll('button').forEach(x => x.classList.remove('is-active'));
-      b.classList.add('is-active');
-    }));
-    daySeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      daySeg.querySelectorAll('button').forEach(x => x.classList.remove('is-active'));
-      b.classList.add('is-active');
-    }));
+  function pocRenderExModalDaySeg(selDay) {
+    var daySeg = document.getElementById('pocExDaySeg');
+    daySeg.innerHTML = st.days.map(function(d) {
+      return '<button type="button" class="' + (d.id === selDay ? 'is-active' : '') + '" data-d="' + pocEsc(d.id) + '">' + pocEsc(d.name) + '</button>';
+    }).join('');
+    daySeg.querySelectorAll('button').forEach(function(b) {
+      b.addEventListener('click', function() {
+        daySeg.querySelectorAll('button').forEach(function(x) { x.classList.remove('is-active'); });
+        b.classList.add('is-active');
+      });
+    });
   }
 
   window.pocCloseExModal = function() { document.getElementById('pocExModalBg').classList.remove('is-open'); };
 
   window.pocSaveEx = function() {
-    const name = document.getElementById('pocExName').value.trim();
+    var name = document.getElementById('pocExName').value.trim();
     if (!name) return;
-    const gymBtn = document.querySelector('#pocExGymSeg .is-active');
-    const dayBtn = document.querySelector('#pocExDaySeg .is-active');
-    const gym = gymBtn ? gymBtn.dataset.g : st.filterGym;
-    const day = dayBtn ? dayBtn.dataset.d : st.filterDay;
-    const bw = document.getElementById('pocExBw').checked;
-    const data = { name, gym, day, bw: bw || false,
+    var dayBtn = document.querySelector('#pocExDaySeg .is-active');
+    var day = dayBtn ? dayBtn.dataset.d : st.filterDay;
+    var bw = document.getElementById('pocExBw').checked;
+    var data = { name: name, day: day, bw: bw || false,
       startWeight: bw ? 0 : (parseFloat(document.getElementById('pocExStartWt').value) || 20),
       repMin: bw ? 5 : (parseInt(document.getElementById('pocExRepMin').value) || 6),
       repMax: bw ? 20 : (parseInt(document.getElementById('pocExRepMax').value) || 8),
       step: bw ? 0 : (parseFloat(document.getElementById('pocExStep').value) || 2.5)
     };
     if (pocEditingExId) {
-      const ex = st.exercises.find(e => e.id === pocEditingExId);
+      var ex = st.exercises.find(function(e) { return e.id === pocEditingExId; });
       if (ex) Object.assign(ex, data);
-      pocCurrentExId = pocEditingExId;
     } else {
-      const newEx = Object.assign({ id: pocUid() }, data);
-      st.exercises.push(newEx);
-      pocCurrentExId = newEx.id;
+      st.exercises.push(Object.assign({ id: pocUid() }, data));
     }
     pocSave();
     document.getElementById('pocExModalBg').classList.remove('is-open');
@@ -3380,69 +3443,29 @@ const POC_CONFIG = {
 
   window.pocDeleteEx = function() {
     if (!pocEditingExId) return;
-    const ex = st.exercises.find(e => e.id === pocEditingExId);
+    var ex = st.exercises.find(function(e) { return e.id === pocEditingExId; });
     if (!ex) return;
     if (!confirm('Delete "' + ex.name + '" and all its logs?')) return;
-    st.exercises = st.exercises.filter(e => e.id !== pocEditingExId);
+    st.exercises = st.exercises.filter(function(e) { return e.id !== pocEditingExId; });
     delete st.logs[pocEditingExId];
-    pocCurrentExId = null;
     pocSave();
     document.getElementById('pocExModalBg').classList.remove('is-open');
     pocRenderAll();
   };
 
   document.getElementById('pocExBw').addEventListener('change', function(e) {
-    const bw = e.target.checked;
+    var bw = e.target.checked;
     document.getElementById('pocExStartWtField').style.display = bw ? 'none' : '';
     document.getElementById('pocExNumFields').style.display = bw ? 'none' : '';
     document.getElementById('pocExStepField').style.display = bw ? 'none' : '';
   });
 
-  // ---- Reps pills ----
-  document.getElementById('pocRepsRow').addEventListener('click', function(e) {
-    const btn = e.target.closest('.poc-reps-pill');
-    if (!btn) return;
-    pocSelectedReps = parseInt(btn.dataset.v, 10);
-    pocRenderLogSection();
-  });
-
-  // ---- Weight step buttons ----
-  document.getElementById('pocWtDown').addEventListener('click', function() {
-    const inp = document.getElementById('pocWtInput');
-    const ex = pocGetCurrentEx();
-    const step = (ex && ex.step) || 2.5;
-    const val = Math.max(0, Math.round(((parseFloat(inp.value) || 0) - step) * 100) / 100);
-    inp.value = val;
-  });
-  document.getElementById('pocWtUp').addEventListener('click', function() {
-    const inp = document.getElementById('pocWtInput');
-    const ex = pocGetCurrentEx();
-    const step = (ex && ex.step) || 2.5;
-    const val = Math.round(((parseFloat(inp.value) || 0) + step) * 100) / 100;
-    inp.value = val;
-  });
-
-  // ---- Log set ----
-  document.getElementById('pocLogBtn').addEventListener('click', function() {
-    const ex = pocGetCurrentEx();
-    if (!ex) return;
-    const weightStr = document.getElementById('pocWtInput').value;
-    const weight = ex.bw ? 0 : parseFloat(weightStr);
-    if (!ex.bw && (isNaN(weight) || weightStr.trim() === '')) return;
-    const entry = { date: pocDateKey(), weight: ex.bw ? 0 : weight, reps: pocSelectedReps };
-    if (!st.logs[ex.id]) st.logs[ex.id] = [];
-    st.logs[ex.id].push(entry);
-    pocSave();
-    document.getElementById('pocWtInput').value = '';
-    pocRenderAll();
-  });
-
   // ---- Mark done ----
   document.getElementById('pocTwDoneBtn').addEventListener('click', function() {
-    const today = pocDateKey();
-    let doneKeys = [];
-    try { const raw = localStorage.getItem(WO_DONE_KEY); doneKeys = raw ? JSON.parse(raw) : []; } catch (e) {}
-    const idx = doneKeys.indexOf(today);
+    var today = pocDateKey();
+    var doneKeys = [];
+    try { var raw = localStorage.getItem(WO_DONE_KEY); doneKeys = raw ? JSON.parse(raw) : []; } catch (e) {}
+    var idx = doneKeys.indexOf(today);
     if (idx >= 0) doneKeys.splice(idx, 1); else doneKeys.push(today);
     localStorage.setItem(WO_DONE_KEY, JSON.stringify(doneKeys));
     pocRenderTodayWo();
@@ -3459,68 +3482,49 @@ const POC_CONFIG = {
   };
 
   function pocRenderSettingsModal() {
-    document.getElementById('pocSetUnits').querySelectorAll('button').forEach(b => b.classList.toggle('is-active', b.dataset.u === st.units));
-    const gymsList = document.getElementById('pocSetGyms');
-    gymsList.innerHTML = st.gyms.map((g, i) =>
-      '<div class="poc-set-row" data-i="' + i + '"><input value="' + pocEsc(g.name) + '" placeholder="Gym name"><button class="poc-mini-btn" data-action="del">×</button></div>'
-    ).join('');
-    gymsList.querySelectorAll('[data-i]').forEach(row => {
-      const i = parseInt(row.dataset.i, 10);
-      row.querySelector('input').addEventListener('input', function(e) { st.gyms[i].name = e.target.value; pocSave(); });
-      row.querySelector('[data-action="del"]').addEventListener('click', function() {
-        if (st.gyms.length <= 1) return alert('Need at least one gym.');
-        if (!confirm('Remove "' + st.gyms[i].name + '"?')) return;
-        st.gyms.splice(i, 1);
-        if (!st.gyms.find(g => g.id === st.filterGym)) st.filterGym = st.gyms[0].id;
-        pocSave(); pocRenderSettingsModal();
-      });
+    document.getElementById('pocSetUnits').querySelectorAll('button').forEach(function(b) {
+      b.classList.toggle('is-active', b.dataset.u === st.units);
     });
-    const daysList = document.getElementById('pocSetDays');
-    daysList.innerHTML = st.days.map((d, i) =>
-      '<div class="poc-set-row" data-i="' + i + '"><input value="' + pocEsc(d.name) + '" placeholder="Day name"><button class="poc-mini-btn" data-action="del">×</button></div>'
-    ).join('');
-    daysList.querySelectorAll('[data-i]').forEach(row => {
-      const i = parseInt(row.dataset.i, 10);
+    var daysList = document.getElementById('pocSetDays');
+    daysList.innerHTML = st.days.map(function(d, i) {
+      return '<div class="poc-set-row" data-i="' + i + '"><input value="' + pocEsc(d.name) + '" placeholder="Day name"><button class="poc-mini-btn" data-action="del">×</button></div>';
+    }).join('');
+    daysList.querySelectorAll('[data-i]').forEach(function(row) {
+      var i = parseInt(row.dataset.i, 10);
       row.querySelector('input').addEventListener('input', function(e) { st.days[i].name = e.target.value; pocSave(); });
       row.querySelector('[data-action="del"]').addEventListener('click', function() {
         if (st.days.length <= 1) return alert('Need at least one day.');
         if (!confirm('Remove "' + st.days[i].name + '"?')) return;
         st.days.splice(i, 1);
-        if (!st.days.find(d => d.id === st.filterDay)) st.filterDay = st.days[0].id;
+        if (!st.days.find(function(d) { return d.id === st.filterDay; })) st.filterDay = st.days[0].id;
         pocSave(); pocRenderSettingsModal();
       });
     });
   }
 
   document.getElementById('pocSetUnits').addEventListener('click', function(e) {
-    const btn = e.target.closest('[data-u]');
+    var btn = e.target.closest('[data-u]');
     if (!btn) return;
     st.units = btn.dataset.u;
     pocSave(); pocRenderSettingsModal();
   });
-  document.getElementById('pocSetAddGym').addEventListener('click', function() {
-    const name = (prompt('New gym name:') || '').trim();
-    if (!name) return;
-    st.gyms.push({ id: 'g_' + Date.now(), name });
-    pocSave(); pocRenderSettingsModal();
-  });
   document.getElementById('pocSetAddDay').addEventListener('click', function() {
-    const name = (prompt('New day name:') || '').trim();
+    var name = (prompt('New day name:') || '').trim();
     if (!name) return;
-    st.days.push({ id: 'd_' + Date.now(), name });
+    st.days.push({ id: 'd_' + Date.now(), name: name });
     pocSave(); pocRenderSettingsModal();
   });
   document.getElementById('pocSetExport').addEventListener('click', function() {
-    const blob = new Blob([JSON.stringify(st, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'poc-backup.json'; a.click();
+    var blob = new Blob([JSON.stringify(st, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'poc-backup.json'; a.click();
   });
   document.getElementById('pocSetImport').addEventListener('click', function() { document.getElementById('pocSetImportFile').click(); });
   document.getElementById('pocSetImportFile').addEventListener('change', function(e) {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
+    var file = e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
     reader.onload = function() {
       try {
-        const parsed = JSON.parse(reader.result);
+        var parsed = JSON.parse(reader.result);
         if (!confirm('Replace all data with imported file?')) return;
         st = pocNormalize(parsed); pocSave(); pocRenderSettingsModal(); pocRenderAll();
       } catch (err) { alert('Import failed: ' + err.message); }
@@ -3536,8 +3540,7 @@ const POC_CONFIG = {
   });
 
   // ---- Rotation modal ----
-  let pocRotDraft = null;
-
+  var pocRotDraft = null;
   window.pocOpenRot = function() {
     pocRotDraft = st.splitRotation.slice();
     pocRenderRotModal();
@@ -3558,39 +3561,39 @@ const POC_CONFIG = {
 
   function pocRotTodayIdx() {
     if (!pocRotDraft) return -1;
-    const today = pocDateKey();
-    const anchor = st.splitAnchor;
-    const anchorDate = new Date(anchor.date + 'T00:00:00');
-    const todayDate = new Date(today + 'T00:00:00');
-    const diff = Math.round((todayDate - anchorDate) / 86400000);
-    const rotLen = pocRotDraft.length;
+    var today = pocDateKey();
+    var anchor = st.splitAnchor;
+    var anchorDate = new Date(anchor.date + 'T00:00:00');
+    var todayDate = new Date(today + 'T00:00:00');
+    var diff = Math.round((todayDate - anchorDate) / 86400000);
+    var rotLen = pocRotDraft.length;
     return ((anchor.index + diff) % rotLen + rotLen) % rotLen;
   }
 
   function pocRenderRotModal() {
-    const list = document.getElementById('pocRotList');
-    const todayIdx = pocRotTodayIdx();
-    list.innerHTML = pocRotDraft.map((name, i) =>
-      '<div class="poc-rot-row' + (i === todayIdx ? ' is-today' : '') + '" data-i="' + i + '">' +
-      '<span class="poc-rot-num">' + (i + 1) + '</span>' +
-      '<input value="' + pocEsc(name) + '" placeholder="Day name">' +
-      (i === todayIdx ? '<span class="poc-rot-today-tag">TODAY</span>' : '<button class="poc-rot-mini poc-rot-today-btn" data-set-today="' + i + '">Today →</button>') +
-      '<button class="poc-rot-mini del" data-del="' + i + '">×</button>' +
-      '</div>'
-    ).join('');
-    list.querySelectorAll('[data-i]').forEach(row => {
-      const i = parseInt(row.dataset.i, 10);
+    var list = document.getElementById('pocRotList');
+    var todayIdx = pocRotTodayIdx();
+    list.innerHTML = pocRotDraft.map(function(name, i) {
+      return '<div class="poc-rot-row' + (i === todayIdx ? ' is-today' : '') + '" data-i="' + i + '">' +
+        '<span class="poc-rot-num">' + (i + 1) + '</span>' +
+        '<input value="' + pocEsc(name) + '" placeholder="Day name">' +
+        (i === todayIdx ? '<span class="poc-rot-today-tag">TODAY</span>' : '<button class="poc-rot-mini poc-rot-today-btn" data-set-today="' + i + '">Today →</button>') +
+        '<button class="poc-rot-mini del" data-del="' + i + '">×</button>' +
+        '</div>';
+    }).join('');
+    list.querySelectorAll('[data-i]').forEach(function(row) {
+      var i = parseInt(row.dataset.i, 10);
       row.querySelector('input').addEventListener('input', function(e) { pocRotDraft[i] = e.target.value; });
-      const delBtn = row.querySelector('[data-del]');
+      var delBtn = row.querySelector('[data-del]');
       if (delBtn) delBtn.addEventListener('click', function() {
         if (pocRotDraft.length <= 1) return alert('Need at least one day.');
         pocRotDraft.splice(parseInt(delBtn.dataset.del, 10), 1);
         pocRenderRotModal();
       });
-      const todayBtn = row.querySelector('[data-set-today]');
+      var todayBtn = row.querySelector('[data-set-today]');
       if (todayBtn) todayBtn.addEventListener('click', function() {
-        const idx = parseInt(todayBtn.dataset.setToday, 10);
-        const rotLen = pocRotDraft.length;
+        var idx = parseInt(todayBtn.dataset.setToday, 10);
+        var rotLen = pocRotDraft.length;
         st.splitAnchor = { date: pocDateKey(), index: ((idx % rotLen) + rotLen) % rotLen };
         pocSave(); pocRenderRotModal();
       });
