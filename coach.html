@@ -448,15 +448,19 @@ function fmtTime(d) { return d.toLocaleTimeString('en-US', { hour:'numeric', min
 ───────────────────────────────────────────── */
 function loadAllData() {
   return {
-    profile:   storeGet('lifeos_profile'),
-    goals:     storeGet('lifeos_goals')         || [],
-    habits:    storeGet('lifeos_habits')         || [],
-    recovery:  storeGet('lifeos_recovery')       || [],
-    workouts:  storeGet('lifeos_workouts')       || [],
-    nutrition: storeGet('lifeos_nutrition_log')  || [],
-    program:   storeGet('lifeos_custom_program'),
-    events:    storeGet('lifeos_events')         || [],
-    prs:       storeGet('lifeos_prs')            || {}
+    profile:      storeGet('lifeos_profile'),
+    goals:        storeGet('lifeos_goals')          || [],
+    habits:       storeGet('lifeos_habits')          || [],
+    recovery:     storeGet('lifeos_recovery')        || [],
+    workouts:     storeGet('lifeos_workouts')        || [],
+    nutrition:    storeGet('lifeos_nutrition')       || [],
+    nutGoals:     storeGet('lifeos_nutrition_goals') || { cal:2500, protein:150, carbs:250, fat:70 },
+    program:      storeGet('lifeos_custom_program'),
+    program21:    storeGet('lifeos_21day_program'),
+    events:       storeGet('lifeos_events')          || [],
+    prs:          storeGet('lifeos_prs')             || {},
+    poc:          storeGet('lifeos_poc')             || { exercises:[], logs:{} },
+    pocDone:      storeGet('lifeos_poc_done')        || []
   };
 }
 
@@ -549,76 +553,107 @@ function analyze(data) {
    CONTEXT STRING (for API)
 ───────────────────────────────────────────── */
 function buildContext(data, a) {
-  const p = data.profile || {};
+  const p     = data.profile || {};
   const today = nowStr();
+  const ng    = data.nutGoals || { cal:2500, protein:150, carbs:250, fat:70 };
 
-  // Calendar: today's events and upcoming week
-  const todayEvts = (data.events || []).filter(e => e.date === today);
-  const wkEnd = toDateStr(new Date(Date.now() + 6 * 86400000));
-  const weekEvts = (data.events || []).filter(e => e.date > today && e.date <= wkEnd)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Calendar
+  const todayEvts = (data.events || []).filter(function(e){ return e.date === today; });
+  const wkEnd     = toDateStr(new Date(Date.now() + 6 * 86400000));
+  const weekEvts  = (data.events || []).filter(function(e){ return e.date > today && e.date <= wkEnd; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); });
 
-  // Today's nutrition macros
-  const todayMeals = (data.nutrition || []).filter(n => n.date === today);
-  const mac = todayMeals.reduce((acc, n) => ({
-    cal:   acc.cal   + (n.calories || 0),
-    prot:  acc.prot  + (n.protein  || 0),
+  // Nutrition
+  const todayMeals = (data.nutrition || []).filter(function(n){ return n.date === today; });
+  const mac = todayMeals.reduce(function(acc, n){ return {
+    cal:   acc.cal   + (n.calories || n.cal || 0),
+    prot:  acc.prot  + (n.protein  || n.prot || 0),
     carbs: acc.carbs + (n.carbs    || 0),
     fat:   acc.fat   + (n.fat      || 0)
-  }), { cal: 0, prot: 0, carbs: 0, fat: 0 });
+  }; }, { cal:0, prot:0, carbs:0, fat:0 });
+
+  // POC exercise logs — last 5 sessions per exercise
+  const poc      = data.poc || { exercises:[], logs:{} };
+  const pocLines = [];
+  if (poc.exercises && poc.exercises.length) {
+    pocLines.push('PROGRESSIVE OVERLOAD TRACKING:');
+    poc.exercises.slice(0, 20).forEach(function(ex) {
+      const log = (poc.logs || {})[ex.id] || [];
+      if (!log.length) return;
+      const recent = log.slice(-5).reverse();
+      const sets   = recent.map(function(d) {
+        const best = (d.sets || []).reduce(function(b, s) {
+          return (parseFloat(s.weight)||0) > (parseFloat(b.weight)||0) ? s : b;
+        }, d.sets[0] || {});
+        return d.date.slice(5) + ': ' + (best.weight||0) + 'kg×' + (best.reps||0);
+      });
+      const trend = recent.length >= 2
+        ? ((parseFloat(recent[0].sets && recent[0].sets[0] && recent[0].sets[0].weight)||0) >
+           (parseFloat(recent[1].sets && recent[1].sets[0] && recent[1].sets[0].weight)||0) ? ' ↑' : ' →')
+        : '';
+      pocLines.push('  ' + ex.name + ' [target: ' + (ex.repMin||0) + '-' + (ex.repMax||0) + ' reps]: ' + sets.join(' | ') + trend);
+    });
+  }
+
+  // Goals
+  const goalLines = [];
+  if (data.goals && data.goals.length) {
+    goalLines.push('GOALS:');
+    data.goals.slice(0,8).forEach(function(g) {
+      goalLines.push('  - ' + g.title + (g.target ? ' (target: ' + g.target + ')' : '') + (g.deadline ? ' by ' + g.deadline : ''));
+    });
+  }
 
   const lines = [
-    'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + ', ' + (p.height||'?') + 'cm',
-    ``,
-    `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`,
-    ``,
+    'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + (p.height ? ', '+p.height+'cm' : ''),
+    'TODAY: ' + new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+    '',
     todayEvts.length
-      ? "TODAY'S EVENTS:\n" + todayEvts.map(function(e){ return '  - ' + e.title + (e.time ? ' at ' + e.time : '') + (e.category ? ' [' + e.category + ']' : ''); }).join('\n')
-      : 'No calendar events today',
-    weekEvts.length
-      ? 'UPCOMING THIS WEEK:\n' + weekEvts.slice(0,5).map(function(e){ return '  - ' + e.date.slice(5) + ': ' + e.title + (e.category ? ' [' + e.category + ']' : ''); }).join('\n')
+      ? "TODAY'S CALENDAR:\n" + todayEvts.map(function(e){ return '  - ' + e.title + (e.time ? ' at '+e.time : '') + (e.category ? ' ['+e.category+']' : ''); }).join('\n')
       : '',
-    ``,
-    `WORKOUTS THIS WEEK: ${a.workoutsThisWeek} (last week: ${a.workoutsLastWeek})`,
-    a.daysSince !== null ? `Days since last workout: ${a.daysSince}` : 'No workouts logged yet',
-    ``,
+    weekEvts.length
+      ? 'UPCOMING WEEK:\n' + weekEvts.slice(0,5).map(function(e){ return '  - '+e.date.slice(5)+': '+e.title+(e.category?' ['+e.category+']':''); }).join('\n')
+      : '',
+    '',
+    ...goalLines,
+    goalLines.length ? '' : '',
+    'TRAINING:',
+    '  Workouts this week: ' + a.workoutsThisWeek + ' (last week: ' + a.workoutsLastWeek + ')',
+    a.daysSince !== null ? '  Days since last workout: ' + a.daysSince : '  No workouts logged yet',
+    a.prog ? '  Program: ' + a.prog.done + '/' + a.prog.total + ' days (' + a.prog.pct + '%), ' + a.prog.left + ' days left' : '  No active program',
+    '',
     ...(a.recentWorkouts.length ? [
-      `RECENT WORKOUTS (last ${Math.min(a.recentWorkouts.length, 10)}):`,
-      ...a.recentWorkouts.slice(0,10).map(w => {
-        const exSummary = (w.exercises||[]).map(ex => {
-          const sets = ex.sets || [];
+      'RECENT SESSIONS:',
+      ...a.recentWorkouts.slice(0,6).map(function(w) {
+        const exS = (w.exercises||[]).map(function(ex) {
+          var sets = ex.sets || [];
           if (!sets.length) return ex.name;
-          const topSet = sets.reduce((b,s)=>(parseFloat(s.weight)||0)>(parseFloat(b.weight)||0)?s:b, sets[0]);
-          return `${ex.name}: ${topSet.weight||0}kg×${topSet.reps||0} (${sets.length} sets)`;
+          var top = sets.reduce(function(b,s){ return (parseFloat(s.weight)||0)>(parseFloat(b.weight)||0)?s:b; }, sets[0]);
+          return ex.name + ': ' + (top.weight||0) + 'kg×' + (top.reps||0);
         }).join(', ');
-        return `  ${w.date?.slice(0,10)||'?'} — ${w.name||'Workout'}${exSummary ? ' | '+exSummary : ''}`;
+        return '  ' + (w.date||'').slice(0,10) + ' — ' + (w.name||'Workout') + (exS ? ' | '+exS : '');
       })
     ] : []),
-    ``,
-    ...(Object.keys(a.exMap).length ? [
-      `EXERCISE PROGRESSION (most recent → oldest):`,
-      ...Object.values(a.exMap).slice(0,15).map(ex => {
-        const s = ex.sessions;
-        const trend = s.length >= 2 ? (s[0].weight > s[1].weight ? ' ↑' : s[0].weight < s[1].weight ? ' ↓' : ' →') : '';
-        return '  ' + ex.name + ': ' + s.map(function(x){ return x.weight + 'kg×' + x.reps; }).join(' → ') + trend;
-      })
-    ] : []),
-    ``,
-    `HABITS: ${a.habitsToday}/${a.totalHabits} done today | 7-day adherence: ${a.habitPct !== null ? a.habitPct+'%' : 'no data'}`,
-    ...(data.habits.slice(0,8).map(h=>`  - ${h.name} (streak: ${h.currentStreak||0}d, cat: ${h.category||'?'})`)),
-    ``,
-    `SLEEP: avg ${a.avgSleep !== null ? a.avgSleep+'h' : 'no data'} (last 7 days)`,
-    a.avgStress !== null ? `Stress avg: ${a.avgStress}/10` : '',
-    a.lastRec ? `Last recovery log: ${a.lastRec.date} — sleep ${a.lastRec.sleep}h, stress ${a.lastRec.stress}/10` : '',
-    ``,
-    a.prog ? `PROGRAM: ${a.prog.done}/${a.prog.total} days (${a.prog.pct}%), ${a.prog.left} days remaining` : 'No active training program',
-    mac.cal > 0 ? `\nNUTRITION TODAY: ${Math.round(mac.cal)} kcal | protein: ${Math.round(mac.prot)}g | carbs: ${Math.round(mac.carbs)}g | fat: ${Math.round(mac.fat)}g` : 'Nutrition: nothing logged today',
-    ``,
-    Object.keys(a.prs).length ? 'TOP PRs:\n' + Object.entries(a.prs).slice(0,8).map(function(ep){ return '  - ' + ep[0] + ': ' + ep[1].weight + 'kg × ' + ep[1].reps; }).join('\n') : '',
-    ``,
-    `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`
+    '',
+    ...pocLines,
+    pocLines.length ? '' : '',
+    Object.keys(a.prs).length ? 'PERSONAL RECORDS:\n' + Object.entries(a.prs).slice(0,10).map(function(ep){ return '  '+ep[0]+': '+ep[1].weight+'kg × '+ep[1].reps+' reps'; }).join('\n') : '',
+    '',
+    'HABITS (' + a.habitsToday + '/' + a.totalHabits + ' today, ' + (a.habitPct !== null ? a.habitPct+'%' : '?') + ' 7-day):',
+    ...data.habits.slice(0,10).map(function(h){ return '  - '+h.name+' (streak: '+(h.currentStreak||0)+'d)'; }),
+    '',
+    'SLEEP & RECOVERY:',
+    '  Avg sleep (7d): ' + (a.avgSleep !== null ? a.avgSleep+'h' : 'no data'),
+    a.avgStress !== null ? '  Avg stress (7d): ' + a.avgStress + '/10' : '',
+    a.lastRec ? '  Last log: ' + a.lastRec.date + ' — ' + a.lastRec.sleep + 'h sleep, stress ' + a.lastRec.stress + '/10' : '',
+    '',
+    'NUTRITION:',
+    '  Targets: ' + ng.cal + ' kcal | protein: ' + ng.protein + 'g | carbs: ' + ng.carbs + 'g | fat: ' + ng.fat + 'g',
+    mac.cal > 0
+      ? '  Today: ' + Math.round(mac.cal) + ' kcal | protein: ' + Math.round(mac.prot) + 'g | carbs: ' + Math.round(mac.carbs) + 'g | fat: ' + Math.round(mac.fat) + 'g'
+      : '  Today: nothing logged',
   ];
-  return lines.filter(l => l !== '').join('\n');
+  return lines.filter(function(l){ return l !== undefined; }).join('\n');
 }
 
 /* ─────────────────────────────────────────────
