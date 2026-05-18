@@ -562,19 +562,15 @@ function buildContext(data, a) {
   }), { cal: 0, prot: 0, carbs: 0, fat: 0 });
 
   const lines = [
-    `USER: ${p.name||'Chris'}${p.age?`, age ${p.age}`:''}${p.weight?`, ${p.weight}kg`:''}, ${p.height||'?'}cm`,
+    'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + ', ' + (p.height||'?') + 'cm',
     ``,
     `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`,
     ``,
     todayEvts.length
-      ? `TODAY'S EVENTS:
-${todayEvts.map(e=>`  - ${e.title}${e.time?' at '+e.time:''}${e.category?' ['+e.category+']':''}`).join('
-')}`
+      ? "TODAY'S EVENTS:\n" + todayEvts.map(function(e){ return '  - ' + e.title + (e.time ? ' at ' + e.time : '') + (e.category ? ' [' + e.category + ']' : ''); }).join('\n')
       : 'No calendar events today',
     weekEvts.length
-      ? `UPCOMING THIS WEEK:
-${weekEvts.slice(0,5).map(e=>`  - ${e.date.slice(5)}: ${e.title}${e.category?' ['+e.category+']':''}`).join('
-')}`
+      ? 'UPCOMING THIS WEEK:\n' + weekEvts.slice(0,5).map(function(e){ return '  - ' + e.date.slice(5) + ': ' + e.title + (e.category ? ' [' + e.category + ']' : ''); }).join('\n')
       : '',
     ``,
     `WORKOUTS THIS WEEK: ${a.workoutsThisWeek} (last week: ${a.workoutsLastWeek})`,
@@ -598,7 +594,7 @@ ${weekEvts.slice(0,5).map(e=>`  - ${e.date.slice(5)}: ${e.title}${e.category?' [
       ...Object.values(a.exMap).slice(0,15).map(ex => {
         const s = ex.sessions;
         const trend = s.length >= 2 ? (s[0].weight > s[1].weight ? ' ↑' : s[0].weight < s[1].weight ? ' ↓' : ' →') : '';
-        return `  ${ex.name}: ${s.map(x=>`${x.weight}kg×${x.reps}`).join(' → ')}${trend}`;
+        return '  ' + ex.name + ': ' + s.map(function(x){ return x.weight + 'kg×' + x.reps; }).join(' → ') + trend;
       })
     ] : []),
     ``,
@@ -612,7 +608,7 @@ ${weekEvts.slice(0,5).map(e=>`  - ${e.date.slice(5)}: ${e.title}${e.category?' [
     a.prog ? `PROGRAM: ${a.prog.done}/${a.prog.total} days (${a.prog.pct}%), ${a.prog.left} days remaining` : 'No active training program',
     mac.cal > 0 ? `\nNUTRITION TODAY: ${Math.round(mac.cal)} kcal | protein: ${Math.round(mac.prot)}g | carbs: ${Math.round(mac.carbs)}g | fat: ${Math.round(mac.fat)}g` : 'Nutrition: nothing logged today',
     ``,
-    Object.keys(a.prs).length ? `TOP PRs:\n${Object.entries(a.prs).slice(0,8).map(([e,pr])=>`  - ${e}: ${pr.weight}kg × ${pr.reps}`).join('\n')}` : '',
+    Object.keys(a.prs).length ? 'TOP PRs:\n' + Object.entries(a.prs).slice(0,8).map(function(ep){ return '  - ' + ep[0] + ': ' + ep[1].weight + 'kg × ' + ep[1].reps; }).join('\n') : '',
     ``,
     `TODAY: ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`
   ];
