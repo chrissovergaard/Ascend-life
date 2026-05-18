@@ -1087,6 +1087,34 @@
       font-family: var(--font-mono); font-size: 9px; font-weight: 700;
       letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary);
     }
+
+    /* ── Garmin Daily Stats ── */
+    .gm-garmin-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
+    }
+    .gm-stat-tile {
+      background: #111111; border: 1px solid #1C1C1C; border-radius: 10px;
+      padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center;
+    }
+    .gm-stat-icon { font-size: 18px; line-height: 1; }
+    .gm-stat-value {
+      font-family: var(--font-mono); font-size: 20px; font-weight: 800; color: var(--text-primary); line-height: 1;
+    }
+    .gm-stat-value.gm-good  { color: #4ADE80; }
+    .gm-stat-value.gm-mid   { color: #FFC107; }
+    .gm-stat-value.gm-bad   { color: #FF6B6B; }
+    .gm-stat-label {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
+    }
+    .gm-stat-sub { font-size: 10px; color: var(--text-tertiary); }
+    .gm-garmin-form { display: flex; flex-direction: column; gap: 10px; }
+    .gm-garmin-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .gm-garmin-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px; }
+    .gm-garmin-lbl {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary);
+    }
     .sr-card.sr-success .sr-source { color: rgba(255,255,255,0.4); }
     .sr-card.sr-warning .sr-source { color: rgba(255,193,7,0.6); }
     .sr-card.sr-danger  .sr-source { color: rgba(255,107,107,0.6); }
@@ -1479,6 +1507,99 @@
         <div class="rm-input-row">
           <input type="text" class="goal-input" id="rmNotesInput" placeholder="Notes (optional)…" style="flex:1">
           <button class="goal-add-btn" id="rmUpdateBtn">Update Recovery</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Garmin Daily Stats -->
+  <div class="section">
+    <div class="section-title">Garmin Daily Stats</div>
+    <div class="gm-card">
+
+      <div class="gm-garmin-grid" id="garminGrid">
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">❤️</div>
+          <div class="gm-stat-value" id="gStatRhr">—</div>
+          <div class="gm-stat-label">Resting HR</div>
+          <div class="gm-stat-sub" id="gStatRhrSub">bpm</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">⚡</div>
+          <div class="gm-stat-value" id="gStatBattery">—</div>
+          <div class="gm-stat-label">Body Battery</div>
+          <div class="gm-stat-sub" id="gStatBatterySub">/ 100</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">📶</div>
+          <div class="gm-stat-value" id="gStatHrv" style="font-size:14px">—</div>
+          <div class="gm-stat-label">HRV Status</div>
+          <div class="gm-stat-sub" id="gStatHrvSub"></div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">👟</div>
+          <div class="gm-stat-value" id="gStatSteps">—</div>
+          <div class="gm-stat-label">Steps</div>
+          <div class="gm-stat-sub" id="gStatStepsSub">today</div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🩺</div>
+          <div class="gm-stat-value" id="gStatHealth" style="font-size:14px">—</div>
+          <div class="gm-stat-label">Health Status</div>
+          <div class="gm-stat-sub" id="gStatHealthSub"></div>
+        </div>
+        <div class="gm-stat-tile">
+          <div class="gm-stat-icon">🔋</div>
+          <div class="gm-stat-value" id="gStatRecovery">—</div>
+          <div class="gm-stat-label">Recovery</div>
+          <div class="gm-stat-sub" id="gStatRecoverySub">hours</div>
+        </div>
+      </div>
+
+      <div class="gm-garmin-form">
+        <div class="gm-garmin-row">
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">Resting HR (bpm)</div>
+            <input type="number" class="goal-input" id="gInRhr" placeholder="f.eks. 52" min="30" max="120">
+          </div>
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">Body Battery (0–100)</div>
+            <input type="number" class="goal-input" id="gInBattery" placeholder="f.eks. 78" min="0" max="100">
+          </div>
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">HRV Status</div>
+            <select class="hb-select" id="gInHrv" style="width:100%">
+              <option value="">— Vælg —</option>
+              <option value="Poor">Poor</option>
+              <option value="Unbalanced">Unbalanced</option>
+              <option value="Balanced">Balanced</option>
+              <option value="Good">Good</option>
+            </select>
+          </div>
+        </div>
+        <div class="gm-garmin-row">
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">Steps</div>
+            <input type="number" class="goal-input" id="gInSteps" placeholder="f.eks. 8400" min="0">
+          </div>
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">Health Status</div>
+            <select class="hb-select" id="gInHealth" style="width:100%">
+              <option value="">— Vælg —</option>
+              <option value="Poor">Poor</option>
+              <option value="Fair">Fair</option>
+              <option value="Good">Good</option>
+              <option value="Excellent">Excellent</option>
+            </select>
+          </div>
+          <div class="gm-garmin-group">
+            <div class="gm-garmin-lbl">Recovery (timer)</div>
+            <input type="number" class="goal-input" id="gInRecovery" placeholder="f.eks. 20" min="0" max="96">
+          </div>
+        </div>
+        <div class="gm-garmin-row" style="justify-content:flex-end">
+          <button class="goal-add-btn" id="gSaveBtn">Gem Garmin data</button>
         </div>
       </div>
 
@@ -2818,6 +2939,97 @@ function updateRecovery() {
   window.dispatchEvent(new CustomEvent('data-changed'));
 }
 
+// ── Garmin Daily Stats ──
+
+function loadGarminHistory() { return storeGet('lifeos_garmin') || []; }
+function getTodayGarmin() {
+  return loadGarminHistory().find(function(r) { return r.date === getActiveDateString(); }) || null;
+}
+
+function saveGarmin() {
+  var rhr      = document.getElementById('gInRhr').value;
+  var battery  = document.getElementById('gInBattery').value;
+  var hrv      = document.getElementById('gInHrv').value;
+  var steps    = document.getElementById('gInSteps').value;
+  var health   = document.getElementById('gInHealth').value;
+  var recovery = document.getElementById('gInRecovery').value;
+  if (!rhr && !battery && !hrv && !steps && !health && !recovery) return;
+  var today   = getActiveDateString();
+  var history = loadGarminHistory();
+  var idx     = history.findIndex(function(r) { return r.date === today; });
+  var existing = idx !== -1 ? history[idx] : {};
+  var entry = {
+    date:     today,
+    rhr:      rhr      !== '' ? parseInt(rhr,10)      : existing.rhr      || null,
+    battery:  battery  !== '' ? parseInt(battery,10)  : existing.battery  || null,
+    hrv:      hrv      || existing.hrv      || null,
+    steps:    steps    !== '' ? parseInt(steps,10)    : existing.steps    || null,
+    health:   health   || existing.health   || null,
+    recovery: recovery !== '' ? parseInt(recovery,10) : existing.recovery || null
+  };
+  if (idx !== -1) history[idx] = entry; else history.push(entry);
+  storeSet('lifeos_garmin', history);
+  document.getElementById('gInRhr').value      = '';
+  document.getElementById('gInBattery').value  = '';
+  document.getElementById('gInHrv').value      = '';
+  document.getElementById('gInSteps').value    = '';
+  document.getElementById('gInHealth').value   = '';
+  document.getElementById('gInRecovery').value = '';
+  renderGarmin();
+  window.dispatchEvent(new CustomEvent('data-changed'));
+}
+
+function garminColor(val, low, mid) {
+  if (val === null) return '';
+  return val >= mid ? 'gm-good' : val >= low ? 'gm-mid' : 'gm-bad';
+}
+
+function hrvColor(v) {
+  if (!v) return '';
+  if (v === 'Good')       return 'gm-good';
+  if (v === 'Balanced')   return 'gm-good';
+  if (v === 'Unbalanced') return 'gm-mid';
+  return 'gm-bad';
+}
+
+function healthColor(v) {
+  if (!v) return '';
+  if (v === 'Excellent') return 'gm-good';
+  if (v === 'Good')      return 'gm-good';
+  if (v === 'Fair')      return 'gm-mid';
+  return 'gm-bad';
+}
+
+function renderGarmin() {
+  var g = getTodayGarmin();
+  var set = function(id, val, unit, colorCls) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val !== null && val !== undefined ? val : '—';
+    el.className = 'gm-stat-value' + (colorCls ? ' ' + colorCls : '');
+    if (id.endsWith('Sub') && unit) el.textContent = unit;
+  };
+  if (!g) {
+    ['gStatRhr','gStatBattery','gStatHrv','gStatSteps','gStatHealth','gStatRecovery'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.textContent = '—'; el.className = 'gm-stat-value'; }
+    });
+    return;
+  }
+  var rhrEl = document.getElementById('gStatRhr');
+  if (rhrEl) { rhrEl.textContent = g.rhr !== null ? g.rhr : '—'; rhrEl.className = 'gm-stat-value ' + garminColor(g.rhr, 50, 65); }
+  var batEl = document.getElementById('gStatBattery');
+  if (batEl) { batEl.textContent = g.battery !== null ? g.battery : '—'; batEl.className = 'gm-stat-value ' + garminColor(g.battery, 25, 50); }
+  var hrvEl = document.getElementById('gStatHrv');
+  if (hrvEl) { hrvEl.textContent = g.hrv || '—'; hrvEl.className = 'gm-stat-value ' + hrvColor(g.hrv); if (g.hrv) hrvEl.style.fontSize='14px'; }
+  var stpEl = document.getElementById('gStatSteps');
+  if (stpEl) { stpEl.textContent = g.steps !== null ? g.steps.toLocaleString() : '—'; stpEl.className = 'gm-stat-value ' + garminColor(g.steps, 5000, 8000); }
+  var hlEl = document.getElementById('gStatHealth');
+  if (hlEl) { hlEl.textContent = g.health || '—'; hlEl.className = 'gm-stat-value ' + healthColor(g.health); if (g.health) hlEl.style.fontSize='14px'; }
+  var recEl = document.getElementById('gStatRecovery');
+  if (recEl) { recEl.textContent = g.recovery !== null ? g.recovery : '—'; recEl.className = 'gm-stat-value ' + garminColor(g.recovery, 12, 20); }
+}
+
 function renderRecovery() {
   const today  = getTodayRecovery();
   const alerts = getSmartAlerts();
@@ -3299,6 +3511,9 @@ renderHabits();
 
 document.getElementById('rmUpdateBtn').addEventListener('click', updateRecovery);
 renderRecovery();
+
+document.getElementById('gSaveBtn').addEventListener('click', saveGarmin);
+renderGarmin();
 
 renderRecommendations();
 window.addEventListener('data-changed', updateRecommendationsOnDataChange);

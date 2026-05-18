@@ -472,7 +472,8 @@ function loadAllData() {
     events:       storeGet('lifeos_events')          || [],
     prs:          storeGet('lifeos_prs')             || {},
     poc:          storeGet('lifeos_poc')             || { exercises:[], logs:{} },
-    pocDone:      storeGet('lifeos_poc_done')        || []
+    pocDone:      storeGet('lifeos_poc_done')        || [],
+    garmin:       storeGet('lifeos_garmin')          || []
   };
 }
 
@@ -674,6 +675,35 @@ function buildContext(data, a) {
     ...(todayMeals.length ? ['  Meals logged today:',
       ...todayMeals.map(function(m){ return '    - ' + (m.name||'Meal') + ': ' + (m.cal||m.calories||0) + 'kcal | P:'+(m.protein||0)+'g C:'+(m.carbs||0)+'g F:'+(m.fat||0)+'g'; })
     ] : []),
+    '',
+    ...function() {
+      var gHistory = (data.garmin || []).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+      var todayG   = gHistory.find(function(g){ return g.date === today; }) || null;
+      var lines2   = ['GARMIN WATCH DATA:'];
+      if (todayG) {
+        if (todayG.rhr      != null)  lines2.push('  Resting HR today: '     + todayG.rhr      + ' bpm');
+        if (todayG.battery  != null)  lines2.push('  Body Battery today: '   + todayG.battery  + '/100');
+        if (todayG.hrv)               lines2.push('  HRV Status: '           + todayG.hrv);
+        if (todayG.steps    != null)  lines2.push('  Steps today: '          + todayG.steps.toLocaleString());
+        if (todayG.health)            lines2.push('  Health Status: '        + todayG.health);
+        if (todayG.recovery != null)  lines2.push('  Recovery time needed: ' + todayG.recovery + 'h');
+      } else {
+        lines2.push('  No Garmin data logged today');
+      }
+      var recent = gHistory.slice(0, 7);
+      if (recent.length > 1) {
+        lines2.push('  Recent 7-day trend:');
+        recent.forEach(function(g) {
+          var parts = [];
+          if (g.rhr      != null) parts.push('RHR:' + g.rhr + 'bpm');
+          if (g.battery  != null) parts.push('Battery:' + g.battery);
+          if (g.steps    != null) parts.push('Steps:' + g.steps.toLocaleString());
+          if (g.hrv)              parts.push('HRV:' + g.hrv);
+          if (parts.length) lines2.push('    ' + g.date + ': ' + parts.join(' | '));
+        });
+      }
+      return lines2;
+    }(),
   ];
   return lines.filter(function(l){ return l !== undefined; }).join('\n');
 }
