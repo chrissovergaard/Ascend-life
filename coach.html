@@ -400,9 +400,9 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label" for="settingClaudeKey">Claude API Key <span style="color:var(--text-tertiary);font-weight:400">(fallback når Ollama er offline)</span></label>
-      <input type="password" id="settingClaudeKey" class="form-input" placeholder="sk-ant-...">
-      <div class="form-hint">Bruges på GitHub Pages og andre steder uden Ollama. Gemmes kun lokalt.</div>
+      <label class="form-label" for="settingGroqKey">Groq API Key <span style="color:var(--text-tertiary);font-weight:400">(gratis fallback når Ollama er offline)</span></label>
+      <input type="password" id="settingGroqKey" class="form-input" placeholder="gsk_...">
+      <div class="form-hint">Gratis på <a href="https://console.groq.com" target="_blank" style="color:var(--success)">console.groq.com</a> — bruges på GitHub Pages. Gemmes kun lokalt.</div>
     </div>
 
     <div class="form-group">
@@ -726,9 +726,9 @@ async function checkOllama() {
   } catch { return false; }
 }
 
-async function callClaude(history, systemPrompt) {
+async function callGroq(history, systemPrompt) {
   const s   = storeGet('coach_settings') || {};
-  const key = (s.claudeKey || '').trim();
+  const key = (s.groqKey || '').trim();
   if (!key) return { nokey: true };
 
   let hist = history.slice(-20).map(m => ({
@@ -739,28 +739,24 @@ async function callClaude(history, systemPrompt) {
   if (!hist.length) return { error: 'no messages' };
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'Authorization': 'Bearer ' + key
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: hist,
+        model: 'llama-3.1-8b-instant',
+        messages: [{ role: 'system', content: systemPrompt }, ...hist],
         stream: true
       }),
       signal: AbortSignal.timeout(90000)
     });
     if (!res.ok) {
       const txt = await res.text().catch(() => res.statusText);
-      return { error: 'Claude ' + res.status + ': ' + txt.slice(0, 120) };
+      return { error: 'Groq ' + res.status + ': ' + txt.slice(0, 120) };
     }
-    return { stream: res.body, aiType: 'claude' };
+    return { stream: res.body, aiType: 'groq' };
   } catch(e) {
     return (e.name === 'TypeError' || e.name === 'TimeoutError')
       ? { offline: true }
@@ -770,11 +766,11 @@ async function callClaude(history, systemPrompt) {
 
 async function streamToNewBubble(history, systemPrompt, fallbackFn) {
   let result = await callOllama(history, systemPrompt);
-  if (result.offline) result = await callClaude(history, systemPrompt);
+  if (result.offline) result = await callGroq(history, systemPrompt);
   hideTyping();
 
   if (result.nokey || result.offline) {
-    const msg = fallbackFn ? fallbackFn() : { content: 'No AI available. Add Ollama or a Claude API key in Settings ⚙', tone: 'warning' };
+    const msg = fallbackFn ? fallbackFn() : { content: 'No AI available. Add a Groq API key in Settings ⚙ (gratis på groq.com)', tone: 'warning' };
     addMessage({ role:'coach', content: msg.content, tone: msg.tone || 'warning', time: fmtTime(new Date()), ts: Date.now() });
     return;
   }
@@ -798,10 +794,13 @@ async function streamToNewBubble(history, systemPrompt, fallbackFn) {
         buf = lines.pop() || '';
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
           try {
-            const chunk = JSON.parse(line.slice(6));
-            if (chunk.type === 'content_block_delta' && chunk.delta && chunk.delta.type === 'text_delta') {
-              fullText += chunk.delta.text;
+            const chunk = JSON.parse(data);
+            const token = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (token) {
+              fullText += token;
               bubble.textContent = fullText;
               document.getElementById('chatMessages').scrollTop = 99999;
             }
@@ -1138,9 +1137,9 @@ async function updateApiBadge() {
   if (online) {
     el.className = 'api-badge is-ai';
     txt.textContent = 'Ollama · ' + (s.ollamaModel || 'llama3.2');
-  } else if ((s.claudeKey || '').trim()) {
+  } else if ((s.groqKey || '').trim()) {
     el.className = 'api-badge is-ai';
-    txt.textContent = 'Claude · Haiku';
+    txt.textContent = 'Groq · llama3';
   } else {
     el.className = 'api-badge';
     txt.textContent = 'Offline · Rule-based';
@@ -1151,7 +1150,7 @@ function openSettings() {
   const s = storeGet('coach_settings') || {};
   document.getElementById('settingOllamaUrl').value   = s.ollamaUrl   || 'http://localhost:11434';
   document.getElementById('settingOllamaModel').value = s.ollamaModel || 'llama3.2';
-  document.getElementById('settingClaudeKey').value   = s.claudeKey   || '';
+  document.getElementById('settingGroqKey').value     = s.groqKey     || '';
   document.getElementById('settingTone').value        = s.tone        || 'honest';
   document.getElementById('settingName').value        = s.name        || (loadAllData().profile?.name) || '';
   document.getElementById('settingsModal').classList.add('is-open');
@@ -1162,7 +1161,7 @@ function saveSettings() {
   storeSet('coach_settings', {
     ollamaUrl:   document.getElementById('settingOllamaUrl').value.trim()   || 'http://localhost:11434',
     ollamaModel: document.getElementById('settingOllamaModel').value.trim() || 'llama3.2',
-    claudeKey:   document.getElementById('settingClaudeKey').value.trim(),
+    groqKey:     document.getElementById('settingGroqKey').value.trim(),
     tone:        document.getElementById('settingTone').value,
     name:        document.getElementById('settingName').value.trim()
   });
