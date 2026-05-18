@@ -532,7 +532,7 @@ function analyze(data) {
   // Nutrition
   const todayKcal = (data.nutrition || [])
     .filter(n => n.date === today)
-    .reduce((s,n)=>s+(n.calories||0), 0);
+    .reduce((s,n)=>s+(n.cal||n.calories||0), 0);
 
   return {
     workoutsThisWeek: thisW.length,
