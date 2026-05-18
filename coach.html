@@ -189,17 +189,19 @@
 
     /* ── QUICK PROMPTS ── */
     .quick-prompts {
-      display: flex; gap: 6px; flex-wrap: wrap;
-      padding: 10px 18px; border-top: 1px solid #222;
-      flex-shrink: 0;
+      display: flex; gap: 6px; flex-wrap: nowrap;
+      padding: 10px 18px 6px; border-top: 1px solid #1A1A1A;
+      flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
     }
+    .quick-prompts::-webkit-scrollbar { display: none; }
     .quick-btn {
-      background: #080808; border: 1px solid #1C1C1C;
-      border-radius: 20px; padding: 6px 12px;
+      background: #0A0A0A; border: 1px solid #222;
+      border-radius: 20px; padding: 6px 13px;
       font-size: 11px; color: var(--text-tertiary); cursor: pointer;
       transition: all 0.15s; white-space: nowrap; font-family: var(--font-body);
+      flex-shrink: 0;
     }
-    .quick-btn:hover { border-color: #444; color: var(--text-primary); background: #111111; }
+    .quick-btn:hover { border-color: #555; color: var(--text-primary); background: #161616; }
 
     /* ── INPUT ── */
     .chat-input-row {
@@ -356,11 +358,21 @@
     </div>
 
     <div class="quick-prompts" id="quickPrompts">
-      <button class="quick-btn" onclick="quickSend('How am I doing this week?')">📊 Status</button>
-      <button class="quick-btn" onclick="quickSend('What should I focus on right now?')">🎯 Priority</button>
+      <button class="quick-btn" onclick="quickSend('How am I doing this week?')">📊 This week</button>
+      <button class="quick-btn" onclick="quickSend('What should I focus on right now?')">🎯 Focus</button>
+      <button class="quick-btn" onclick="quickSend('How is my training going?')">🏋️ Training</button>
+      <button class="quick-btn" onclick="quickSend('How is my nutrition today?')">🥗 Nutrition</button>
+      <button class="quick-btn" onclick="quickSend('How is my sleep and recovery?')">😴 Recovery</button>
       <button class="quick-btn" onclick="quickSend('Am I on track to hit my goals?')">📈 Goals</button>
+      <button class="quick-btn" onclick="quickSend('Am I making progress on my lifts?')">💪 Progression</button>
+      <button class="quick-btn" onclick="quickSend('How are my habits looking?')">✅ Habits</button>
+      <button class="quick-btn" onclick="quickSend('Where am I in my training program?')">📋 Program</button>
+      <button class="quick-btn" onclick="quickSend('What should I eat more of?')">🍗 Protein</button>
       <button class="quick-btn" onclick="quickSend('Give me a pep talk 🔥')">🔥 Motivate me</button>
-      <button class="quick-btn" onclick="quickSend('What does my week look like so far?')">📅 This week</button>
+      <button class="quick-btn" onclick="quickSend('What is my biggest weakness right now?')">⚠️ Weakness</button>
+      <button class="quick-btn" onclick="quickSend('What have I improved at lately?')">🆙 Wins</button>
+      <button class="quick-btn" onclick="quickSend('Am I training enough this week?')">📅 Frequency</button>
+      <button class="quick-btn" onclick="quickSend('What should I do today?')">⚡ Today</button>
     </div>
 
     <div class="chat-input-row">
@@ -1112,7 +1124,6 @@ async function sendMessage() {
   const time = fmtTime(new Date());
   addMessage({ role:'user', content:text, time });
 
-  document.getElementById('quickPrompts').style.display = 'none';
   showTyping();
 
   const data = loadAllData();
@@ -1221,7 +1232,6 @@ function clearHistory() {
   const c = document.getElementById('chatMessages');
   const t = document.getElementById('typingIndicator');
   [...c.children].forEach(el => { if (el !== t) el.remove(); });
-  document.getElementById('quickPrompts').style.display = '';
   closeSettings();
 }
 
@@ -1243,8 +1253,7 @@ function clearHistory() {
   if (history.length > 0) {
     messages = history;
     history.slice(-30).forEach(m => renderMsg(m, false));
-    document.getElementById('quickPrompts').style.display = 'none';
-  }
+    }
 
   if (newSess) {
     showTyping();
