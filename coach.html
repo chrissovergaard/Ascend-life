@@ -803,13 +803,14 @@ async function callGroq(history, systemPrompt) {
         'Authorization': 'Bearer ' + key
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'system', content: systemPrompt }, ...hist],
         stream: true
       }),
       signal: AbortSignal.timeout(90000)
     });
     if (!res.ok) {
+      if (res.status === 429) return { error: 'Groq rate limit nået — vent 30 sekunder og prøv igen.' };
       const txt = await res.text().catch(() => res.statusText);
       return { error: 'Groq ' + res.status + ': ' + txt.slice(0, 120) };
     }
