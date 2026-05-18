@@ -1266,36 +1266,38 @@ JSON format:
 
   <!-- ==================== SAVED PROGRAMS ==================== -->
   <div class="section" id="impProgramsSection" style="display:none">
-    <div class="section-title">Saved Programs</div>
-    <div class="gm-card">
-      <div class="gm-header">
-        <div class="gm-header-left"><div class="gm-eyebrow">Quick Start Templates</div></div>
-        <div class="gs-counter" id="impProgCount">0 days</div>
+    <button class="pr-toggle-btn" id="savedProgToggleBtn" onclick="savedProgToggle()">
+      <span class="pr-toggle-icon" id="savedProgToggleIcon">▶</span>
+      Quick Start Templates
+      <span class="gs-counter" id="impProgCount">0 programs</span>
+    </button>
+    <div id="savedProgBody" style="display:none">
+      <div class="gm-card">
+        <div id="impProgList"></div>
+        <div id="impProgEmpty" class="empty-state" style="display:none">No saved templates.</div>
       </div>
-      <div id="impProgList"></div>
-      <div id="impProgEmpty" class="empty-state" style="display:none">No saved templates.</div>
     </div>
   </div>
 
 
   <!-- ==================== CURRENT PROGRAM ==================== -->
   <div class="section" id="cwProgramSection" style="display:none">
-    <div class="section-title">Current Program</div>
-    <div class="gm-card">
-      <div class="gm-header">
-        <div class="gm-header-left">
-          <div class="gm-eyebrow" id="cwProgName">—</div>
+    <button class="pr-toggle-btn" id="cwProgToggleBtn" onclick="cwProgToggle()">
+      <span class="pr-toggle-icon" id="cwProgToggleIcon">▶</span>
+      <span id="cwProgName">Training Program</span>
+      <span class="gs-counter" id="cwProgCounter">0 / 0</span>
+    </button>
+    <div id="cwProgBody" style="display:none">
+      <div class="gm-card">
+        <div class="cw-prog-overall">
+          <div class="cw-prog-bar-wrap">
+            <div class="cw-prog-bar-fill" id="cwProgFill" style="width:0%"></div>
+          </div>
+          <div class="cw-prog-bar-label" id="cwProgPct">0%</div>
         </div>
-        <div class="gs-counter" id="cwProgCounter">0 / 0</div>
+        <div id="cwProgList"></div>
+        <div id="cwProgEmpty" class="empty-state" style="display:none">No program days.</div>
       </div>
-      <div class="cw-prog-overall">
-        <div class="cw-prog-bar-wrap">
-          <div class="cw-prog-bar-fill" id="cwProgFill" style="width:0%"></div>
-        </div>
-        <div class="cw-prog-bar-label" id="cwProgPct">0%</div>
-      </div>
-      <div id="cwProgList"></div>
-      <div id="cwProgEmpty" class="empty-state" style="display:none">No program days.</div>
     </div>
   </div>
 
@@ -2174,6 +2176,26 @@ function prToggle() {
   icon.textContent   = open ? '▶' : '▼';
   btn.classList.toggle('is-open', !open);
   if (!open) renderPersonalRecords();
+}
+
+function savedProgToggle() {
+  const btn  = document.getElementById('savedProgToggleBtn');
+  const body = document.getElementById('savedProgBody');
+  const icon = document.getElementById('savedProgToggleIcon');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  icon.textContent   = open ? '▶' : '▼';
+  btn.classList.toggle('is-open', !open);
+}
+
+function cwProgToggle() {
+  const btn  = document.getElementById('cwProgToggleBtn');
+  const body = document.getElementById('cwProgBody');
+  const icon = document.getElementById('cwProgToggleIcon');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  icon.textContent   = open ? '▶' : '▼';
+  btn.classList.toggle('is-open', !open);
 }
 
 function getPersonalRecord(exerciseName) {
