@@ -1031,6 +1031,19 @@
     }
     .rm-call-placeholder { color:#444; font-style:italic; font-size:12px; }
 
+    /* ── Today's Call mini-chat ── */
+    .rm-chat-wrap { margin-top: 14px; border-top: 1px solid #1A1A1A; padding-top: 12px; }
+    .rm-chat-msgs { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; max-height:260px; overflow-y:auto; scrollbar-width:none; }
+    .rm-chat-msgs::-webkit-scrollbar { display:none; }
+    .rm-chat-msg { padding:8px 12px; border-radius:10px; font-size:12px; line-height:1.55; max-width:92%; white-space:pre-wrap; }
+    .rm-chat-msg.user  { background:#111; border:1px solid #1C1C1C; color:var(--text-secondary); align-self:flex-end; }
+    .rm-chat-msg.coach { background:#080808; border:1px solid #181818; color:var(--text-secondary); align-self:flex-start; }
+    .rm-chat-msg.typing { color:#444; font-style:italic; }
+    .rm-chat-row { display:flex; gap:8px; }
+    .rm-chat-row .goal-input { flex:1; font-size:12px; }
+    .rm-chat-send { flex-shrink:0; background:none; border:1px solid #1C1C1C; border-radius:8px; color:var(--text-tertiary); cursor:pointer; font-size:14px; padding:0 14px; transition:border-color 0.18s, color 0.18s; }
+    .rm-chat-send:hover { border-color:#333; color:#fff; }
+
     .rm-alerts { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
     .rm-alert  { font-family:var(--font-mono); font-size:11px; padding:8px 12px; border-radius:10px; background:#111111; border:1px solid #1C1C1C; color:var(--text-secondary); line-height:1.4; }
 
@@ -1670,6 +1683,15 @@
         </div>
         <div class="rm-call-content" id="rmCallContent">
           <span class="rm-call-placeholder">Log søvn og recovery data — AI genererer din daglige anbefaling.</span>
+        </div>
+      </div>
+
+      <!-- Today's Call mini-chat -->
+      <div class="rm-chat-wrap" id="rmChatWrap" style="display:none">
+        <div class="rm-chat-msgs" id="rmChatMsgs"></div>
+        <div class="rm-chat-row">
+          <input class="goal-input" type="text" id="rmChatInput" placeholder="Spørg om anbefalingen…">
+          <button class="rm-chat-send" id="rmChatSend">→</button>
         </div>
       </div>
 
@@ -3321,6 +3343,7 @@ function renderTodaysCallText(text, model) {
   var content = document.getElementById('rmCallContent');
   var badge   = document.getElementById('rmCallBadge');
   var banner  = document.getElementById('rmCallBanner');
+  var chatWrap = document.getElementById('rmChatWrap');
   if (!content) return;
   content.textContent = text;
   if (badge) badge.textContent = model === 'groq' ? 'Groq AI' : model === 'ollama' ? 'Ollama AI' : 'Rule-based';
@@ -3328,6 +3351,109 @@ function renderTodaysCallText(text, model) {
     var u = (text||'').toUpperCase();
     banner.className = 'rm-call-banner ' + (u.startsWith('PUSH') ? 'push' : u.startsWith('MAINTAIN') ? 'maintain' : u.startsWith('RECOVER') ? 'recover' : 'push');
   }
+  if (chatWrap && text && !text.includes('Log søvn')) chatWrap.style.display = '';
+}
+
+// ── Today's Call mini-chat ──
+var rmChatHistory = [];
+
+async function rmChatSend() {
+  var input = document.getElementById('rmChatInput');
+  var msgs  = document.getElementById('rmChatMsgs');
+  var msg   = (input.value || '').trim();
+  if (!msg) return;
+  input.value = '';
+
+  // User bubble
+  var userEl = document.createElement('div');
+  userEl.className = 'rm-chat-msg user'; userEl.textContent = msg;
+  msgs.appendChild(userEl); msgs.scrollTop = msgs.scrollHeight;
+
+  // Build conversation context
+  var cached = storeGet('lifeos_todays_call');
+  var callCtx = (cached && cached.text) ? "Today's Call:\n" + cached.text : '';
+  var dataCtx = buildTodayCallContext();
+  var sys2 = 'Du er en elite personlig coach. Brugeren taler med dig om sin daglige Today\'s Call anbefaling.\n\nKontekst:\n' + callCtx + '\n\nFULDE DATA:\n' + dataCtx + '\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kardiovaskulær form for en atlet. Kommenter det aldrig negativt. Svar direkte, præcist og på dansk. Max 120 ord.';
+
+  rmChatHistory.push({ role:'user', content: msg });
+
+  // Typing indicator
+  var typingEl = document.createElement('div');
+  typingEl.className = 'rm-chat-msg coach typing'; typingEl.textContent = '…';
+  msgs.appendChild(typingEl); msgs.scrollTop = msgs.scrollHeight;
+
+  var cs  = storeGet('coach_settings') || {};
+  var key = (cs.groqKey || '').trim();
+  var result = null;
+
+  try {
+    var ck = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
+    if (ck.ok) {
+      var or = await fetch('http://localhost:11434/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ model: cs.ollamaModel||'llama3.2', messages:[{role:'system',content:sys2},...rmChatHistory.slice(-8)], stream:true }),
+        signal: AbortSignal.timeout(60000)
+      });
+      if (or.ok) result = { stream: or.body, aiType:'ollama' };
+    }
+  } catch(e) {}
+
+  if (!result && key) {
+    try {
+      var gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'system',content:sys2},...rmChatHistory.slice(-8)], stream:true }),
+        signal: AbortSignal.timeout(60000)
+      });
+      if (gr.ok) result = { stream: gr.body, aiType:'groq' };
+    } catch(e) {}
+  }
+
+  msgs.removeChild(typingEl);
+
+  if (!result) {
+    var errEl = document.createElement('div');
+    errEl.className = 'rm-chat-msg coach'; errEl.textContent = 'Ingen AI tilgængelig — tilføj Groq API-nøgle i Coach-indstillingerne.';
+    msgs.appendChild(errEl); msgs.scrollTop = msgs.scrollHeight;
+    rmChatHistory.pop();
+    return;
+  }
+
+  var coachEl = document.createElement('div');
+  coachEl.className = 'rm-chat-msg coach'; coachEl.textContent = '';
+  msgs.appendChild(coachEl); msgs.scrollTop = msgs.scrollHeight;
+
+  var reader  = result.stream.getReader();
+  var decoder = new TextDecoder();
+  var full    = '';
+
+  try {
+    if (result.aiType === 'groq') {
+      var buf = '';
+      while (true) {
+        var rd = await reader.read();
+        if (rd.done) break;
+        buf += decoder.decode(rd.value, {stream:true});
+        var parts = buf.split('\n'); buf = parts.pop() || '';
+        for (var p of parts) {
+          if (!p.startsWith('data: ')) continue;
+          var d = p.slice(6).trim(); if (d === '[DONE]') continue;
+          try { var tk = JSON.parse(d).choices[0].delta.content; if (tk) { full += tk; coachEl.textContent = full; msgs.scrollTop = msgs.scrollHeight; } } catch(e) {}
+        }
+      }
+    } else {
+      while (true) {
+        var rd2 = await reader.read();
+        if (rd2.done) break;
+        for (var ln of decoder.decode(rd2.value).split('\n')) {
+          if (!ln.trim()) continue;
+          try { var ch = JSON.parse(ln); if (ch.message && ch.message.content) { full += ch.message.content; coachEl.textContent = full; msgs.scrollTop = msgs.scrollHeight; } } catch(e) {}
+        }
+      }
+    }
+  } catch(e) { if (!full) full = 'Fejl — prøv igen.'; coachEl.textContent = full; }
+
+  rmChatHistory.push({ role:'assistant', content: full });
 }
 
 async function generateTodaysCall(force) {
@@ -3345,7 +3471,7 @@ async function generateTodaysCall(force) {
   if (regen) regen.classList.add('spinning');
 
   var ctx = buildTodayCallContext();
-  var sys = 'Du er en elite personlig coach. Baseret på brugerens data, generer hans TODAY\'S CALL — en specifik, direkte daglig anbefaling.\n\nFormat:\n- Første linje: PUSH, MAINTAIN eller RECOVER + et kort subtitle (f.eks. "PUSH — Hård session i dag" eller "RECOVER — Kroppen har brug for hvile")\n- Derefter 2-3 sætninger ærlig analyse baseret på de faktiske tal\n- Derefter 4-5 bullet points med konkrete handlinger til i dag\n\nVær direkt og datadrevet. Henvis til de faktiske tal. Hold svaret under 180 ord. Skriv på dansk.';
+  var sys = 'Du er en elite personlig coach. Baseret på brugerens data, generer hans TODAY\'S CALL — en specifik, direkte daglig anbefaling.\n\nFormat:\n- Første linje: PUSH, MAINTAIN eller RECOVER + et kort subtitle (f.eks. "PUSH — Hård session i dag" eller "RECOVER — Kroppen har brug for hvile")\n- Derefter 2-3 sætninger ærlig analyse baseret på de faktiske tal\n- Derefter 4-5 bullet points med konkrete handlinger til i dag\n\nVær direkt og datadrevet. Henvis til de faktiske tal. Hold svaret under 180 ord. Skriv på dansk.\n\nVIGTIGT OM HVILEPULS: En LAV hvilepuls (40-60 bpm) hos en atletisk person er et TEGN PÅ FREMRAGENDE kardiovaskulær form — ikke et problem. Trænede atleter har typisk 40-55 bpm. Kommenter det aldrig negativt. Jo lavere (ned til ca. 35-40 bpm), jo bedre kondition. Flage det kun hvis det er usædvanligt lavt FOR DENNE PERSON sammenlignet med deres normale baseline, eller kombineret med sygdomstegn.';
 
   var result = null;
   try {
@@ -3848,7 +3974,9 @@ document.getElementById('hbNameInput').addEventListener('keydown', e => { if (e.
 renderHabits();
 
 document.getElementById('rmUpdateBtn').addEventListener('click', updateRecovery);
-document.getElementById('rmCallRegen').addEventListener('click', function() { generateTodaysCall(true); });
+document.getElementById('rmCallRegen').addEventListener('click', function() { rmChatHistory = []; document.getElementById('rmChatMsgs').innerHTML = ''; generateTodaysCall(true); });
+document.getElementById('rmChatSend').addEventListener('click', rmChatSend);
+document.getElementById('rmChatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') rmChatSend(); });
 renderRecovery();
 renderGarmin();
 generateTodaysCall(false);
