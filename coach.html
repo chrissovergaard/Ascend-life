@@ -624,7 +624,7 @@ function buildContext(data, a) {
 
   const lines = [
     'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + (p.height ? ', '+p.height+'cm' : ''),
-    'TODAY: ' + new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
+    'TODAY: ' + new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + ' — kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
     '',
     todayEvts.length
       ? "TODAY'S CALENDAR:\n" + todayEvts.map(function(e){ return '  - ' + e.title + (e.time ? ' at '+e.time : '') + (e.category ? ' ['+e.category+']' : ''); }).join('\n')

@@ -3287,7 +3287,7 @@ function buildTodayCallContext() {
   var prevCall = storeGet('lifeos_todays_call');
 
   var lines = [
-    'DATE: ' + new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}),
+    'DATE: ' + new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}) + ' — kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
     'USER: ' + (profile.name||'Chris') + (profile.age ? ', ' + profile.age + ' år' : '') + (profile.weight ? ', ' + profile.weight + 'kg' : ''),
     ''
   ];
@@ -3373,7 +3373,7 @@ async function rmChatSend() {
   var cached = storeGet('lifeos_todays_call');
   var callCtx = (cached && cached.text) ? "Today's Call:\n" + cached.text : '';
   var dataCtx = buildTodayCallContext();
-  var sys2 = 'Du er en elite personlig coach. Brugeren taler med dig om sin daglige Today\'s Call anbefaling.\n\nKontekst:\n' + callCtx + '\n\nFULDE DATA:\n' + dataCtx + '\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kardiovaskulær form for en atlet. Kommenter det aldrig negativt. Svar direkte, præcist og på dansk. Max 120 ord.';
+  var sys2 = 'Du er en elite personlig coach. Brugeren taler med dig om sin daglige Today\'s Call anbefaling.\n\nTIDSPUNKT: kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}) + ' — tag højde for hvad der er realistisk på dette tidspunkt (f.eks. kri ikke på manglende kost tidligt om morgenen).\n\nKontekst:\n' + callCtx + '\n\nFULDE DATA:\n' + dataCtx + '\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kardiovaskulær form for en atlet. Kommenter det aldrig negativt. Svar direkte, præcist og på dansk. Max 120 ord.';
 
   rmChatHistory.push({ role:'user', content: msg });
 
