@@ -682,6 +682,15 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.act-del-btn {
+  flex-shrink: 0; margin-left: 6px;
+  background: transparent; border: none;
+  color: var(--text-tertiary); font-size: 14px; line-height: 1;
+  cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.nw-activity-row:hover .act-del-btn { opacity: 1; }
+.act-del-btn:hover { color: #FF8A8A !important; }
 .nw-activity-empty {
   text-align: center; padding: 12px 0;
   color: var(--text-tertiary); font-size: 11px;
@@ -2147,7 +2156,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const cls = e.delta >= 0 ? 'up' : 'down';
       const amt = fmtMoney(Math.abs(e.delta));
       const kind = e.kind === 'edit' ? 'EDIT' : (e.kind === 'delete' ? 'DELETE' : 'ADD');
-      return '<div class="nw-activity-row" style="color:' + meta.color + '">'
+      return '<div class="nw-activity-row" data-ts="' + e.ts + '" style="color:' + meta.color + '">'
         + '<span class="nw-activity-bar" style="background:' + meta.color + '"></span>'
         + '<div class="nw-activity-info">'
         +   '<div class="nw-activity-name">' + escapeHtml(e.name || '(unnamed)') + '</div>'
@@ -2155,8 +2164,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         + '</div>'
         + '<span class="nw-activity-amt ' + cls + '">' + sign + amt + '</span>'
         + '<span class="nw-activity-date">' + fmtActivityDate(e.ts) + '</span>'
+        + '<button class="act-del-btn" data-ts="' + e.ts + '" title="Slet">×</button>'
         + '</div>';
     }).join('');
+    list.querySelectorAll('.act-del-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const ts = Number(btn.dataset.ts);
+        const all = storeGet(ACTIVITY_KEY) || [];
+        const idx = all.findIndex(x => x.ts === ts);
+        if (idx !== -1) { all.splice(idx, 1); storeSet(ACTIVITY_KEY, all); }
+        renderActivity();
+      });
+    });
   }
 
   // ============================================================
