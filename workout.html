@@ -942,6 +942,20 @@
     img, video, canvas, svg { max-width: 100%; }
 
     .hidden { display: none !important; }
+    /* PR Toast */
+    .pr-toast { position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:linear-gradient(135deg,#1a1a1a,#111);border:1px solid rgba(107,227,164,0.4);border-radius:16px;padding:14px 22px;z-index:9999;transition:transform .4s cubic-bezier(.175,.885,.32,1.275);text-align:center;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.6); }
+    .pr-toast.show { transform:translateX(-50%) translateY(0); }
+    .pr-toast-title { font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--success);margin-bottom:4px; }
+    .pr-toast-body  { font-size:13px;font-weight:600;color:var(--text-primary); }
+    /* Template list */
+    .tmpl-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#111;border:1px solid #1c1c1c;margin-bottom:6px; }
+    .tmpl-name { flex:1;font-size:13px;font-weight:600;color:var(--text-primary); }
+    .tmpl-meta { font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary); }
+    .tmpl-btn  { background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--text-tertiary);font-size:11px;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap; }
+    .tmpl-btn:hover { border-color:var(--success);color:var(--success); }
+    .tmpl-del  { background:transparent;border:none;color:var(--text-tertiary);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;opacity:0;transition:opacity .15s; }
+    .tmpl-item:hover .tmpl-del { opacity:1; }
+    .tmpl-del:hover { color:#FF8A8A; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1258,6 +1272,24 @@ JSON format:
   </div>
 </div>
 
+  <!-- ==================== WORKOUT TEMPLATES ==================== -->
+  <div class="section">
+    <button class="pr-toggle-btn" id="tmplToggleBtn" onclick="tmplToggle()">
+      <span class="pr-toggle-icon" id="tmplToggleIcon">▶</span>
+      Workout Templates
+      <span class="gs-counter" id="tmplCount">0 templates</span>
+    </button>
+    <div id="tmplBody" style="display:none">
+      <div class="gm-card">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input type="text" id="tmplName" class="goal-input" placeholder="Template navn (f.eks. Push Day A)" style="flex:1;min-width:150px">
+          <button class="wt-save-btn" id="tmplSaveBtn" style="padding:9px 16px;font-size:12px">💾 Gem aktuel workout</button>
+        </div>
+        <div id="tmplList"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== WORKOUT HISTORY ==================== -->
   <div class="section">
     <div class="section-title">Workout History</div>
@@ -1400,12 +1432,24 @@ function saveWorkout() {
     workouts.unshift({ id: Date.now(), name: currentWorkout.name, date: new Date().toISOString(), notes: currentWorkout.notes || '', duration: dur, exercises });
   }
 
+  // Detect PRs before saving
+  const newPRs = [];
+  exercises.forEach(ex => {
+    const prevBest = getPersonalRecord(ex.name);
+    const newBest  = Math.max(...ex.sets.map(s => parseFloat(s.weight)).filter(n => !isNaN(n)));
+    if (!isNaN(newBest) && newBest > 0 && (prevBest === null || newBest > prevBest)) {
+      newPRs.push({ name: ex.name, weight: newBest, prev: prevBest });
+    }
+  });
+
   storeSet('lifeos_workouts', workouts);
   currentWorkout = null;
   clearInterval(wtTimerInterval); wtTimerInterval = null;
   wtRenderActive();
   renderWorkoutHistory();
   renderPersonalRecords();
+
+  if (newPRs.length > 0) showPRToast(newPRs);
 }
 
 function cancelWorkout() {
@@ -3626,6 +3670,111 @@ function cwStartDay(di, day) {
   renderWorkoutHistory();
   renderPersonalRecords();
 })();
+
+// ══════════════════════════════════════════
+// PR TOAST
+// ══════════════════════════════════════════
+const prToastEl = document.createElement('div');
+prToastEl.className = 'pr-toast';
+document.body.appendChild(prToastEl);
+
+function showPRToast(prs) {
+  const first = prs[0];
+  prToastEl.innerHTML =
+    '<div class="pr-toast-title">🏆 Ny personlig rekord!</div>' +
+    '<div class="pr-toast-body">' + first.name + ': ' + first.weight + ' kg' +
+    (first.prev ? ' <span style="color:var(--success);font-size:12px">(+' + Math.round((first.weight - first.prev)*10)/10 + ' kg)</span>' : ' <span style="color:var(--success);font-size:12px">(første gang)</span>') + '</div>' +
+    (prs.length > 1 ? '<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">+' + (prs.length-1) + ' flere PRs</div>' : '');
+  prToastEl.classList.add('show');
+  setTimeout(() => prToastEl.classList.remove('show'), 4000);
+}
+
+// ══════════════════════════════════════════
+// WORKOUT TEMPLATES
+// ══════════════════════════════════════════
+const TMPL_KEY = 'lifeos_workout_templates';
+function loadTemplates() { return storeGet(TMPL_KEY) || []; }
+function saveTemplates(arr) { storeSet(TMPL_KEY, arr); }
+
+function tmplToggle() {
+  const body = document.getElementById('tmplBody');
+  const icon = document.getElementById('tmplToggleIcon');
+  const btn  = document.getElementById('tmplToggleBtn');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  icon.textContent = open ? '▶' : '▼';
+  btn.classList.toggle('is-open', !open);
+  if (!open) renderTemplates();
+}
+
+function renderTemplates() {
+  const list  = document.getElementById('tmplList');
+  const count = document.getElementById('tmplCount');
+  const tmpls = loadTemplates();
+  count.textContent = tmpls.length + ' template' + (tmpls.length !== 1 ? 's' : '');
+  if (!tmpls.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);font-style:italic;padding:8px 0">Ingen templates endnu — gem din næste workout som template</div>';
+    return;
+  }
+  list.innerHTML = '';
+  tmpls.forEach(function(t, idx) {
+    var item = document.createElement('div'); item.className = 'tmpl-item';
+    var name = document.createElement('div'); name.className = 'tmpl-name'; name.textContent = t.name;
+    var meta = document.createElement('div'); meta.className = 'tmpl-meta';
+    meta.textContent = (t.exercises || []).length + ' øvelser · gemt ' + (t.savedAt || '').slice(0,10);
+    var info = document.createElement('div'); info.style.cssText = 'flex:1;min-width:0';
+    info.appendChild(name); info.appendChild(meta);
+    var loadBtn = document.createElement('button'); loadBtn.className = 'tmpl-btn'; loadBtn.textContent = '▶ Start';
+    loadBtn.addEventListener('click', function() { loadTemplate(idx); });
+    var del = document.createElement('button'); del.className = 'tmpl-del'; del.textContent = '×';
+    del.addEventListener('click', function() {
+      var arr = loadTemplates(); arr.splice(idx, 1); saveTemplates(arr); renderTemplates();
+    });
+    item.appendChild(info); item.appendChild(loadBtn); item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+function loadTemplate(idx) {
+  const t = loadTemplates()[idx];
+  if (!t) return;
+  startWorkout();
+  currentWorkout.name = t.name;
+  document.getElementById('wtWorkoutName').value = t.name;
+  (t.exercises || []).forEach(ex => {
+    addExercise(ex.name);
+    const last = currentWorkout.exercises[currentWorkout.exercises.length - 1];
+    last.sets = ex.sets ? ex.sets.map(s => ({ ...s })) : [{ reps: '', weight: '' }];
+  });
+  wtRenderActive();
+  document.getElementById('wtActiveSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('tmplSaveBtn').addEventListener('click', function() {
+  if (!currentWorkout || !currentWorkout.exercises.length) {
+    alert('Start en workout og tilføj øvelser først.');
+    return;
+  }
+  wtReadBack();
+  const name = document.getElementById('tmplName').value.trim() || currentWorkout.name || 'Template';
+  const arr = loadTemplates();
+  arr.unshift({
+    name,
+    exercises: currentWorkout.exercises.map(ex => ({
+      name: ex.name,
+      sets: ex.sets.map(s => ({ reps: s.reps, weight: s.weight }))
+    })),
+    savedAt: new Date().toISOString()
+  });
+  if (arr.length > 20) arr.splice(20);
+  saveTemplates(arr);
+  document.getElementById('tmplName').value = '';
+  renderTemplates();
+  // Show templates section if hidden
+  const body = document.getElementById('tmplBody');
+  if (body.style.display === 'none') tmplToggle();
+  alert('Template gemt: ' + name);
+});
 </script>
 </body>
 </html>

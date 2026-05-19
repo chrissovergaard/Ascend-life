@@ -1193,6 +1193,28 @@
     .sr-score-fill.sr-danger  { background:#FF6B6B; }
 
     .sr-empty { font-family:var(--font-mono); font-size:12px; color:var(--text-tertiary); text-align:center; padding:24px 0; }
+    /* Bodyweight chart */
+    .bw-stat { display:flex;flex-direction:column;gap:1px; }
+    .bw-stat-val { font-family:var(--font-mono);font-size:13px;font-weight:800; }
+    .bw-stat-lbl { font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-tertiary); }
+    /* Sleep alarm */
+    .sleep-alarm-row { display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
+    .sleep-alarm-time { font-family:var(--font-mono);font-size:28px;font-weight:800;color:#7EB8F7; }
+    .sleep-alarm-reason { font-size:12px;color:var(--text-tertiary);flex:1; }
+    /* Pre-game */
+    .pg-item { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05); }
+    .pg-item:last-child { border-bottom:none; }
+    .pg-time { font-family:var(--font-mono);font-size:11px;color:#FFA500;min-width:50px;font-weight:700; }
+    .pg-text { font-size:12px;color:var(--text-secondary); }
+    /* Injury log */
+    .inj-item { display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:#111;border:1px solid #1c1c1c;margin-bottom:6px; }
+    .inj-level { font-family:var(--font-mono);font-size:12px;font-weight:800;min-width:20px; }
+    .inj-info { flex:1;min-width:0; }
+    .inj-part { font-size:12px;font-weight:600;color:var(--text-primary); }
+    .inj-meta { font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary); }
+    .inj-del { background:transparent;border:none;color:var(--text-tertiary);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;opacity:0; transition:opacity .15s; }
+    .inj-item:hover .inj-del { opacity:1; }
+    .inj-del:hover { color:#FF8A8A; }
 
     /* ===== CALENDAR SYSTEM ===== */
     .cal-layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -1795,6 +1817,54 @@
       <div class="sr-grid" id="srGrid">
         <div class="sr-empty">No data yet — log workouts, habits and recovery to get personalised tips.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Bodyweight Tracker -->
+  <div class="section">
+    <div class="section-title">Bodyweight Tracker</div>
+    <div class="gm-card">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <input type="number" id="bwInput" class="goal-input" placeholder="kg (f.eks. 62.5)" step="0.1" min="30" max="200" style="max-width:150px">
+        <button class="wt-save-btn" id="bwLogBtn" style="padding:9px 16px;font-size:12px">+ Log vægt</button>
+        <span id="bwLatest" style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary)"></span>
+      </div>
+      <canvas id="bwChart" height="80" style="width:100%;display:block"></canvas>
+      <div id="bwStats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- Sleep Alarm -->
+  <div class="section" id="sleepAlarmSection">
+    <div class="section-title">Anbefalet Sengetid</div>
+    <div class="gm-card" id="sleepAlarmCard">
+      <div id="sleepAlarmContent" style="font-size:13px;color:var(--text-secondary)">Ingen kommende events — nyd en god nats søvn.</div>
+    </div>
+  </div>
+
+  <!-- Pre-kamp protokol -->
+  <div class="section" id="preGameSection" style="display:none">
+    <div class="section-title">Pre-kamp Protokol</div>
+    <div class="gm-card" id="preGameCard"></div>
+  </div>
+
+  <!-- Injury / Soreness Log -->
+  <div class="section">
+    <div class="section-title">Ømhed & Skade Log</div>
+    <div class="gm-card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input type="text" id="injBodyPart" class="goal-input" placeholder="Område (f.eks. venstre skulder)" style="flex:2;min-width:140px">
+        <select id="injLevel" class="goal-input" style="flex:1;min-width:100px">
+          <option value="1">😐 Let (1)</option>
+          <option value="2">😬 Mild (2)</option>
+          <option value="3" selected>😣 Moderat (3)</option>
+          <option value="4">😖 Kraftig (4)</option>
+          <option value="5">🤕 Alvorlig (5)</option>
+        </select>
+        <input type="text" id="injNote" class="goal-input" placeholder="Note (valgfri)" style="flex:2;min-width:120px">
+        <button class="wt-save-btn" id="injLogBtn" style="padding:9px 14px;font-size:12px">+ Log</button>
+      </div>
+      <div id="injList"></div>
     </div>
   </div>
 
@@ -4126,6 +4196,255 @@ document.getElementById('profSaveBtn').addEventListener('click', saveProfile);
 document.getElementById('profEditBtn').addEventListener('click', showProfileEdit);
 document.getElementById('profCancelBtn').addEventListener('click', cancelProfileEdit);
 renderProfile();
+
+// ══════════════════════════════════════════
+// BODYWEIGHT TRACKER
+// ══════════════════════════════════════════
+(function() {
+  var BW_KEY = 'lifeos_bodyweight';
+  function loadBW() { return storeGet(BW_KEY) || []; }
+  function saveBW(arr) { storeSet(BW_KEY, arr); }
+
+  function renderBW() {
+    var data = loadBW().slice(-30);
+    var latest = data[data.length - 1];
+    var latestEl = document.getElementById('bwLatest');
+    if (latest) {
+      latestEl.textContent = 'Seneste: ' + latest.w + ' kg (' + latest.date.slice(5) + ')';
+    } else {
+      latestEl.textContent = 'Ingen data endnu';
+    }
+
+    var stats = document.getElementById('bwStats');
+    stats.innerHTML = '';
+    if (data.length >= 2) {
+      var first = data[0].w, last = data[data.length-1].w;
+      var diff = Math.round((last - first) * 10) / 10;
+      var goal = (storeGet('lifeos_profile') || {}).goalWeight || 65;
+      var toGoal = Math.round((goal - last) * 10) / 10;
+      function mkStat(val, lbl, color) {
+        var d = document.createElement('div'); d.className = 'bw-stat';
+        var v = document.createElement('div'); v.className = 'bw-stat-val';
+        v.style.color = color || 'var(--text-primary)'; v.textContent = val;
+        var l = document.createElement('div'); l.className = 'bw-stat-lbl'; l.textContent = lbl;
+        d.appendChild(v); d.appendChild(l); return d;
+      }
+      stats.appendChild(mkStat(last + ' kg', 'Nu', 'var(--text-primary)'));
+      stats.appendChild(mkStat((diff >= 0 ? '+' : '') + diff + ' kg', data.length + ' dage', diff > 0 ? '#FFA500' : 'var(--success)'));
+      stats.appendChild(mkStat((toGoal >= 0 ? '+' : '') + toGoal + ' kg', 'til mål (' + goal + 'kg)', toGoal <= 0 ? 'var(--success)' : '#7EB8F7'));
+    }
+
+    var canvas = document.getElementById('bwChart');
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * devicePixelRatio;
+    canvas.height = 80 * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    var W = canvas.offsetWidth, H = 80;
+    ctx.clearRect(0, 0, W, H);
+    if (data.length < 2) {
+      ctx.font = '11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.textAlign = 'center'; ctx.fillText('Log mindst 2 målinger for at se grafen', W/2, 42);
+      return;
+    }
+    var weights = data.map(function(d) { return d.w; });
+    var minW = Math.min.apply(null, weights) - 1;
+    var maxW = Math.max.apply(null, weights) + 1;
+    var pad = 8;
+    function toX(i) { return pad + (i / (data.length - 1)) * (W - pad * 2); }
+    function toY(w) { return H - pad - ((w - minW) / (maxW - minW)) * (H - pad * 2); }
+    // Area
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(data[0].w));
+    data.forEach(function(d, i) { if (i > 0) ctx.lineTo(toX(i), toY(d.w)); });
+    ctx.lineTo(toX(data.length-1), H); ctx.lineTo(toX(0), H); ctx.closePath();
+    ctx.fillStyle = 'rgba(100,180,255,0.08)'; ctx.fill();
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(data[0].w));
+    data.forEach(function(d, i) { if (i > 0) ctx.lineTo(toX(i), toY(d.w)); });
+    ctx.strokeStyle = '#7EB8F7'; ctx.lineWidth = 2; ctx.stroke();
+    // Goal line
+    var goal2 = (storeGet('lifeos_profile') || {}).goalWeight || 65;
+    if (goal2 >= minW && goal2 <= maxW) {
+      var gy = toY(goal2);
+      ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W - pad, gy);
+      ctx.strokeStyle = 'rgba(107,227,164,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  document.getElementById('bwLogBtn').addEventListener('click', function() {
+    var val = parseFloat(document.getElementById('bwInput').value);
+    if (!val || val < 20 || val > 300) return;
+    var today = getActiveDateString();
+    var arr = loadBW();
+    var idx = arr.findIndex(function(e) { return e.date === today; });
+    if (idx >= 0) arr[idx].w = val; else arr.push({ date: today, w: val });
+    arr.sort(function(a,b) { return a.date.localeCompare(b.date); });
+    saveBW(arr);
+    document.getElementById('bwInput').value = '';
+    renderBW();
+  });
+
+  renderBW();
+})();
+
+// ══════════════════════════════════════════
+// SLEEP ALARM
+// ══════════════════════════════════════════
+(function() {
+  function renderSleepAlarm() {
+    var events = storeGet('lifeos_events') || [];
+    var tomorrow = (function(){ var d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+    var today = getActiveDateString();
+
+    // Find most demanding event today or tomorrow
+    var candidates = events.filter(function(e) { return e.date === today || e.date === tomorrow; });
+    var highEvt = candidates.find(function(e) {
+      var t = (e.title||'').toLowerCase();
+      return /kamp|match|game|competition|race|tournament|stævne/.test(t);
+    });
+    var hasActivity = candidates.length > 0;
+    var targetSleep = 8; // hours goal
+    var contentEl = document.getElementById('sleepAlarmContent');
+
+    var schedule = storeGet('lifeos_schedule') || {};
+    var wakeHour = schedule.wake ? Math.floor(schedule.wake / 60) : 7;
+    var wakeMin  = schedule.wake ? schedule.wake % 60 : 0;
+
+    // Calculate bedtime: wakeTime - targetSleep hours
+    var bedHour = wakeHour - targetSleep;
+    if (bedHour < 0) bedHour += 24;
+    var bedTime = String(bedHour).padStart(2,'0') + ':' + String(wakeMin).padStart(2,'0');
+
+    var reason = '';
+    if (highEvt) {
+      reason = (highEvt.date === today ? 'Kamp i dag' : 'Kamp i morgen') + ': ' + highEvt.title + ' — sov inden ' + bedTime + ' for at vågne udhvilet';
+      targetSleep = 9;
+      var bedHour2 = wakeHour - 9; if (bedHour2 < 0) bedHour2 += 24;
+      bedTime = String(bedHour2).padStart(2,'0') + ':' + String(wakeMin).padStart(2,'0');
+    } else if (hasActivity) {
+      reason = 'Aktivitet ' + (candidates[0].date === today ? 'i dag' : 'i morgen') + ' — sov inden ' + bedTime;
+    } else {
+      reason = 'Ingen krævende events — sov gerne inden ' + bedTime;
+    }
+
+    contentEl.innerHTML = '<div class="sleep-alarm-row"><div class="sleep-alarm-time">' + bedTime + '</div><div class="sleep-alarm-reason">' + reason + '<br><span style="font-size:10px;color:var(--text-tertiary)">Mål: ' + targetSleep + ' timers søvn · vågnetid ' + String(wakeHour).padStart(2,'0') + ':' + String(wakeMin).padStart(2,'0') + '</span></div></div>';
+  }
+  renderSleepAlarm();
+})();
+
+// ══════════════════════════════════════════
+// PRE-KAMP PROTOKOL
+// ══════════════════════════════════════════
+(function() {
+  function renderPreGame() {
+    var events = storeGet('lifeos_events') || [];
+    var today = getActiveDateString();
+    var tomorrow = (function(){ var d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+    var kampEvt = events.find(function(e) {
+      var t = (e.title||'').toLowerCase();
+      return (e.date === today || e.date === tomorrow) && /kamp|match|game|competition|race|tournament|stævne/.test(t);
+    });
+    var section = document.getElementById('preGameSection');
+    var card    = document.getElementById('preGameCard');
+    if (!kampEvt) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    var isToday = kampEvt.date === today;
+    var gameTime = kampEvt.time || '19:00';
+    var [gh, gm] = gameTime.split(':').map(Number);
+
+    function addHours(h, m, dh, dm) {
+      var tm = m - dm; var th = h - dh + (tm < 0 ? -1 : 0); tm = ((tm % 60) + 60) % 60;
+      if (th < 0) th += 24;
+      return String(th).padStart(2,'0') + ':' + String(tm).padStart(2,'0');
+    }
+
+    var steps = isToday ? [
+      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game måltid: pasta/ris + kylling (let, letfordøjeligt)' },
+      { time: addHours(gh, gm, 1, 30), text: '💧 Stop stor vandindtag — drik lidt, men ikke meget' },
+      { time: addHours(gh, gm, 0, 45), text: '🏃 Opvarmning: 10 min løb + dynamisk stræk + accelerationer' },
+      { time: addHours(gh, gm, 0, 15), text: '🧠 Mentalt fokus: visualiser, find roen' },
+      { time: gameTime,                  text: '⚡ KAMP: ' + kampEvt.title },
+      { time: addHours(gh, gm, -1,   0), text: '🍗 Recovery måltid: protein + kulhydrat inden for 30-60 min' },
+      { time: addHours(gh, gm, -2,   0), text: '😴 Anbefalet søvntid — minimum 8 timer i aften' },
+    ] : [
+      { time: 'I dag aften', text: '🍝 High-carb aftensmad: pasta, ris eller kartofler' },
+      { time: 'I dag aften', text: '😴 Sov inden 22:30 — minimum 8-9 timer' },
+      { time: 'I morgen morgen', text: '🥣 Let morgenmad: havregrød + banan (3h+ inden kamp)' },
+      { time: 'I morgen', text: '💧 Hydrér hele dagen — 2-3 liter vand' },
+      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game måltid: pasta/ris + kylling' },
+      { time: gameTime, text: '⚡ KAMP: ' + kampEvt.title },
+    ];
+
+    card.innerHTML = '<div style="font-size:11px;font-weight:700;color:#FFA500;margin-bottom:12px;font-family:var(--font-mono)">' + (isToday ? '⚡ KAMP I DAG' : '⚡ KAMP I MORGEN') + ' — ' + kampEvt.title.toUpperCase() + '</div>' +
+      steps.map(function(s) {
+        return '<div class="pg-item"><span class="pg-time">' + s.time + '</span><span class="pg-text">' + s.text + '</span></div>';
+      }).join('');
+  }
+  renderPreGame();
+})();
+
+// ══════════════════════════════════════════
+// INJURY / SORENESS LOG
+// ══════════════════════════════════════════
+(function() {
+  var INJ_KEY = 'lifeos_injuries';
+  var LEVEL_COLORS = { 1:'#6BE3A4', 2:'#FFC107', 3:'#FFA500', 4:'#FF7043', 5:'#FF5252' };
+
+  function loadInj() { return storeGet(INJ_KEY) || []; }
+  function saveInj(arr) { storeSet(INJ_KEY, arr); }
+
+  function renderInj() {
+    var list = document.getElementById('injList');
+    var arr  = loadInj();
+    if (!arr.length) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);font-style:italic;padding:8px 0">Ingen ømhed logget</div>';
+      return;
+    }
+    list.innerHTML = '';
+    arr.slice().reverse().forEach(function(inj, revIdx) {
+      var idx = arr.length - 1 - revIdx;
+      var d = document.createElement('div'); d.className = 'inj-item';
+      var lvl = document.createElement('div'); lvl.className = 'inj-level';
+      lvl.textContent = inj.level + '/5'; lvl.style.color = LEVEL_COLORS[inj.level] || '#FFA500';
+      var info = document.createElement('div'); info.className = 'inj-info';
+      var part = document.createElement('div'); part.className = 'inj-part'; part.textContent = inj.part;
+      var meta = document.createElement('div'); meta.className = 'inj-meta';
+      meta.textContent = inj.date + (inj.note ? ' — ' + inj.note : '') + (inj.resolved ? ' ✓ løst' : '');
+      info.appendChild(part); info.appendChild(meta);
+      var resolveBtn = document.createElement('button');
+      resolveBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--text-tertiary);font-size:9px;padding:3px 7px;border-radius:5px;cursor:pointer;white-space:nowrap';
+      resolveBtn.textContent = inj.resolved ? '↩ Genåbn' : '✓ Løst';
+      resolveBtn.addEventListener('click', function() {
+        var a = loadInj(); a[idx].resolved = !a[idx].resolved; saveInj(a); renderInj();
+      });
+      var del = document.createElement('button'); del.className = 'inj-del'; del.textContent = '×';
+      del.addEventListener('click', function() { var a = loadInj(); a.splice(idx,1); saveInj(a); renderInj(); });
+      d.appendChild(lvl); d.appendChild(info); d.appendChild(resolveBtn); d.appendChild(del);
+      list.appendChild(d);
+    });
+  }
+
+  document.getElementById('injLogBtn').addEventListener('click', function() {
+    var part = document.getElementById('injBodyPart').value.trim();
+    if (!part) { document.getElementById('injBodyPart').focus(); return; }
+    var arr = loadInj();
+    arr.push({
+      part:  part,
+      level: parseInt(document.getElementById('injLevel').value) || 3,
+      note:  document.getElementById('injNote').value.trim(),
+      date:  getActiveDateString(),
+      resolved: false
+    });
+    saveInj(arr);
+    document.getElementById('injBodyPart').value = '';
+    document.getElementById('injNote').value = '';
+    renderInj();
+  });
+
+  renderInj();
+})();
 </script>
 </body>
 </html>

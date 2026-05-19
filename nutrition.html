@@ -262,6 +262,29 @@
 
     .empty-state { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 18px 0; text-align: center; }
 
+    /* ── WATER TRACKER ── */
+    .water-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .water-glasses { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+    .water-glass {
+      width: 34px; height: 38px; border-radius: 6px;
+      border: 1.5px solid rgba(100,180,255,0.25);
+      background: rgba(100,180,255,0.06);
+      cursor: pointer; transition: background 0.15s, border-color 0.15s;
+      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px;
+      font-size: 16px; line-height: 1;
+    }
+    .water-glass.filled { background: rgba(100,180,255,0.22); border-color: rgba(100,180,255,0.6); }
+    .water-glass:hover { border-color: rgba(100,180,255,0.5); background: rgba(100,180,255,0.14); }
+    .water-count { font-family: var(--font-mono); font-size: 12px; color: #7EB8F7; font-weight: 700; white-space: nowrap; }
+
+    /* ── WEEKLY CHART ── */
+    .wk-chart-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+    .wk-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+    .wk-bar-outer { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+    .wk-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-height: 3px; }
+    .wk-bar-label { font-family: var(--font-mono); font-size: 8px; color: var(--text-tertiary); white-space: nowrap; }
+    .wk-bar-val { font-family: var(--font-mono); font-size: 8px; color: var(--text-secondary); font-weight: 700; }
+
     @media (max-width: 520px) {
       body { padding: 18px 14px 48px; }
       .dash-title { font-size: 22px; }
@@ -412,6 +435,30 @@
         </div>
       </div>
       <button class="wt-save-btn" id="ntSaveGoalsBtn" style="font-size:12px;padding:9px 18px">✓ Save Goals</button>
+    </div>
+  </div>
+
+  <!-- ══ WATER TRACKER ══ -->
+  <div class="section">
+    <div class="section-title">Water Intake</div>
+    <div class="gm-card">
+      <div class="water-row">
+        <div class="water-glasses" id="waterGlasses"></div>
+        <div class="water-count" id="waterCount">0 / 8 glas</div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-tertiary)">Klik et glas for at logge — mål: 8 glas / dag</div>
+    </div>
+  </div>
+
+  <!-- ══ UGENTLIG OVERSIGT ══ -->
+  <div class="section">
+    <div class="section-title">Ugentlig Oversigt</div>
+    <div class="gm-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:11px;color:var(--text-tertiary)">Kalorier de sidste 7 dage</span>
+        <span id="wkAvgKcal" style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)"></span>
+      </div>
+      <div class="wk-chart-wrap" id="wkChart"></div>
     </div>
   </div>
 
@@ -720,6 +767,85 @@ document.getElementById('goalFat').value     = savedGoals.fat;
 
 // Initial render
 renderAll();
+
+// ==================== WATER TRACKER ====================
+const WATER_KEY = 'lifeos_water';
+function loadWater() {
+  const today = getToday();
+  const w = storeGet(WATER_KEY) || {};
+  return w[today] || 0;
+}
+function saveWater(count) {
+  const today = getToday();
+  const w = storeGet(WATER_KEY) || {};
+  w[today] = count;
+  // Keep last 30 days only
+  const cutoff = dateToStr(new Date(Date.now() - 30*86400000));
+  Object.keys(w).forEach(k => { if (k < cutoff) delete w[k]; });
+  storeSet(WATER_KEY, w);
+}
+function renderWater() {
+  const count = loadWater();
+  const container = document.getElementById('waterGlasses');
+  const countEl   = document.getElementById('waterCount');
+  container.innerHTML = '';
+  for (let i = 1; i <= 8; i++) {
+    const g = document.createElement('div');
+    g.className = 'water-glass' + (i <= count ? ' filled' : '');
+    g.textContent = '💧';
+    g.title = i <= count ? 'Fjern glas ' + i : 'Log glas ' + i;
+    g.addEventListener('click', () => {
+      const current = loadWater();
+      saveWater(i <= current ? i - 1 : i);
+      renderWater();
+    });
+    container.appendChild(g);
+  }
+  countEl.textContent = count + ' / 8 glas' + (count >= 8 ? ' ✓' : '');
+  countEl.style.color = count >= 8 ? 'var(--success)' : '#7EB8F7';
+}
+renderWater();
+
+// ==================== WEEKLY CHART ====================
+function renderWeeklyChart() {
+  const chart  = document.getElementById('wkChart');
+  const avgEl  = document.getElementById('wkAvgKcal');
+  const allMeals = loadMeals();
+  const goals  = loadGoals();
+  const days   = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = dateToStr(d);
+    const kcal = allMeals.filter(m => m.date === ds).reduce((s, m) => s + (m.cal || m.calories || 0), 0);
+    const labels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    days.push({ ds, kcal, label: labels[d.getDay()] });
+  }
+  const maxKcal = Math.max(...days.map(d => d.kcal), goals.cal, 1);
+  const total   = days.reduce((s, d) => s + d.kcal, 0);
+  const logged  = days.filter(d => d.kcal > 0).length;
+  avgEl.textContent = logged ? 'snit ' + Math.round(total / logged) + ' kcal' : '';
+
+  chart.innerHTML = '';
+  days.forEach(day => {
+    const col = document.createElement('div'); col.className = 'wk-bar-col';
+    const outer = document.createElement('div'); outer.className = 'wk-bar-outer';
+    const bar = document.createElement('div'); bar.className = 'wk-bar';
+    const pct = Math.min(100, day.kcal / maxKcal * 100);
+    bar.style.height  = pct + '%';
+    const isToday = day.ds === dateToStr(new Date());
+    const onTarget = day.kcal >= goals.cal * 0.9;
+    bar.style.background = isToday ? '#FFA500' : onTarget ? 'var(--success)' : day.kcal > 0 ? '#7EB8F7' : 'rgba(255,255,255,0.08)';
+    bar.title = day.ds + ': ' + day.kcal + ' kcal';
+    outer.appendChild(bar); col.appendChild(outer);
+    const val = document.createElement('div'); val.className = 'wk-bar-val';
+    val.textContent = day.kcal > 0 ? (day.kcal >= 1000 ? Math.round(day.kcal/100)/10+'k' : day.kcal) : '';
+    const lbl = document.createElement('div'); lbl.className = 'wk-bar-label';
+    lbl.textContent = day.label;
+    col.appendChild(val); col.appendChild(lbl);
+    chart.appendChild(col);
+  });
+}
+renderWeeklyChart();
 </script>
 </body>
 </html>
