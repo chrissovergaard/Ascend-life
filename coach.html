@@ -473,7 +473,8 @@ function loadAllData() {
     prs:          storeGet('lifeos_prs')             || {},
     poc:          storeGet('lifeos_poc')             || { exercises:[], logs:{} },
     pocDone:      storeGet('lifeos_poc_done')        || [],
-    garmin:       storeGet('lifeos_garmin')          || []
+    garmin:       storeGet('lifeos_garmin')          || [],
+    todaysCall:   storeGet('lifeos_todays_call')
   };
 }
 
@@ -675,6 +676,14 @@ function buildContext(data, a) {
     ...(todayMeals.length ? ['  Meals logged today:',
       ...todayMeals.map(function(m){ return '    - ' + (m.name||'Meal') + ': ' + (m.cal||m.calories||0) + 'kcal | P:'+(m.protein||0)+'g C:'+(m.carbs||0)+'g F:'+(m.fat||0)+'g'; })
     ] : []),
+    '',
+    ...function() {
+      var tc = data.todaysCall;
+      if (tc && tc.date === today && tc.text) {
+        return ["TODAY'S CALL (AI-genereret daglig anbefaling):", '  ' + tc.text.split('\n').join('\n  ')];
+      }
+      return [];
+    }(),
     '',
     ...function() {
       var gHistory = (data.garmin || []).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });

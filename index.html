@@ -1007,23 +1007,29 @@
     .rm-temp-display   { font-family:var(--font-mono); font-size:22px; font-weight:800; line-height:1; }
     .rm-stress-display { font-family:var(--font-mono); font-size:24px; line-height:1; }
 
-    .rm-call-banner { border-radius:14px; padding:16px 18px; margin-bottom:16px; border:1px solid; }
-    .rm-call-banner.green  { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.1); }
-    .rm-call-banner.mid    { background:rgba(255,193,7,0.06);  border-color:rgba(255,193,7,0.2); }
-    .rm-call-banner.low    { background:rgba(255,107,107,0.06); border-color:rgba(255,107,107,0.2); }
-    .rm-call-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .rm-call-banner { border-radius:14px; padding:16px 18px; margin-bottom:16px; border:1px solid #1C1C1C; background:#0E0E0E; }
+    .rm-call-banner.push    { background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.1); }
+    .rm-call-banner.maintain{ background:rgba(255,193,7,0.05);   border-color:rgba(255,193,7,0.18); }
+    .rm-call-banner.recover { background:rgba(255,107,107,0.05); border-color:rgba(255,107,107,0.18); }
+    .rm-call-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
     .rm-call-eyebrow { font-family:var(--font-mono); font-size:9px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-tertiary); }
-    .rm-call-label  { font-family:var(--font-mono); font-size:13px; font-weight:900; letter-spacing:0.10em; text-transform:uppercase; }
-    .rm-call-label.high { color:#FFFFFF; }
-    .rm-call-label.mid  { color:#FFC107; }
-    .rm-call-label.low  { color:#FF6B6B; }
-    .rm-call-desc  { font-size:13px; color:var(--text-secondary); line-height:1.55; margin-bottom:10px; }
-    .rm-checklist  { display:flex; flex-direction:column; gap:5px; }
-    .rm-check-item { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
-    .rm-check-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-    .rm-check-dot.high { background:#FFFFFF; }
-    .rm-check-dot.mid  { background:#FFC107; }
-    .rm-check-dot.low  { background:#FF6B6B; }
+    .rm-call-ai-badge {
+      font-family:var(--font-mono); font-size:8px; font-weight:700; letter-spacing:0.10em;
+      text-transform:uppercase; padding:2px 7px; border-radius:99px;
+      border:1px solid #1C1C1C; color:#555; background:#111;
+    }
+    .rm-call-regen {
+      margin-left:auto; background:none; border:1px solid #1C1C1C; border-radius:7px;
+      color:var(--text-tertiary); cursor:pointer; font-size:13px; padding:3px 8px;
+      transition:border-color 0.18s, color 0.18s; line-height:1;
+    }
+    .rm-call-regen:hover { border-color:#333; color:var(--text-secondary); }
+    @keyframes rm-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .rm-call-regen.spinning { animation:rm-spin 0.9s linear infinite; pointer-events:none; }
+    .rm-call-content {
+      font-size:13px; color:var(--text-secondary); line-height:1.65; white-space:pre-wrap;
+    }
+    .rm-call-placeholder { color:#444; font-style:italic; font-size:12px; }
 
     .rm-alerts { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
     .rm-alert  { font-family:var(--font-mono); font-size:11px; padding:8px 12px; border-radius:10px; background:#111111; border:1px solid #1C1C1C; color:var(--text-secondary); line-height:1.4; }
@@ -1656,13 +1662,15 @@
       <div class="rm-alerts" id="rmAlerts"></div>
 
       <!-- Today's Call banner -->
-      <div class="rm-call-banner" id="rmCallBanner" style="display:none">
+      <div class="rm-call-banner" id="rmCallBanner">
         <div class="rm-call-header">
-          <span class="rm-call-eyebrow">TODAY'S CALL</span>
-          <span class="rm-call-label" id="rmCallLabel">—</span>
+          <span class="rm-call-eyebrow">Today's Call</span>
+          <span class="rm-call-ai-badge" id="rmCallBadge">AI</span>
+          <button class="rm-call-regen" id="rmCallRegen" title="Regenerer">↺</button>
         </div>
-        <div class="rm-call-desc" id="rmCallDesc"></div>
-        <div class="rm-checklist"  id="rmChecklist"></div>
+        <div class="rm-call-content" id="rmCallContent">
+          <span class="rm-call-placeholder">Log søvn og recovery data — AI genererer din daglige anbefaling.</span>
+        </div>
       </div>
 
       <!-- 7-day trend chart -->
@@ -3184,6 +3192,7 @@ function updateRecovery() {
 
   renderRecovery();
   renderGarmin();
+  generateTodaysCall(true);
   window.dispatchEvent(new CustomEvent('data-changed'));
 }
 
@@ -3236,6 +3245,182 @@ function renderGarmin() {
   setTile('gStatSnapshot', g.snapshot || '—',                      healthColor(g.snapshot));
 }
 
+// ── Today's Call AI ──
+
+function buildTodayCallContext() {
+  var today   = getActiveDateString();
+  var rec     = getTodayRecovery();
+  var gar     = getTodayGarmin();
+  var rmS     = getRecoverySettings();
+  var wks     = (storeGet('lifeos_workouts') || []).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var thisWk  = wks.filter(function(w){ return w.date && (Date.now() - new Date(w.date+'T12:00:00').getTime()) < 7*86400000; });
+  var habits  = loadHabits ? loadHabits() : [];
+  var habDone = habits.filter(function(h){ return (h.completedDates||[]).indexOf(today) !== -1; }).length;
+  var goals   = storeGet('lifeos_goals') || [];
+  var nutDay  = (storeGet('lifeos_nutrition') || []).filter(function(n){ return n.date === today; });
+  var nutGoals = storeGet('lifeos_nutrition_goals') || { cal:2500, protein:150 };
+  var nutCal  = nutDay.reduce(function(s,n){ return s + (n.cal||0); }, 0);
+  var nutProt = nutDay.reduce(function(s,n){ return s + (n.protein||0); }, 0);
+  var profile = storeGet('lifeos_profile') || {};
+  var prevCall = storeGet('lifeos_todays_call');
+
+  var lines = [
+    'DATE: ' + new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}),
+    'USER: ' + (profile.name||'Chris') + (profile.age ? ', ' + profile.age + ' år' : '') + (profile.weight ? ', ' + profile.weight + 'kg' : ''),
+    ''
+  ];
+
+  lines.push('RECOVERY TODAY:');
+  if (rec) {
+    lines.push('  Sleep: ' + (rec.sleep != null ? rec.sleep + 'h (target: ≥' + rmS.sleepGood + 'h)' : 'ikke logget'));
+    lines.push('  Stress: ' + (rec.stressLevel != null ? rec.stressLevel + '/100 (lav ≤' + rmS.stressLow + ')' : 'ikke logget'));
+    lines.push('  Recovery score: ' + (rec.recoveryScore != null ? rec.recoveryScore + '%' : '?'));
+  } else {
+    lines.push('  Ingen recovery data logget i dag');
+  }
+
+  if (gar) {
+    lines.push('');
+    lines.push('GARMIN DATA I DAG:');
+    if (gar.rhr      != null) lines.push('  RHR: ' + gar.rhr + ' bpm (mål ≤' + rmS.rhrGood + ')');
+    if (gar.battery  != null) lines.push('  Body Battery: ' + gar.battery + '/100 (mål ≥' + rmS.battGood + ')');
+    if (gar.hrv)              lines.push('  HRV: ' + gar.hrv);
+    if (gar.steps    != null) lines.push('  Skridt: ' + gar.steps.toLocaleString() + ' (mål ' + rmS.stepsGood.toLocaleString() + ')');
+    if (gar.spo2     != null) lines.push('  SpO2: ' + gar.spo2 + '%');
+    if (gar.resp     != null) lines.push('  Respiration: ' + gar.resp + '/min');
+    if (gar.recovery != null) lines.push('  Recovery tid: ' + gar.recovery + 'h');
+    if (gar.health)           lines.push('  Health status: ' + gar.health);
+    if (gar.snapshot)         lines.push('  Health snapshot: ' + gar.snapshot);
+  }
+
+  lines.push('');
+  lines.push('TRÆNING DENNE UGE: ' + thisWk.length + ' sessioner');
+  if (wks.length > 0) {
+    var daysSince = Math.floor((Date.now() - new Date(wks[0].date+'T12:00:00').getTime()) / 86400000);
+    lines.push('Sidst trænet: ' + daysSince + ' dag(e) siden — ' + (wks[0].name||'Workout'));
+    if (thisWk.length > 0) lines.push('Denne uge: ' + thisWk.slice(0,5).map(function(w){ return w.date.slice(5)+' '+(w.name||'Workout'); }).join(', '));
+  }
+
+  lines.push('');
+  lines.push('HABITS: ' + habDone + '/' + habits.length + ' klaret i dag');
+  habits.slice(0,8).forEach(function(h){ lines.push('  ' + ((h.completedDates||[]).indexOf(today)!==-1?'✓':'✗') + ' ' + h.name); });
+
+  lines.push('');
+  lines.push('KOST: ' + (nutCal > 0 ? nutCal + ' kcal / P:' + Math.round(nutProt) + 'g  (mål: ' + nutGoals.cal + ' kcal / P:' + nutGoals.protein + 'g)' : 'intet logget i dag'));
+
+  if (goals.length > 0) {
+    lines.push('');
+    lines.push('MÅL:');
+    goals.slice(0,5).forEach(function(g){ lines.push('  - ' + (g.name||g.title||'?') + (g.target ? ' → ' + g.target : '')); });
+  }
+
+  return lines.join('\n');
+}
+
+function renderTodaysCallText(text, model) {
+  var content = document.getElementById('rmCallContent');
+  var badge   = document.getElementById('rmCallBadge');
+  var banner  = document.getElementById('rmCallBanner');
+  if (!content) return;
+  content.textContent = text;
+  if (badge) badge.textContent = model === 'groq' ? 'Groq AI' : model === 'ollama' ? 'Ollama AI' : 'Rule-based';
+  if (banner) {
+    var u = (text||'').toUpperCase();
+    banner.className = 'rm-call-banner ' + (u.startsWith('PUSH') ? 'push' : u.startsWith('MAINTAIN') ? 'maintain' : u.startsWith('RECOVER') ? 'recover' : 'push');
+  }
+}
+
+async function generateTodaysCall(force) {
+  var today  = getActiveDateString();
+  var cached = storeGet('lifeos_todays_call');
+  if (!force && cached && cached.date === today && cached.text) {
+    renderTodaysCallText(cached.text, cached.model);
+    return;
+  }
+  var cs  = storeGet('coach_settings') || {};
+  var key = (cs.groqKey || '').trim();
+  var content = document.getElementById('rmCallContent');
+  var regen   = document.getElementById('rmCallRegen');
+  content.innerHTML = '<span style="color:#555;font-style:italic">Genererer Today\'s Call…</span>';
+  if (regen) regen.classList.add('spinning');
+
+  var ctx = buildTodayCallContext();
+  var sys = 'Du er en elite personlig coach. Baseret på brugerens data, generer hans TODAY\'S CALL — en specifik, direkte daglig anbefaling.\n\nFormat:\n- Første linje: PUSH, MAINTAIN eller RECOVER + et kort subtitle (f.eks. "PUSH — Hård session i dag" eller "RECOVER — Kroppen har brug for hvile")\n- Derefter 2-3 sætninger ærlig analyse baseret på de faktiske tal\n- Derefter 4-5 bullet points med konkrete handlinger til i dag\n\nVær direkt og datadrevet. Henvis til de faktiske tal. Hold svaret under 180 ord. Skriv på dansk.';
+
+  var result = null;
+  try {
+    var ck = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
+    if (ck.ok) {
+      var or = await fetch('http://localhost:11434/api/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ model: cs.ollamaModel||'llama3.2', messages:[{role:'system',content:sys},{role:'user',content:ctx}], stream:true }),
+        signal: AbortSignal.timeout(60000)
+      });
+      if (or.ok) result = { stream: or.body, aiType:'ollama' };
+    }
+  } catch(e) {}
+
+  if (!result && key) {
+    try {
+      var gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'system',content:sys},{role:'user',content:ctx}], stream:true }),
+        signal: AbortSignal.timeout(60000)
+      });
+      if (gr.ok) result = { stream: gr.body, aiType:'groq' };
+    } catch(e) {}
+  }
+
+  if (regen) regen.classList.remove('spinning');
+
+  if (!result) {
+    var fb = getTodayRecovery();
+    var fallback = fb
+      ? (fb.recoveryScore >= 80 ? 'PUSH — Alle systemer grønne\n\nDin recovery er stærk og kroppen er klar til at præstere.\n\n• Push hård i træningen i dag\n• Sigt efter PR hvis planlagt\n• Drik 3L vand\n• Sov 8+ timer i aften'
+        : fb.recoveryScore >= 60 ? 'MAINTAIN — Træn moderat\n\nRecovery er okay men ikke optimal. Hold intensiteten nede.\n\n• Reducer intensitet ~20%\n• Fokus på teknik og mobilitet\n• Drik 3L vand\n• Sov 8+ timer i aften'
+        : 'RECOVER — Kroppen har brug for hvile\n\nRecovery er lav. Push i dag risikerer skade og overtraining.\n\n• Spring hård træning over\n• Let gang eller udstrækning\n• Sov 9+ timer i aften\n• Undgå koffein efter kl. 14')
+      : 'Log søvn og recovery data for en AI-genereret anbefaling.';
+    storeSet('lifeos_todays_call', { date:today, text:fallback, model:'rule-based' });
+    renderTodaysCallText(fallback, 'rule-based');
+    return;
+  }
+
+  var reader  = result.stream.getReader();
+  var decoder = new TextDecoder();
+  var full    = '';
+  content.textContent = '';
+
+  try {
+    if (result.aiType === 'groq') {
+      var buf = '';
+      while (true) {
+        var rd = await reader.read();
+        if (rd.done) break;
+        buf += decoder.decode(rd.value, { stream:true });
+        var parts = buf.split('\n'); buf = parts.pop() || '';
+        for (var p of parts) {
+          if (!p.startsWith('data: ')) continue;
+          var d = p.slice(6).trim();
+          if (d === '[DONE]') continue;
+          try { var tk = JSON.parse(d).choices[0].delta.content; if (tk) { full += tk; content.textContent = full; } } catch(e) {}
+        }
+      }
+    } else {
+      while (true) {
+        var rd2 = await reader.read();
+        if (rd2.done) break;
+        for (var ln of decoder.decode(rd2.value).split('\n')) {
+          if (!ln.trim()) continue;
+          try { var ch = JSON.parse(ln); if (ch.message && ch.message.content) { full += ch.message.content; content.textContent = full; } } catch(e) {}
+        }
+      }
+    }
+  } catch(e) { if (!full) full = 'Fejl under generering — prøv igen.'; }
+
+  storeSet('lifeos_todays_call', { date:today, text:full, model:result.aiType });
+  renderTodaysCallText(full, result.aiType);
+}
+
 function renderRecovery() {
   const today  = getTodayRecovery();
   const alerts = getSmartAlerts();
@@ -3286,25 +3471,10 @@ function renderRecovery() {
     alertsEl.appendChild(el);
   });
 
-  // Today's Call
-  const banner = document.getElementById('rmCallBanner');
-  const call   = today ? getTodaysCall(today.recoveryScore) : null;
-  if (call) {
-    const sc = getColorByRecoveryScore(today.recoveryScore);
-    banner.style.display = '';
-    banner.className = 'rm-call-banner ' + sc.cls;
-    document.getElementById('rmCallLabel').textContent = call.level;
-    document.getElementById('rmCallLabel').className   = 'rm-call-label ' + sc.cls;
-    document.getElementById('rmCallDesc').textContent  = call.desc;
-    const cl = document.getElementById('rmChecklist'); cl.innerHTML = '';
-    call.items.forEach(item => {
-      const li  = document.createElement('div'); li.className = 'rm-check-item';
-      const dot = document.createElement('span'); dot.className = 'rm-check-dot ' + sc.cls;
-      li.appendChild(dot); li.appendChild(document.createTextNode(item));
-      cl.appendChild(li);
-    });
-  } else {
-    banner.style.display = 'none';
+  // Today's Call — load cached or show placeholder (actual generation triggered separately)
+  var cached = storeGet('lifeos_todays_call');
+  if (cached && cached.date === getActiveDateString() && cached.text) {
+    renderTodaysCallText(cached.text, cached.model);
   }
 
   // 7-day chart
@@ -3678,8 +3848,10 @@ document.getElementById('hbNameInput').addEventListener('keydown', e => { if (e.
 renderHabits();
 
 document.getElementById('rmUpdateBtn').addEventListener('click', updateRecovery);
+document.getElementById('rmCallRegen').addEventListener('click', function() { generateTodaysCall(true); });
 renderRecovery();
 renderGarmin();
+generateTodaysCall(false);
 
 document.getElementById('rmGearBtn').addEventListener('click', function() {
   var panel = document.getElementById('rmSettingsPanel');
