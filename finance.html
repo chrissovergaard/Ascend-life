@@ -1649,7 +1649,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
             <div class="nw-stat-val" id="nwStat1pct">—</div>
           </div>
           <div class="nw-stat">
-            <div class="nw-stat-label">All-time high</div>
+            <div class="nw-stat-label" style="display:flex;align-items:center;gap:5px">All-time high <button id="nwResetHistory" title="Nulstil historik" style="background:transparent;border:none;color:var(--text-tertiary);font-size:10px;cursor:pointer;padding:0;line-height:1;opacity:0.6">↺</button></div>
             <div class="nw-stat-val" id="nwStatHigh">—</div>
           </div>
           <div class="nw-stat">
@@ -2402,6 +2402,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     highEl.textContent  = fmtMoney(high);
     lowEl.textContent   = fmtMoney(low);
     countEl.textContent = String(hist.length);
+  }
+
+  const resetHistBtn = document.getElementById('nwResetHistory');
+  if (resetHistBtn) {
+    resetHistBtn.addEventListener('click', () => {
+      if (!confirm('Nulstil al historik? Dette fjerner grafen og all-time high/low.')) return;
+      storeSet(NW_HISTORY_KEY, []);
+      renderNwChart();
+    });
   }
 
   NW_CATS.forEach(cat => {
