@@ -3270,28 +3270,98 @@ function renderGarmin() {
 
 // ── Today's Call AI ──
 
+function classifyEventIntensityLocal(evt) {
+  var t = (evt.title    || '').toLowerCase();
+  var c = (evt.category || '').toLowerCase();
+  if (/kamp|match|game|competition|race|tournament|finale|playoff|stævne|konkurrence/.test(t) || c === 'competition') return 'HIGH';
+  if (/hård|hard|intense|heavy|sprint|interval|hiit/.test(t)) return 'HIGH';
+  if (/træning|workout|gym|løb|run|cykel|bike|swim|svøm|fodbold|basketball|tennis|sport|fitness|boksning/.test(t)) return 'MEDIUM';
+  if (/cardio|program/.test(c) || c === 'workout' || c === 'training') return 'MEDIUM';
+  if (/hvile|rest|recovery|stretch|yoga/.test(t)) return 'LOW';
+  return null;
+}
+
 function buildTodayCallContext() {
-  var today   = getActiveDateString();
-  var rec     = getTodayRecovery();
-  var gar     = getTodayGarmin();
-  var rmS     = getRecoverySettings();
-  var wks     = (storeGet('lifeos_workouts') || []).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
-  var thisWk  = wks.filter(function(w){ return w.date && (Date.now() - new Date(w.date+'T12:00:00').getTime()) < 7*86400000; });
-  var habits  = loadHabits ? loadHabits() : [];
-  var habDone = habits.filter(function(h){ return (h.completedDates||[]).indexOf(today) !== -1; }).length;
-  var goals   = storeGet('lifeos_goals') || [];
-  var nutDay  = (storeGet('lifeos_nutrition') || []).filter(function(n){ return n.date === today; });
+  var today    = getActiveDateString();
+  var tomorrow = (function(){ var d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+  var in48h    = (function(){ var d = new Date(); d.setDate(d.getDate()+2); return d.toISOString().slice(0,10); })();
+  var rec      = getTodayRecovery();
+  var gar      = getTodayGarmin();
+  var rmS      = getRecoverySettings();
+  var allEvents = storeGet('lifeos_events') || [];
+  var wks      = (storeGet('lifeos_workouts') || []).sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var thisWk   = wks.filter(function(w){ return w.date && (Date.now() - new Date(w.date+'T12:00:00').getTime()) < 7*86400000; });
+  var habits   = loadHabits ? loadHabits() : [];
+  var habDone  = habits.filter(function(h){ return (h.completedDates||[]).indexOf(today) !== -1; }).length;
+  var goals    = storeGet('lifeos_goals') || [];
+  var nutDay   = (storeGet('lifeos_nutrition') || []).filter(function(n){ return n.date === today; });
   var nutGoals = storeGet('lifeos_nutrition_goals') || { cal:2500, protein:150 };
-  var nutCal  = nutDay.reduce(function(s,n){ return s + (n.cal||0); }, 0);
-  var nutProt = nutDay.reduce(function(s,n){ return s + (n.protein||0); }, 0);
-  var profile = storeGet('lifeos_profile') || {};
-  var prevCall = storeGet('lifeos_todays_call');
+  var nutCal   = nutDay.reduce(function(s,n){ return s + (n.cal||0); }, 0);
+  var nutProt  = nutDay.reduce(function(s,n){ return s + (n.protein||0); }, 0);
+  var profile  = storeGet('lifeos_profile') || {};
+
+  // Event analysis
+  var todayEvts    = allEvents.filter(function(e){ return e.date === today; });
+  var tomorrowEvts = allEvents.filter(function(e){ return e.date === tomorrow; });
+  var soonEvts     = allEvents.filter(function(e){ return e.date > today && e.date <= in48h; });
+  var todayHigh    = todayEvts.filter(function(e){ return classifyEventIntensityLocal(e) === 'HIGH'; });
+  var todayMed     = todayEvts.filter(function(e){ return classifyEventIntensityLocal(e) === 'MEDIUM'; });
+  var tmrHigh      = tomorrowEvts.filter(function(e){ return classifyEventIntensityLocal(e) === 'HIGH'; });
+  var tmrMed       = tomorrowEvts.filter(function(e){ return classifyEventIntensityLocal(e) === 'MEDIUM'; });
+  var todayWorkout = wks.find(function(w){ return w.date && w.date.slice(0,10) === today; });
+
+  // Build load alerts
+  var loadAlerts = [];
+  if (todayHigh.length > 0 && (todayMed.length > 0 || todayWorkout)) {
+    loadAlerts.push('⚠ DOUBLE-DAY: Hård event + træning samme dag → reducer morgen-session, boost kost');
+  }
+  if (todayHigh.length > 0) {
+    loadAlerts.push('🏆 KAMP/EVENT I DAG: ' + todayHigh.map(function(e){ return e.title + (e.time ? ' kl.'+e.time : ''); }).join(', ') + ' → carb-load, hvil inden, recovery bagefter');
+  }
+  if (tmrHigh.length > 0) {
+    loadAlerts.push('⚡ KAMP I MORGEN: ' + tmrHigh.map(function(e){ return e.title; }).join(', ') + ' → reducer intensitet i dag, høj-carb aftensmad, tidlig søvn');
+  }
+  if (tmrMed.length > 0 && !tmrHigh.length) {
+    loadAlerts.push('📅 TRÆNING I MORGEN: ' + tmrMed.map(function(e){ return e.title; }).join(', ') + ' → sov godt, spis nok i aften');
+  }
+  var battery = gar ? gar.battery : null;
+  var sleep   = rec ? parseFloat(rec.sleep) : null;
+  if ((battery != null && battery < 30) || (sleep != null && sleep < 6)) {
+    loadAlerts.push('😴 LAV RECOVERY: ' + (battery != null ? 'Battery '+battery+'/100' : '') + (sleep != null ? ' Søvn '+sleep+'h' : '') + ' → reducer intensitet, prioriter restitution');
+  }
+  if (nutCal > 0 && nutCal < nutGoals.cal * 0.6 && (todayHigh.length > 0 || todayMed.length > 0 || thisWk.length > 0)) {
+    loadAlerts.push('🍽 UNDER-FUELED: Kun ' + nutCal + ' kcal (' + Math.round(nutCal/nutGoals.cal*100) + '% af mål) inden hård aktivitet → spis nu');
+  }
 
   var lines = [
     'DATE: ' + new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}) + ' — kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
     'USER: ' + (profile.name||'Chris') + (profile.age ? ', ' + profile.age + ' år' : '') + (profile.weight ? ', ' + profile.weight + 'kg' : ''),
     ''
   ];
+
+  if (loadAlerts.length > 0) {
+    lines.push('LOAD ALERTS (disse påvirker al rådgivning):');
+    loadAlerts.forEach(function(a){ lines.push('  ' + a); });
+    lines.push('');
+  }
+
+  if (todayEvts.length > 0) {
+    lines.push('KALENDER I DAG:');
+    todayEvts.forEach(function(e){
+      var intensity = classifyEventIntensityLocal(e);
+      lines.push('  - ' + e.title + (e.time ? ' kl.'+e.time : '') + (intensity ? ' {'+intensity+'}' : ''));
+    });
+    lines.push('');
+  }
+
+  if (soonEvts.length > 0) {
+    lines.push('KOMMENDE 48 TIMER:');
+    soonEvts.slice(0,5).forEach(function(e){
+      var intensity = classifyEventIntensityLocal(e);
+      lines.push('  - ' + e.date.slice(5) + ': ' + e.title + (intensity ? ' {'+intensity+'}' : ''));
+    });
+    lines.push('');
+  }
 
   lines.push('RECOVERY TODAY:');
   if (rec) {
@@ -3374,7 +3444,7 @@ async function rmChatSend() {
   var cached = storeGet('lifeos_todays_call');
   var callCtx = (cached && cached.text) ? "Today's Call:\n" + cached.text : '';
   var dataCtx = buildTodayCallContext();
-  var sys2 = 'Du er en elite personlig coach. Brugeren taler med dig om sin daglige Today\'s Call anbefaling.\n\nTIDSPUNKT: kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}) + ' — tag højde for hvad der er realistisk på dette tidspunkt (f.eks. kri ikke på manglende kost tidligt om morgenen).\n\nKontekst:\n' + callCtx + '\n\nFULDE DATA:\n' + dataCtx + '\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kardiovaskulær form for en atlet. Kommenter det aldrig negativt. Svar direkte, præcist og på dansk. Max 120 ord.';
+  var sys2 = 'Du er en elite MASTER COACH der koordinerer træning, kost, recovery og kalender som ét system.\n\nTIDSPUNKT: kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}) + ' — giv kun råd der giver mening på dette tidspunkt.\n\nKOORDINERING: Krydsreferér altid — kamp/event påvirker træningsintensitet, recovery påvirker kost, timing af næste aktivitet påvirker hvad der giver mening at anbefale NU.\n\nKontekst:\n' + callCtx + '\n\nFULDE DATA (inkl. LOAD ALERTS hvis de findes):\n' + dataCtx + '\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kondition. Kommenter aldrig negativt. Svar direkte, præcist og på dansk. Max 120 ord.';
 
   rmChatHistory.push({ role:'user', content: msg });
 
@@ -3472,7 +3542,7 @@ async function generateTodaysCall(force) {
   if (regen) regen.classList.add('spinning');
 
   var ctx = buildTodayCallContext();
-  var sys = 'Du er en elite personlig coach. Baseret på brugerens data, generer hans TODAY\'S CALL — en specifik, direkte daglig anbefaling.\n\nFormat:\n- Første linje: PUSH, MAINTAIN eller RECOVER + et kort subtitle (f.eks. "PUSH — Hård session i dag" eller "RECOVER — Kroppen har brug for hvile")\n- Derefter 2-3 sætninger ærlig analyse baseret på de faktiske tal\n- Derefter 4-5 bullet points med konkrete handlinger til i dag\n\nVær direkt og datadrevet. Henvis til de faktiske tal. Hold svaret under 180 ord. Skriv på dansk.\n\nVIGTIGT OM HVILEPULS: En LAV hvilepuls (40-60 bpm) hos en atletisk person er et TEGN PÅ FREMRAGENDE kardiovaskulær form — ikke et problem. Trænede atleter har typisk 40-55 bpm. Kommenter det aldrig negativt. Jo lavere (ned til ca. 35-40 bpm), jo bedre kondition. Flage det kun hvis det er usædvanligt lavt FOR DENNE PERSON sammenlignet med deres normale baseline, eller kombineret med sygdomstegn.';
+  var sys = 'Du er en elite MASTER COACH AI der koordinerer træning, kost, recovery OG kalender som ét samlet system.\n\nDin opgave: generer brugerens TODAY\'S CALL — en koordineret daglig plan der tager ALLE faktorer i betragtning.\n\nFormat:\n- Første linje: PUSH, MAINTAIN eller RECOVER + subtitle der afspejler HELE dagen (f.eks. "PUSH — Dobbeltdag: reducer morgen, fuld gas til kamp" eller "RECOVER — Kamp i morgen: spar kræfter i dag")\n- 2-3 sætninger der forklarer den overordnede logik OG hvorfor\n- 4-6 konkrete bullet points med specifik timing (f.eks. "08:00 Morgenmad: havregrød + banan + 30g protein", "17:30 Pre-kamp: pasta + kylling 1.5h før")\n\nKOORDINERINGSREGLER:\n- Hvis LOAD ALERTS findes i data → de SKAL påvirke Today\'s Call\n- Kamp/event i dag → specifik pre/under/post plan med mad-timing\n- Kamp i morgen → reducer intensitet i dag, høj-carb aften, tidlig søvn\n- Double-day → reducer morgen-session eksplicit, boost kalorier\n- Lav recovery → vælg RECOVER eller MAINTAIN, forklar hvorfor\n- Under-fueled → nævn det og giv konkrete madforslag\n\nVær datadrevet: henvis til de faktiske tal. Hold svaret under 200 ord. Skriv på dansk.\n\nVIGTIGT: Lav hvilepuls (40-60 bpm) = fremragende kondition for en atlet. Kommenter aldrig negativt. Tidspunkt i data: brug det — giv ikke råd om morgenmad kl. 20.';
 
   var result = null;
   try {

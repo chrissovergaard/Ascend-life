@@ -564,6 +564,53 @@ function analyze(data) {
 }
 
 /* ─────────────────────────────────────────────
+   EVENT INTENSITY CLASSIFIER
+───────────────────────────────────────────── */
+function classifyEventIntensity(evt) {
+  const t = (evt.title    || '').toLowerCase();
+  const c = (evt.category || '').toLowerCase();
+  if (/kamp|match|game|competition|race|tournament|finale|playoff|stævne|konkurrence/.test(t) || c === 'competition') return 'HIGH';
+  if (/hård|hard|intense|heavy|sprint|interval|hiit/.test(t)) return 'HIGH';
+  if (/træning|workout|gym|løb|run|cykel|bike|swim|svøm|fodbold|basketball|tennis|sport|fitness|boksning|kamp/.test(t)) return 'MEDIUM';
+  if (/cardio|program/.test(c) || c === 'workout' || c === 'training') return 'MEDIUM';
+  if (/hvile|rest|recovery|stretch|yoga|walk|gå tur/.test(t)) return 'LOW';
+  return null;
+}
+
+function buildDayLoadAnalysis(evts, wks, today) {
+  const tomorrow = toDateStr(new Date(Date.now() + 86400000));
+  const in48h    = toDateStr(new Date(Date.now() + 2 * 86400000));
+
+  const todayEvts   = evts.filter(e => e.date === today);
+  const tomorrowEvts = evts.filter(e => e.date === tomorrow);
+  const soon        = evts.filter(e => e.date > today && e.date <= in48h);
+
+  const todayHigh   = todayEvts.filter(e => classifyEventIntensity(e) === 'HIGH');
+  const todayMed    = todayEvts.filter(e => classifyEventIntensity(e) === 'MEDIUM');
+  const tmrHigh     = tomorrowEvts.filter(e => classifyEventIntensity(e) === 'HIGH');
+  const tmrMed      = tomorrowEvts.filter(e => classifyEventIntensity(e) === 'MEDIUM');
+
+  const todayWorkout = wks.find(w => w.date && w.date.slice(0,10) === today);
+
+  const alerts = [];
+
+  if (todayHigh.length > 0 && (todayMed.length > 0 || todayWorkout)) {
+    alerts.push('⚠ DOUBLE-DAY: Hård kamp/event + træning samme dag → reducer træningsintensitet, boost kost');
+  }
+  if (todayHigh.length > 0) {
+    alerts.push('🏆 COMPETITION TODAY: ' + todayHigh.map(e => e.title).join(', ') + ' → prioriter carb-load, hvil inden, protein+kulhydrat bagefter');
+  }
+  if (tmrHigh.length > 0) {
+    alerts.push('⚡ KAMP I MORGEN: ' + tmrHigh.map(e => e.title).join(', ') + ' → i dag: reducer intensitet, høj-carb aftensmad, tidlig søvn');
+  }
+  if (tmrMed.length > 0 && !tmrHigh.length) {
+    alerts.push('📅 TRÆNING I MORGEN: ' + tmrMed.map(e => e.title).join(', ') + ' → sov godt, spis nok i aften');
+  }
+
+  return alerts;
+}
+
+/* ─────────────────────────────────────────────
    CONTEXT STRING (for API)
 ───────────────────────────────────────────── */
 function buildContext(data, a) {
@@ -622,15 +669,25 @@ function buildContext(data, a) {
     });
   }
 
+  const loadAlerts = buildDayLoadAnalysis(data.events || [], data.workouts || [], today);
+
   const lines = [
     'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + (p.height ? ', '+p.height+'cm' : ''),
     'TODAY: ' + new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + ' — kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
     '',
+    loadAlerts.length ? 'LOAD ALERTS (read these first — they affect all advice):\n' + loadAlerts.map(function(a){ return '  ' + a; }).join('\n') : '',
+    loadAlerts.length ? '' : '',
     todayEvts.length
-      ? "TODAY'S CALENDAR:\n" + todayEvts.map(function(e){ return '  - ' + e.title + (e.time ? ' at '+e.time : '') + (e.category ? ' ['+e.category+']' : ''); }).join('\n')
+      ? "TODAY'S CALENDAR:\n" + todayEvts.map(function(e){
+          const intensity = classifyEventIntensity(e);
+          return '  - ' + e.title + (e.time ? ' at '+e.time : '') + (e.category ? ' ['+e.category+']' : '') + (intensity ? ' {'+intensity+'}' : '');
+        }).join('\n')
       : '',
     weekEvts.length
-      ? 'UPCOMING WEEK:\n' + weekEvts.slice(0,5).map(function(e){ return '  - '+e.date.slice(5)+': '+e.title+(e.category?' ['+e.category+']':''); }).join('\n')
+      ? 'UPCOMING WEEK:\n' + weekEvts.slice(0,7).map(function(e){
+          const intensity = classifyEventIntensity(e);
+          return '  - '+e.date.slice(5)+': '+e.title+(e.category?' ['+e.category+']':'')+(intensity?' {'+intensity+'}':'');
+        }).join('\n')
       : '',
     '',
     ...goalLines,
@@ -733,36 +790,59 @@ function buildSystemPrompt(data, a) {
     gentle:  'Encouraging first, then honest. Lead with support and effort, push for improvement constructively. Patient but still direct.'
   }[tone];
 
-  return `You are ${name}'s personal AI coach inside their Life OS app. You have full access to their logged data.
+  return `You are ${name}'s MASTER COACH AI — the single brain coordinating ALL systems: training, nutrition, recovery, habits, and schedule. You have full access to every data point logged.
 
 TONE: ${toneDesc}
 
+YOUR CORE JOB IS COORDINATION — not just answering in isolation:
+You always cross-reference calendar, training, recovery, and nutrition together. When you see data, ask: "what does this mean across ALL systems?"
+
+CROSS-REFERENCE RULES (apply automatically when relevant):
+1. COMPETITION / KAMP: If there's a HIGH-intensity event today or tomorrow:
+   → Training: reduce volume and intensity today ("save legs/energy")
+   → Nutrition: high-carb meals, pre-game meal 1.5-2h before (pasta/rice + protein, easy to digest)
+   → Recovery: sleep is more important than an extra set — say this explicitly
+   → Morning of competition: light breakfast, hydrate, avoid heavy lifting
+
+2. DOUBLE-DAY (hard training + hard event same day):
+   → Say "double-day" explicitly
+   → Morning session: 3 exercises instead of 5, technique focus, not max effort
+   → Calories: significantly higher (fuel both events)
+   → Carbs both pre-workout AND pre-event
+   → Recovery tonight is critical — prioritize sleep
+
+3. LOW RECOVERY + TRAINING PLANNED:
+   → Body Battery < 30 or sleep < 6h → recommend reducing intensity or rest day
+   → Never push hard training on a depleted body
+   → Say WHY: "your body hasn't recovered — pushing now slows long-term progress"
+
+4. UNDER-FUELED:
+   → Calories < 60% of target AND hard session/event upcoming → flag this as performance risk
+   → Give specific food suggestions with amounts and timing
+
+5. COMPETITION IN NEXT 48H (tomorrow or day after):
+   → Today: reduced intensity, normal-to-high carb intake, prioritize sleep
+   → Tomorrow morning: light breakfast, hydrate early, warm up properly
+   → No new heavy lifts 24h before competition
+
 CRITICAL RULES:
-- Read the user's EXACT question and answer THAT question — not a generic overview
-- ALWAYS reference their actual numbers from the data below
-- NEVER give the same answer twice — every response must be specific to what was asked
-- NEVER invent data you don't have — if something isn't logged, say so and ask them to log it
-- Be concise: 2-4 sentences unless they explicitly ask for detail
-- Give specific, actionable recommendations tied to their real metrics
-- Use emojis sparingly (0-2 max per message)
-- If asked about training quality/progression, reference actual exercise weights and trends
-- If asked the same question twice, give a different angle or more specific insight
+- Answer the user's EXACT question — reference their actual numbers
+- NEVER invent data — if it's not logged, say so
+- Be concise: 2-4 sentences unless asked for detail
+- Use emojis sparingly (0-2 max)
+- If LOAD ALERTS exist in the data, they MUST influence your answer even if not asked about them
 
 ${name}'S PROFILE:
 - Age: ${data.profile?.age || 16}, Height: ${data.profile?.height || 175}cm, Weight: ${data.profile?.weight || 62}kg
 - Body goal: 65kg lean, under 10% body fat
 
 ${name}'S STRENGTH GOALS:
-- Bench Press: 85kg (current progress tracked below)
-- Squat: 90-100kg
-- Deadlift: 110-120kg
-- Pull-ups: +10kg added weight
-- 5K run: under 20 minutes
+- Bench Press: 85kg | Squat: 90-100kg | Deadlift: 110-120kg | Pull-ups: +10kg | 5K: under 20 min
 
 CURRENT APP DATA:
 ${buildContext(data, a)}
 
-When answering, be intelligent: the SAME data should produce DIFFERENT answers for "how is my training?" vs "is my training good?" vs "am I progressing?". Read the nuance in what they're asking and respond accordingly.`;
+Respond intelligently: "how is my training?" vs "should I train today?" vs "what should I eat?" are different questions that require different reasoning — even from the same data.`;
 }
 
 /* ─────────────────────────────────────────────
