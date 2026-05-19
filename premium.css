@@ -1,0 +1,182 @@
+/* ===== LIFE OS — PREMIUM VISUAL LAYER ===== */
+
+/* Smooth scroll on all pages */
+html { scroll-behavior: smooth; }
+
+/* ── CARD HOVER LIFT ── */
+.gm-card {
+  transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
+}
+.gm-card:hover {
+  border-color: #2C2C2C !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6) !important;
+}
+.card {
+  transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
+}
+.card:hover {
+  border-color: #2A2A2A !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6) !important;
+}
+
+/* ── GRADIENT TEXT — big dashboard numbers ── */
+.day-ring-percent {
+  background: linear-gradient(165deg, #FFFFFF 0%, #BEBBB3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gm-progress-num {
+  background: linear-gradient(165deg, #FFFFFF 0%, #C0BDB5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.metric-num {
+  background: linear-gradient(165deg, #FFFFFF 0%, #BEBBB3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nt-ring-kcal {
+  background: linear-gradient(165deg, #FFFFFF 0%, #C0BDB5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Workout timer */
+.wt-timer {
+  background: linear-gradient(165deg, #AAAAAA 0%, #555555 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── INPUTS — refined focus state ── */
+.goal-input:focus,
+.wt-weight-input:focus,
+.wt-reps-input:focus,
+.wt-notes:focus,
+.wt-filter-select:focus,
+.day-ring-time-input:focus {
+  border-color: rgba(255,255,255,0.28) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.04) !important;
+  outline: none !important;
+}
+
+/* ── NAV — active pill glow ── */
+.nav-link.is-active {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 10px rgba(255,255,255,0.09) !important;
+}
+
+/* ── STREAK BADGE — active warm glow ── */
+.gm-streak.gm-streak-active {
+  box-shadow: 0 0 18px rgba(255,193,7,0.14) !important;
+}
+
+/* ── PROGRESS BAR SEGMENTS — stronger glow ── */
+.gm-bar-seg-done {
+  box-shadow: 0 0 10px rgba(255,255,255,0.26) !important;
+}
+
+/* ── GOAL ROW HOVER — more refined ── */
+.goal-row {
+  transition: background 0.18s ease, border-color 0.18s ease !important;
+}
+.goal-row:hover {
+  background: #161616 !important;
+  border-color: #2A2A2A !important;
+}
+
+/* ── METRIC CARD HOVER (analytics) — enhanced ── */
+.metric-card {
+  transition: background 0.18s ease, border-color 0.18s ease !important;
+}
+.metric-card:hover {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: #282828 !important;
+}
+
+/* ── PERIOD / FILTER BUTTONS — active polish ── */
+.period-btn {
+  transition: all 0.18s ease !important;
+}
+.period-btn.is-active {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset !important;
+}
+
+/* ── QUICK BUTTONS — refined hover ── */
+.wt-quick-btn,
+.nt-quick-btn {
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease !important;
+}
+.wt-quick-btn:hover { background: #181818 !important; border-color: #303030 !important; }
+.nt-quick-btn:hover { background: #181818 !important; border-color: #303030 !important; }
+
+/* ── SECTION TITLE LINES — slightly brighter ── */
+.section-title::before { opacity: 0.85 !important; }
+
+/* ── HABIT / MEAL ITEMS — refined hover ── */
+.nt-meal-item {
+  transition: background 0.18s ease, border-color 0.18s ease !important;
+}
+.nt-meal-item:hover { background: #181818 !important; border-color: #262626 !important; }
+
+/* ── INSIGHT CARDS (analytics) ── */
+.insight {
+  transition: border-color 0.18s ease !important;
+}
+.insight:hover { border-color: #2C2C2C !important; }
+
+/* ── WORKOUT HISTORY ITEMS ── */
+.wt-history-header {
+  transition: opacity 0.18s ease !important;
+}
+
+/* ── GS ITEMS (PR records etc.) ── */
+.gs-item {
+  transition: background 0.18s ease, border-color 0.18s ease !important;
+}
+.gs-item:hover { background: rgba(255,255,255,0.06) !important; border-color: #2A2A2A !important; }
+
+/* ── ACTION BUTTONS — elevated hover ── */
+.goal-add-btn,
+.wt-save-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.goal-add-btn:hover,
+.wt-save-btn:hover {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── HEATMAP RANGE BUTTONS — refined ── */
+.hm-range-btn {
+  transition: all 0.18s ease !important;
+}
+.hm-range-btn:hover { color: var(--text-primary) !important; border-color: rgba(255,255,255,0.25) !important; }
+
+/* ── EXPORT BTN ── */
+.export-btn {
+  transition: all 0.18s ease !important;
+}
+
+/* ── TAB BUTTONS (analytics) ── */
+.tab-btn {
+  transition: color 0.18s ease, border-color 0.18s ease !important;
+}
+
+/* ── FINANCE PAGE — align with main design language ── */
+.fin-back-btn {
+  transition: all 0.18s ease !important;
+}
+
+/* Scrollbar polish — all pages */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
