@@ -956,6 +956,70 @@
     .tmpl-del  { background:transparent;border:none;color:var(--text-tertiary);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;opacity:0;transition:opacity .15s; }
     .tmpl-item:hover .tmpl-del { opacity:1; }
     .tmpl-del:hover { color:#FF8A8A; }
+
+    /* ===== WORKOUT COACH ===== */
+    .wtc-header { padding:18px 22px 14px; border-bottom:1px solid #1C1C1C; }
+    .wtc-header-top { display:flex; align-items:center; gap:10px; margin-bottom:3px; }
+    .wtc-title { font-size:15px; font-weight:700; color:var(--text-primary); }
+    .wtc-badge {
+      font-family:var(--font-mono); font-size:9px; font-weight:700;
+      letter-spacing:.12em; text-transform:uppercase;
+      background:#111; border:1px solid #1C1C1C; border-radius:99px; padding:3px 8px;
+      color:var(--text-tertiary);
+    }
+    .wtc-badge.is-ai { border-color:rgba(255,255,255,.18); color:var(--success); }
+    .wtc-sub { font-family:var(--font-mono); font-size:10px; color:var(--text-tertiary); }
+    .wtc-prompts { display:flex; flex-wrap:wrap; gap:6px; padding:12px 22px; border-bottom:1px solid #1C1C1C; }
+    .wtc-prompt-btn {
+      background:#111; border:1px solid #1C1C1C; border-radius:99px;
+      padding:5px 12px; font-size:11px; font-family:var(--font-body);
+      color:var(--text-secondary); cursor:pointer; white-space:nowrap;
+      transition:background .15s,color .15s,border-color .15s;
+    }
+    .wtc-prompt-btn:hover { background:#1a1a1a; color:var(--text-primary); border-color:#333; }
+    .wtc-messages {
+      min-height:100px; max-height:340px; overflow-y:auto;
+      padding:16px 22px; display:flex; flex-direction:column; gap:10px;
+      scroll-behavior:smooth;
+    }
+    .wtc-messages::-webkit-scrollbar { width:3px; }
+    .wtc-messages::-webkit-scrollbar-thumb { background:#2A2A2A; border-radius:2px; }
+    .wtc-msg { display:flex; flex-direction:column; max-width:88%; }
+    .wtc-msg.coach { align-self:flex-start; }
+    .wtc-msg.user  { align-self:flex-end; }
+    .wtc-bubble {
+      padding:10px 14px; font-size:13px; line-height:1.65;
+      white-space:pre-wrap; word-break:break-word;
+    }
+    .wtc-msg.coach .wtc-bubble { background:#111; border:1px solid #1C1C1C; color:var(--text-secondary); border-radius:4px 14px 14px 14px; }
+    .wtc-msg.user  .wtc-bubble { background:#252525; border:1px solid #222; color:var(--text-primary); border-radius:14px 4px 14px 14px; }
+    .wtc-time { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:4px; padding:0 4px; }
+    .wtc-typing { display:none; align-self:flex-start; background:#111; border:1px solid #1C1C1C; border-radius:4px 14px 14px 14px; padding:10px 14px; gap:4px; }
+    .wtc-typing.is-active { display:flex; }
+    .wtc-typing-dot { width:6px; height:6px; border-radius:50%; background:var(--text-tertiary); animation:wtc-bounce 1.4s ease-in-out infinite; }
+    .wtc-typing-dot:nth-child(2) { animation-delay:.2s; }
+    .wtc-typing-dot:nth-child(3) { animation-delay:.4s; }
+    @keyframes wtc-bounce {
+      0%,60%,100% { transform:translateY(0); opacity:.4; }
+      30%          { transform:translateY(-4px); opacity:1; }
+    }
+    .wtc-input-row { display:flex; gap:8px; align-items:flex-end; padding:12px 22px 16px; border-top:1px solid #1C1C1C; }
+    .wtc-input {
+      flex:1; background:#080808; border:1px solid #1C1C1C; border-radius:12px;
+      padding:10px 14px; color:var(--text-primary); font-family:var(--font-body);
+      font-size:13px; outline:none; resize:none; line-height:1.5;
+      max-height:100px; overflow-y:auto; transition:border-color .2s;
+    }
+    .wtc-input:focus { border-color:rgba(255,255,255,.28); }
+    .wtc-input::placeholder { color:var(--text-tertiary); }
+    .wtc-send-btn {
+      width:36px; height:36px; border-radius:50%; background:#FFFFFF; color:#000;
+      border:none; font-size:16px; cursor:pointer; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .15s; box-shadow:0 2px 8px rgba(255,255,255,.15);
+    }
+    .wtc-send-btn:hover { transform:scale(1.08); }
+    .wtc-send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="premium.css">
@@ -1306,6 +1370,42 @@ JSON format:
       </div>
       <div id="wtHistoryList"></div>
       <div id="wtHistoryEmpty" class="empty-state">No workouts logged yet.</div>
+    </div>
+  </div>
+
+  <!-- ==================== WORKOUT COACH ==================== -->
+  <div class="section">
+    <div class="section-title">Workout Coach</div>
+    <div class="gm-card" style="padding:0;overflow:hidden;">
+      <div class="wtc-header">
+        <div class="wtc-header-top">
+          <div class="wtc-title">Coach</div>
+          <span class="wtc-badge" id="wtcBadge">Ingen AI</span>
+        </div>
+        <div class="wtc-sub">Ser din træning, kost, kalender og recovery — alt på én gang</div>
+      </div>
+      <div class="wtc-prompts">
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Hvad skal jeg træne i dag?')">⚡ I dag</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Kan jeg øge vægten på mine øvelser?')">📈 Overload</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Hvad er status på min progression?')">🏆 Progression</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Påvirker mine kommende kampe min træning?')">⚽ Kampe</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Har jeg spist nok til at træne optimalt i dag?')">🥗 Kost</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Hvordan er min recovery og hvile?')">😴 Recovery</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Analyser mine seneste 5 sessioner og find mønstre')">🔍 Analyse</button>
+        <button class="wtc-prompt-btn" onclick="wtcQuick('Hvad er mine næste PR-mål og hvornår når jeg dem?')">💪 PR-mål</button>
+      </div>
+      <div class="wtc-messages" id="wtcMessages">
+        <div class="wtc-typing" id="wtcTyping">
+          <div class="wtc-typing-dot"></div>
+          <div class="wtc-typing-dot"></div>
+          <div class="wtc-typing-dot"></div>
+        </div>
+      </div>
+      <div class="wtc-input-row">
+        <textarea class="wtc-input" id="wtcInput" placeholder="Spørg om træning, progression, overload..." rows="1"
+          onkeydown="wtcKeydown(event)" oninput="wtcAutoResize(this)"></textarea>
+        <button class="wtc-send-btn" id="wtcSendBtn" onclick="wtcSendMessage()">↑</button>
+      </div>
     </div>
   </div>
 
@@ -3776,6 +3876,310 @@ document.getElementById('tmplSaveBtn').addEventListener('click', function() {
   if (body.style.display === 'none') tmplToggle();
   alert('Template gemt: ' + name);
 });
+
+// ==================== WORKOUT COACH AI ====================
+(function() {
+
+  function wtcNow() {
+    const d = new Date();
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function wtcClassify(e) {
+    const t = (e.title || '').toLowerCase();
+    const c = (e.category || '').toLowerCase();
+    if (/kamp|match|game|competition|race|tournament|finale|playoff|stævne|konkurrence/.test(t) || c === 'competition') return 'HIGH';
+    if (/hård|hard|intense|sprint|interval|hiit/.test(t)) return 'HIGH';
+    if (/træning|workout|gym|løb|run|fodbold|basketball|tennis|sport|fitness/.test(t)) return 'MEDIUM';
+    if (/cardio|program/.test(c)) return 'MEDIUM';
+    if (/hvile|rest|recovery|stretch|yoga/.test(t)) return 'LOW';
+    return null;
+  }
+
+  function wtcBuildContext() {
+    const today    = dateToStr(new Date());
+    const profile  = storeGet('lifeos_profile')          || {};
+    const workouts = storeGet('lifeos_workouts')         || [];
+    const nutrition= storeGet('lifeos_nutrition')        || [];
+    const recovery = storeGet('lifeos_recovery')         || [];
+    const events   = storeGet('lifeos_events')           || [];
+    const habits   = storeGet('lifeos_habits')           || [];
+    const prs      = storeGet('lifeos_prs')              || {};
+    const poc      = storeGet('lifeos_poc')              || { exercises:[], logs:{} };
+    const nutGoals = storeGet('lifeos_nutrition_goals')  || { cal:2500, protein:150, carbs:250, fat:70 };
+
+    // Nutrition today
+    const todayMeals = nutrition.filter(n => n.date === today);
+    const mac = todayMeals.reduce((acc, n) => ({
+      cal:   acc.cal   + (n.calories || n.cal  || 0),
+      prot:  acc.prot  + (n.protein  || n.prot || 0),
+      carbs: acc.carbs + (n.carbs    || 0),
+      fat:   acc.fat   + (n.fat      || 0)
+    }), { cal:0, prot:0, carbs:0, fat:0 });
+
+    // Calendar
+    const wkEnd       = dateToStr(new Date(Date.now() + 7 * 86400000));
+    const tomorrow    = dateToStr(new Date(Date.now() + 86400000));
+    const todayEvts   = events.filter(e => e.date === today);
+    const upcomingEvts= events.filter(e => e.date > today && e.date <= wkEnd)
+                              .sort((a,b) => a.date.localeCompare(b.date));
+
+    // Workouts this / last week
+    let wkCount = 0, prevCount = 0;
+    for (let i = 0; i < 7;  i++) { const d = new Date(); d.setDate(d.getDate()-i);   if (workouts.some(w=>(w.date||'').slice(0,10)===dateToStr(d))) wkCount++; }
+    for (let i = 7; i < 14; i++) { const d = new Date(); d.setDate(d.getDate()-i);   if (workouts.some(w=>(w.date||'').slice(0,10)===dateToStr(d))) prevCount++; }
+
+    // Progressive Overload lines
+    const pocLines = [];
+    if (poc.exercises && poc.exercises.length) {
+      pocLines.push('PROGRESSIVE OVERLOAD TRACKER:');
+      poc.exercises.slice(0, 20).forEach(ex => {
+        const log = (poc.logs || {})[ex.id] || [];
+        if (!log.length) return;
+        const recent = log.slice(-5).reverse();
+        const sets = recent.map(d => {
+          const best = (d.sets || []).reduce((b,s) => (parseFloat(s.weight)||0) > (parseFloat(b.weight)||0) ? s : b, d.sets[0] || {});
+          return d.date.slice(5) + ': ' + (best.weight||0) + 'kg×' + (best.reps||0);
+        });
+        const w0 = parseFloat(recent[0]?.sets?.[0]?.weight) || 0;
+        const w1 = parseFloat(recent[1]?.sets?.[0]?.weight) || 0;
+        const trend = recent.length >= 2 ? (w0 > w1 ? ' ↑' : ' →') : '';
+        pocLines.push('  ' + ex.name + ' [mål: ' + (ex.repMin||0) + '-' + (ex.repMax||0) + ' reps]: ' + sets.join(' | ') + trend);
+      });
+    }
+
+    // Load alerts
+    const alerts = [];
+    const hasKampToday     = todayEvts.some(e => wtcClassify(e) === 'HIGH');
+    const hasKampTomorrow  = upcomingEvts.some(e => e.date === tomorrow && wtcClassify(e) === 'HIGH');
+    const hasWorkoutToday  = workouts.length && (workouts[0].date||'').slice(0,10) === today;
+    if (hasKampToday && hasWorkoutToday) alerts.push('DOUBLE-DAY — kamp OG træning i dag!');
+    if (hasKampToday)                    alerts.push('KAMP I DAG — reducer intensitet, spar energi');
+    if (hasKampTomorrow)                 alerts.push('KAMP I MORGEN — let/ingen hård træning i dag');
+    const lastRec = (recovery || []).slice(-1)[0];
+    if (lastRec && lastRec.date === today && parseFloat(lastRec.sleep) < 6)
+      alerts.push('LAV SØVN — ' + lastRec.sleep + 'h i nat');
+    if (mac.cal > 0 && mac.cal < nutGoals.cal * 0.6)
+      alerts.push('UNDER-FUELED — kun ' + Math.round(mac.cal) + 'kcal (mål: ' + nutGoals.cal + ')');
+
+    const lines = [
+      'ATLET: ' + (profile.name||'Chris') + (profile.age?', '+profile.age+'år':'') + (profile.weight?', '+profile.weight+'kg':'') + (profile.height?', '+profile.height+'cm':''),
+      'DATO: ' + new Date().toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'}) + ' kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
+      '',
+      alerts.length ? 'ALERTS:\n' + alerts.map(a => '  ⚠ '+a).join('\n') : '',
+      '',
+      todayEvts.length    ? 'KALENDER I DAG:\n'    + todayEvts.map(e => '  - '+e.title+(e.time?' kl.'+e.time:'')+(wtcClassify(e)?' {'+wtcClassify(e)+'}':'')).join('\n')   : '',
+      upcomingEvts.length ? 'KOMMENDE EVENTS:\n'   + upcomingEvts.slice(0,5).map(e=>'  - '+e.date.slice(5)+': '+e.title+(wtcClassify(e)?' {'+wtcClassify(e)+'}':'')).join('\n') : '',
+      '',
+      'TRÆNING:',
+      '  Denne uge: '+wkCount+' sessioner | Forrige uge: '+prevCount+' sessioner',
+      '',
+      workouts.length ? 'SENESTE SESSIONER:\n' + workouts.slice(0,6).map(w => {
+        const date = (w.date||'').slice(0,10);
+        const exStr = (w.exercises||[]).slice(0,4).map(ex => {
+          const sets = ex.sets||[];
+          if (!sets.length) return ex.name;
+          const top = sets.reduce((b,s)=>(parseFloat(s.weight)||0)>(parseFloat(b.weight)||0)?s:b, sets[0]);
+          return ex.name+': '+(top.weight||0)+'kg×'+(top.reps||0);
+        }).join(', ');
+        return '  '+date+' — '+(w.name||'Session')+(exStr?' | '+exStr:'');
+      }).join('\n') : '  Ingen sessioner logget endnu',
+      '',
+      ...pocLines,
+      pocLines.length ? '' : '',
+      Object.keys(prs).length
+        ? 'PERSONLIGE REKORDER:\n' + Object.entries(prs).slice(0,10).map(([k,v])=>'  '+k+': '+v.weight+'kg × '+v.reps+' reps').join('\n')
+        : '',
+      '',
+      'KOST — mål: '+nutGoals.cal+'kcal / P:'+nutGoals.protein+'g / C:'+nutGoals.carbs+'g / F:'+nutGoals.fat+'g',
+      mac.cal > 0
+        ? '  I dag: '+Math.round(mac.cal)+'kcal | P:'+Math.round(mac.prot)+'g C:'+Math.round(mac.carbs)+'g F:'+Math.round(mac.fat)+'g ('+Math.round(mac.cal/nutGoals.cal*100)+'% af mål)'
+        : '  I dag: intet logget',
+      todayMeals.length ? '  Måltider:\n' + todayMeals.map(m=>'    - '+(m.name||'Måltid')+': '+(m.cal||m.calories||0)+'kcal P:'+(m.protein||0)+'g').join('\n') : '',
+      '',
+      'RECOVERY (seneste 5 dage):',
+      ...(recovery||[]).slice(-5).reverse().map(r => '  '+r.date+': søvn '+(r.sleep||'?')+'h, stress '+(r.stress||'?')+'/10'+(r.notes?' — '+r.notes:'')),
+      '',
+      habits.length ? 'VANER ('+habits.filter(h=>(h.completedDates||[]).includes(today)).length+'/'+habits.length+' i dag):' : '',
+      ...habits.slice(0,8).map(h=>'  '+ ((h.completedDates||[]).includes(today)?'✓':'✗')+' '+h.name+(h.category?' ['+h.category+']':'')),
+    ];
+
+    return lines.filter(l => l !== undefined).join('\n');
+  }
+
+  function wtcSystemPrompt() {
+    const profile = storeGet('lifeos_profile') || {};
+    const name = profile.name || 'Chris';
+    return `Du er ${name}s personlige TRÆNINGS- OG OVERLOAD COACH. Du har direkte adgang til al data — træning, kost, kalender, recovery og vaner.
+
+DIN KERNEROLLE:
+- Optimér timing, volumen og intensitet af træning
+- Fortæl præcist hvornår det er tid til at øge (progressive overload) og hvornår man skal bakke af
+- Tag ALTID kampe og events i kalender med i regnestykket
+- Brug kost og recovery som direkte inputs til træningsrådgivning
+
+OVERLOAD PRINCIPPER:
+- Atlet laver samme vægt med alle reps 2+ gange → tid til at øge 2.5-5kg
+- Atlet er i toppen af rep-range → øg vægten til næste session
+- Atlet er under bund af rep-range med ny vægt → hold og konsolider
+- Lille progressive hop er altid bedre end for stort
+
+KAMP/KALENDER REGLER:
+- Kamp SAMME dag: let session (maks 3 øvelser, teknikfokus, ingen max-effort)
+- Kamp I MORGEN: ingen tung træning i dag, let mobilitet, tidlig søvn
+- Kamp om 2 dage: normal træning men ikke til failure
+
+KOST → TRÆNING:
+- Kalorier < 60% af mål OG hård træning planlagt: advar direkte om performance-risiko
+- Lavt protein → muskelopbygning kompromitteres, nævn det
+
+${name}S STYRKE MÅL: Bænk 85kg | Squat 90-100kg | Dødløft 110-120kg | Pull-ups +10kg
+
+AKTUEL DATA:
+${wtcBuildContext()}
+
+Svar PÅ DANSK. Vær konkret og datadrevet — brug de faktiske tal. 2-4 sætninger medmindre du bedes om detaljer. Maks 2 emojis.`;
+  }
+
+  function wtcSetTyping(on) {
+    const t = document.getElementById('wtcTyping');
+    if (t) t.classList.toggle('is-active', on);
+    const c = document.getElementById('wtcMessages');
+    if (c) c.scrollTop = c.scrollHeight;
+  }
+
+  function wtcSetBusy(on) {
+    const btn = document.getElementById('wtcSendBtn');
+    if (btn) btn.disabled = on;
+  }
+
+  function wtcUpdateBadge(isAI) {
+    const b = document.getElementById('wtcBadge');
+    if (!b) return;
+    b.textContent = isAI ? 'Groq AI' : 'Ingen AI — tilføj nøgle i Coach ⚙';
+    b.className = 'wtc-badge' + (isAI ? ' is-ai' : '');
+  }
+
+  function wtcAddMsg(text, role) {
+    const container = document.getElementById('wtcMessages');
+    const typing    = document.getElementById('wtcTyping');
+    const el     = document.createElement('div');
+    el.className = 'wtc-msg ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'wtc-bubble';
+    bubble.textContent = text;
+    const time = document.createElement('div');
+    time.className = 'wtc-time';
+    time.textContent = (role === 'coach' ? 'Coach' : 'Du') + ' · ' + wtcNow();
+    el.appendChild(bubble);
+    el.appendChild(time);
+    container.insertBefore(el, typing);
+    container.scrollTop = container.scrollHeight;
+    return bubble;
+  }
+
+  function wtcLoadHistory()  { return storeGet('wtc_chat_history') || []; }
+  function wtcSaveHistory(m) {
+    const h = wtcLoadHistory(); h.push(m);
+    if (h.length > 20) h.splice(0, h.length - 20);
+    storeSet('wtc_chat_history', h);
+  }
+
+  async function wtcStream(userText) {
+    const settings = storeGet('coach_settings') || {};
+    const key = (settings.groqKey || '').trim();
+    if (!key) {
+      wtcAddMsg('Ingen Groq API-nøgle fundet. Tilføj den i Coach-siden under ⚙ Settings — den genbruges her.', 'coach');
+      return;
+    }
+
+    wtcUpdateBadge(true);
+    wtcSetTyping(true);
+    wtcSetBusy(true);
+
+    const history  = wtcLoadHistory();
+    const messages = [...history.slice(-8), { role:'user', content: userText }];
+    wtcSaveHistory({ role:'user', content: userText });
+
+    const container = document.getElementById('wtcMessages');
+    const typing    = document.getElementById('wtcTyping');
+    const el     = document.createElement('div');
+    el.className = 'wtc-msg coach';
+    const bubble = document.createElement('div');
+    bubble.className = 'wtc-bubble';
+    const timeEl = document.createElement('div');
+    timeEl.className = 'wtc-time';
+    timeEl.textContent = 'Coach · ' + wtcNow();
+    el.appendChild(bubble);
+    el.appendChild(timeEl);
+    container.insertBefore(el, typing);
+    wtcSetTyping(false);
+
+    let fullText = '';
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role:'system', content: wtcSystemPrompt() }, ...messages],
+          stream: true, max_tokens: 700, temperature: 0.65
+        })
+      });
+      if (!res.ok) throw new Error('Groq API fejl: ' + res.status);
+      const reader = res.body.getReader();
+      const dec    = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          const t = line.replace(/^data: /, '').trim();
+          if (!t || t === '[DONE]') continue;
+          try {
+            const delta = JSON.parse(t).choices?.[0]?.delta?.content;
+            if (delta) { fullText += delta; bubble.textContent = fullText; container.scrollTop = container.scrollHeight; }
+          } catch {}
+        }
+      }
+      wtcSaveHistory({ role:'assistant', content: fullText });
+    } catch (err) {
+      bubble.textContent = 'Fejl: ' + err.message;
+    }
+    wtcSetBusy(false);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  window.wtcQuick = function(text) {
+    const input = document.getElementById('wtcInput');
+    if (input) { input.value = text; }
+    wtcSendMessage();
+  };
+
+  window.wtcSendMessage = async function() {
+    const input = document.getElementById('wtcInput');
+    const text  = (input ? input.value : '').trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = '';
+    wtcAddMsg(text, 'user');
+    await wtcStream(text);
+  };
+
+  window.wtcKeydown = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wtcSendMessage(); }
+  };
+
+  window.wtcAutoResize = function(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  };
+
+  // Init badge
+  const s = storeGet('coach_settings') || {};
+  if ((s.groqKey || '').trim()) wtcUpdateBadge(true);
+
+})();
 </script>
 </body>
 </html>
