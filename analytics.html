@@ -221,6 +221,23 @@
       .metric-num  { font-size: 18px; }
     }
 
+    /* ── RECOVERY MONITOR TILES ── */
+    .rm-tile-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;
+    }
+    @media (max-width:480px) { .rm-tile-grid { grid-template-columns:repeat(2,1fr); } }
+    .rm-tile {
+      background:#111111; border:1px solid #1C1C1C; border-radius:10px;
+      padding:12px 10px; display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center;
+    }
+    .rm-tile-icon { font-size:18px; line-height:1; }
+    .rm-tile-val  { font-family:var(--font-mono); font-size:20px; font-weight:800; color:var(--text-primary); line-height:1; }
+    .rm-tile-val.good { color:#4ADE80; }
+    .rm-tile-val.mid  { color:#FFC107; }
+    .rm-tile-val.bad  { color:#FF6B6B; }
+    .rm-tile-lbl { font-family:var(--font-mono); font-size:8px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-tertiary); }
+    .rm-tile-sub { font-size:10px; color:var(--text-tertiary); }
+
     /* ── BODY TAB ── */
     .tab-btn.is-active.bd { color: #FF8A65; border-color: #FF8A65; }
     .bd-inj-row {
@@ -320,6 +337,9 @@
   <div class="tab-panel" id="panel-recovery">
     <div class="card">
       <div class="metric-grid" id="rv-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-title" style="margin-bottom:10px">Recovery Monitor — i dag</div>
+      <div class="rm-tile-grid" id="rv-monitor-grid"></div>
       <div class="divider"></div>
       <div class="chart-section">
         <div class="chart-title">Recovery Score — last 7 days</div>
@@ -725,7 +745,91 @@ function renderHabits() {
   getInsights('habits').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
 }
 
+function renderRecoveryMonitor() {
+  const grid = document.getElementById('rv-monitor-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const todayStr = dateToStr(new Date());
+  const recAll   = storeGet('lifeos_recovery') || [];
+  const garAll   = storeGet('lifeos_garmin')   || [];
+
+  const rec = recAll.find(r => r.date === todayStr) || null;
+  const gar = garAll.find(g => g.date === todayStr) || null;
+
+  if (!rec && !gar) {
+    grid.innerHTML = '<div style="color:var(--c-muted);font-size:13px;padding:12px 0;grid-column:1/-1">Ingen recovery data logget i dag</div>';
+    return;
+  }
+
+  function tile(icon, val, lbl, sub, cls) {
+    const d = document.createElement('div'); d.className = 'rm-tile';
+    d.innerHTML = '<div class="rm-tile-icon">'+icon+'</div>'
+      + '<div class="rm-tile-val '+cls+'">'+val+'</div>'
+      + '<div class="rm-tile-lbl">'+lbl+'</div>'
+      + (sub ? '<div class="rm-tile-sub">'+sub+'</div>' : '');
+    return d;
+  }
+
+  function cls(val, low, mid) {
+    if (val == null) return '';
+    return val >= mid ? 'good' : val >= low ? 'mid' : 'bad';
+  }
+  function clsInv(val, bad, mid) {
+    if (val == null) return '';
+    return val <= mid ? 'good' : val <= bad ? 'mid' : 'bad';
+  }
+
+  if (rec) {
+    const sleep = rec.sleep != null ? parseFloat(rec.sleep) : null;
+    const stress = rec.stressLevel != null ? rec.stressLevel : (rec.stress != null ? rec.stress : null);
+    const score  = rec.recoveryScore != null ? rec.recoveryScore : null;
+    const temp   = rec.bodyTemp != null ? rec.bodyTemp : null;
+
+    if (sleep  != null) grid.appendChild(tile('😴', sleep+'h',   'Søvn',         sleep>=7?'God nat':'Kort søvn', cls(sleep, 5, 7)));
+    if (stress != null) grid.appendChild(tile('🧠', stress+'/10','Stress',        stress<=3?'Lav':stress<=6?'Moderat':'Høj', clsInv(stress, 7, 4)));
+    if (score  != null) grid.appendChild(tile('💚', score+'%',   'Recovery Score',score>=70?'Klar til træning':'Brug hvile', cls(score, 40, 70)));
+    if (temp   != null) {
+      const tc = temp >= 37.5 ? 'bad' : temp >= 37.2 ? 'mid' : 'good';
+      grid.appendChild(tile('🌡', temp+'°C', 'Kropstemperatur', temp < 37.5 ? 'Normal' : 'Forhøjet', tc));
+    }
+  }
+
+  if (gar) {
+    const rhr      = gar.rhr      != null ? gar.rhr      : null;
+    const battery  = gar.battery  != null ? gar.battery  : null;
+    const hrv      = gar.hrv      != null ? gar.hrv      : null;
+    const steps    = gar.steps    != null ? gar.steps    : null;
+    const resp     = gar.resp     != null ? gar.resp     : null;
+    const spo2     = gar.spo2     != null ? gar.spo2     : null;
+    const health   = gar.health   != null ? gar.health   : null;
+    const recovery = gar.recovery != null ? gar.recovery : null;
+    const snapshot = gar.snapshot != null ? gar.snapshot : null;
+
+    if (rhr      != null) grid.appendChild(tile('❤️', rhr+'bpm',      'Resting HR',       rhr<=55?'Fremragende':rhr<=65?'God':'Høj', clsInv(rhr, 75, 65)));
+    if (battery  != null) grid.appendChild(tile('🔋', battery+'%',    'Body Battery',     battery>=70?'Høj energi':battery>=40?'Moderat':'Lav energi', cls(battery, 40, 70)));
+    if (hrv      != null) grid.appendChild(tile('📊', hrv+'ms',       'HRV',              hrv>=60?'Fremragende':hrv>=40?'God':'Lav', cls(hrv, 30, 50)));
+    if (steps    != null) {
+      const sk = Math.round(steps/100)/10;
+      grid.appendChild(tile('👟', sk+'k',          'Skridt',           steps>=10000?'Mål nået':'Under mål', cls(steps, 5000, 10000)));
+    }
+    if (resp     != null) grid.appendChild(tile('🌬', resp+' rpm',     'Respiration',      resp>=12&&resp<=20?'Normal':'Unormal', resp>=12&&resp<=20?'good':'mid'));
+    if (spo2     != null) grid.appendChild(tile('🩸', spo2+'%',       'Pulse Ox',         spo2>=97?'Fremragende':spo2>=95?'Normal':'Lav', cls(spo2, 95, 97)));
+    if (health   != null) {
+      const hc = health>=80?'good':health>=60?'mid':'bad';
+      grid.appendChild(tile('🏥', health,          'Health Status',    '', hc));
+    }
+    if (recovery != null) grid.appendChild(tile('⏱', recovery+'t',   'Recovery Time',    recovery<=12?'Klar':'Brug hvile', clsInv(recovery, 48, 24)));
+    if (snapshot != null) {
+      const sc = snapshot==='Excellent'||snapshot==='Good'?'good':snapshot==='Fair'?'mid':'bad';
+      grid.appendChild(tile('📸', snapshot,        'Health Snapshot',  '', sc));
+    }
+  }
+}
+
 function renderRecovery() {
+  renderRecoveryMonitor();
+
   const rm = calculateRecoveryStats(activePeriod);
   const mg = document.getElementById('rv-metrics'); mg.innerHTML='';
   mg.appendChild(mkMetric('😴', rm.avgSleep!=null?rm.avgSleep+'h':'—', 'Avg Sleep',     null, null));
