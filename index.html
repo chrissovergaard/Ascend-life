@@ -4312,8 +4312,9 @@ renderProfile();
     var contentEl = document.getElementById('sleepAlarmContent');
 
     var schedule = storeGet('lifeos_schedule') || {};
-    var wakeHour = schedule.wake ? Math.floor(schedule.wake / 60) : 7;
-    var wakeMin  = schedule.wake ? schedule.wake % 60 : 0;
+    var wakeDecimal = schedule.wake != null ? schedule.wake : 7;
+    var wakeHour = Math.floor(wakeDecimal) % 24;
+    var wakeMin  = Math.round((wakeDecimal - Math.floor(wakeDecimal)) * 60);
 
     // Calculate bedtime: wakeTime - targetSleep hours
     var bedHour = wakeHour - targetSleep;
