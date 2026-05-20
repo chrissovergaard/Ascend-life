@@ -220,6 +220,21 @@
       .metric-grid { grid-template-columns: 1fr 1fr; }
       .metric-num  { font-size: 18px; }
     }
+
+    /* ── BODY TAB ── */
+    .tab-btn.is-active.bd { color: #FF8A65; border-color: #FF8A65; }
+    .bd-inj-row {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:10px;
+      background:#111111; border:1px solid #1C1C1C; margin-bottom:6px;
+    }
+    .bd-inj-level { font-family:var(--font-mono); font-size:12px; font-weight:800; min-width:32px; flex-shrink:0; }
+    .bd-inj-info { flex:1; min-width:0; }
+    .bd-inj-part { font-size:13px; font-weight:600; color:var(--text-primary); }
+    .bd-inj-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:2px; }
+    .bd-inj-tag { font-family:var(--font-mono); font-size:9px; font-weight:700; padding:2px 8px; border-radius:5px; white-space:nowrap; flex-shrink:0; }
+    .bd-inj-tag.active   { background:rgba(255,107,107,.12); color:#FF6B6B; }
+    .bd-inj-tag.resolved { background:rgba(107,227,164,.08); color:#6BE3A4; }
   </style>
   <link rel="stylesheet" href="premium.css">
 </head>
@@ -232,7 +247,8 @@
     <a href="calendar.html"  class="nav-link">Calendar</a>
     <a href="analytics.html" class="nav-link is-active">Analytics</a>
     <a href="nutrition.html" class="nav-link">Nutrition</a>
-    <a href="coach.html" class="nav-link">Coach</a>
+    <a href="coach.html"   class="nav-link">Coach</a>
+    <a href="finance.html" class="nav-link">Finance</a>
   </nav>
 
   <h1 class="dash-title">Analytics</h1>
@@ -251,6 +267,7 @@
     <button class="tab-btn hb"           data-tab="habits">🔥 Habits</button>
     <button class="tab-btn rv"           data-tab="recovery">😴 Recovery</button>
     <button class="tab-btn gl"           data-tab="goals">🏆 Goals</button>
+    <button class="tab-btn bd"           data-tab="body">⚖️ Body</button>
   </div>
 
   <!-- ══════════════ WORKOUTS TAB ══════════════ -->
@@ -326,6 +343,23 @@
       <div id="gl-goal-list" style="margin-bottom:16px"></div>
       <div class="divider"></div>
       <div class="insights" id="gl-insights"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ BODY TAB ══════════════ -->
+  <div class="tab-panel" id="panel-body">
+    <div class="card">
+      <div class="metric-grid" id="bd-metrics"></div>
+      <div class="divider"></div>
+      <div class="chart-section">
+        <div class="chart-title">Bodyweight — seneste 30 dage</div>
+        <div style="position:relative"><canvas id="bd-bw-chart" height="80" style="width:100%;display:block"></canvas></div>
+      </div>
+      <div class="divider"></div>
+      <div class="chart-title">Injury Log</div>
+      <div id="bd-inj-list" style="margin-bottom:16px"></div>
+      <div class="divider"></div>
+      <div class="insights" id="bd-insights"></div>
     </div>
   </div>
 
@@ -738,12 +772,155 @@ function renderGoals() {
   getInsights('goals').forEach(ins=>ig.appendChild(mkInsight(ins.text,ins.type)));
 }
 
+// ==================== BODY STATS ====================
+function calculateBodyStats() {
+  const bwRaw   = storeGet('lifeos_bodyweight') || [];
+  const injuries= storeGet('lifeos_injuries')   || [];
+  const waterMap= storeGet('lifeos_water')      || {};
+  const profile = storeGet('lifeos_profile')    || {};
+
+  const sorted  = [...bwRaw].sort((a,b) => a.date.localeCompare(b.date));
+  const latest  = sorted[sorted.length - 1] || null;
+  const goal    = profile.goalWeight || 65;
+
+  const cutoff  = dateToStr(new Date(Date.now() - 30*86400000));
+  const recent30= sorted.filter(e => e.date >= cutoff);
+  const change  = recent30.length >= 2
+    ? Math.round((recent30[recent30.length-1].w - recent30[0].w) * 10) / 10
+    : null;
+
+  // Water 30-day average
+  let waterSum = 0, waterDays = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const v = waterMap[dateToStr(d)];
+    if (v !== undefined) { waterSum += v; waterDays++; }
+  }
+  const waterAvg   = waterDays > 0 ? (waterSum / waterDays).toFixed(1) : null;
+  const todayWater = waterMap[dateToStr(new Date())] || 0;
+
+  const activeInj  = injuries.filter(i => !i.resolved);
+  const resolvedInj= injuries.filter(i =>  i.resolved);
+
+  return { latest, goal, change, recent30, waterAvg, todayWater, activeInj, resolvedInj, allInj: injuries };
+}
+
+function renderBody() {
+  const bm = calculateBodyStats();
+  const mg = document.getElementById('bd-metrics'); mg.innerHTML = '';
+
+  mg.appendChild(mkMetric('⚖️', bm.latest ? bm.latest.w+'kg' : '—', 'Nuværende Vægt',
+    bm.latest ? formatDate(bm.latest.date) : 'Ingen data', null));
+  mg.appendChild(mkMetric('🎯', bm.goal+'kg', 'Mål',
+    bm.latest ? (bm.latest.w > bm.goal
+      ? '-'+Math.round((bm.latest.w - bm.goal)*10)/10+'kg til mål'
+      : '✓ Nået!') : '—', null));
+  mg.appendChild(mkMetric('📊',
+    bm.change !== null ? (bm.change >= 0 ? '+' : '')+bm.change+'kg' : '—',
+    '30-dages ændring', null, null));
+  mg.appendChild(mkMetric('💧', bm.todayWater+'/8', 'Vand i dag',
+    bm.waterAvg ? 'gns. '+bm.waterAvg+' glas/dag' : null, null));
+  if (bm.activeInj.length > 0)
+    mg.appendChild(mkMetric('🩹', bm.activeInj.length, 'Aktive skader', null, null));
+
+  // Bodyweight canvas chart
+  setTimeout(() => {
+    const canvas = document.getElementById('bd-bw-chart'); if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W   = canvas.parentElement.clientWidth || 360;
+    const H   = 80;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+    const data = bm.recent30;
+    if (data.length < 2) {
+      ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='10px ui-monospace,monospace';
+      ctx.textAlign='center'; ctx.fillText('Log mindst 2 målinger på Dashboard', W/2, H/2); return;
+    }
+    const weights = data.map(d => d.w);
+    const minW = Math.min(...weights) - 0.5, maxW = Math.max(...weights) + 0.5;
+    const pad  = 8, gW = W - pad*2, gH = H - pad - 16;
+    const toX  = i => pad + (i / (data.length-1)) * gW;
+    const toY  = w => pad + gH - ((w - minW) / ((maxW - minW) || 1)) * gH;
+    // Goal line
+    if (bm.goal >= minW && bm.goal <= maxW) {
+      const gy = toY(bm.goal);
+      ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W-pad, gy);
+      ctx.strokeStyle='rgba(107,227,164,0.35)'; ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // Area
+    ctx.beginPath(); ctx.moveTo(toX(0), toY(data[0].w));
+    data.forEach((d,i) => { if (i) ctx.lineTo(toX(i), toY(d.w)); });
+    ctx.lineTo(toX(data.length-1), H); ctx.lineTo(toX(0), H); ctx.closePath();
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0,'rgba(255,138,101,0.18)'); g.addColorStop(1,'rgba(255,138,101,0.02)');
+    ctx.fillStyle = g; ctx.fill();
+    // Line
+    ctx.beginPath(); ctx.moveTo(toX(0), toY(data[0].w));
+    data.forEach((d,i) => { if (i) ctx.lineTo(toX(i), toY(d.w)); });
+    ctx.strokeStyle='#FF8A65'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+    // Dots + labels
+    data.forEach((d,i) => {
+      ctx.beginPath(); ctx.arc(toX(i), toY(d.w), 2.5, 0, Math.PI*2);
+      ctx.fillStyle='#FF8A65'; ctx.fill();
+    });
+    ctx.fillStyle='rgba(180,178,172,0.45)'; ctx.font='600 8px ui-monospace,monospace';
+    ctx.textAlign='left';  ctx.fillText(data[0].date.slice(5), pad, H-2);
+    ctx.textAlign='right'; ctx.fillText(data[data.length-1].date.slice(5), W-pad, H-2);
+  }, 0);
+
+  // Injury list
+  const injEl = document.getElementById('bd-inj-list'); injEl.innerHTML = '';
+  if (!bm.allInj.length) {
+    injEl.innerHTML = '<div class="empty" style="padding:16px 0">Ingen skader logget — god form! 💪</div>';
+  } else {
+    const LC = { 1:'#6BE3A4', 2:'#FFC107', 3:'#FFA500', 4:'#FF7043', 5:'#FF5252' };
+    [...bm.activeInj, ...bm.resolvedInj].forEach(inj => {
+      const row  = document.createElement('div'); row.className = 'bd-inj-row';
+      const lvl  = document.createElement('div'); lvl.className = 'bd-inj-level';
+      lvl.textContent = inj.level+'/5'; lvl.style.color = LC[inj.level]||'#FFA500';
+      const info = document.createElement('div'); info.className = 'bd-inj-info';
+      info.innerHTML = '<div class="bd-inj-part">'+inj.part+'</div>'
+        + '<div class="bd-inj-meta">'+inj.date+(inj.note?' — '+inj.note:'')+'</div>';
+      const tag  = document.createElement('span'); tag.className = 'bd-inj-tag '+(inj.resolved?'resolved':'active');
+      tag.textContent = inj.resolved ? '✓ Løst' : 'Aktiv';
+      row.appendChild(lvl); row.appendChild(info); row.appendChild(tag);
+      injEl.appendChild(row);
+    });
+  }
+
+  // Insights
+  const ig = document.getElementById('bd-insights'); ig.innerHTML = '';
+  const ins = [];
+  if (!bm.latest) {
+    ins.push({ text:'Ingen vægttræk endnu — log din vægt på Dashboard.', type:'' });
+  } else {
+    if (bm.change !== null) {
+      if      (bm.change < -0.3) ins.push({ text:'Du har tabt '+Math.abs(bm.change)+'kg de seneste 30 dage — god fremgang!', type:'good' });
+      else if (bm.change >  0.3) ins.push({ text:'Du har taget '+bm.change+'kg på de seneste 30 dage.', type:'info' });
+      else                       ins.push({ text:'Stabil vægt de seneste 30 dage ('+( bm.change>=0?'+':'')+bm.change+'kg).', type:'info' });
+    }
+    const toGoal = Math.round((bm.goal - bm.latest.w)*10)/10;
+    if (toGoal <= 0) ins.push({ text:'Du har nået dit vægtemål på '+bm.goal+'kg!', type:'good' });
+    else             ins.push({ text:'Mangler '+toGoal+'kg til mål ('+bm.goal+'kg).', type:'info' });
+  }
+  if (bm.waterAvg !== null) {
+    if (parseFloat(bm.waterAvg) >= 7) ins.push({ text:'God vandindtagelse — gns. '+bm.waterAvg+' glas/dag.', type:'good' });
+    else                               ins.push({ text:'Vandindtagelse kan forbedres — gns. '+bm.waterAvg+' glas/dag. Sigt efter 8.', type:'warn' });
+  }
+  if (bm.activeInj.length > 0)
+    ins.push({ text:bm.activeInj.length+' aktive skader/ømheder — tag højde for dem i træningen.', type:'warn' });
+  ins.forEach(i => ig.appendChild(mkInsight(i.text, i.type)));
+}
+
 function renderTab(tab) {
   activeTab = tab;
-  if (tab==='workouts') renderWorkouts();
+  if      (tab==='workouts') renderWorkouts();
   else if (tab==='habits')   renderHabits();
   else if (tab==='recovery') renderRecovery();
   else if (tab==='goals')    renderGoals();
+  else if (tab==='body')     renderBody();
 }
 
 function filterByPeriod(days) {
@@ -753,12 +930,16 @@ function filterByPeriod(days) {
 
 // ==================== DASH SUB ====================
 function updateDashSub() {
-  const d = loadAnalyticsData();
+  const d    = loadAnalyticsData();
+  const bw   = storeGet('lifeos_bodyweight') || [];
+  const inj  = storeGet('lifeos_injuries')   || [];
   const parts = [];
   if (d.workouts.length) parts.push(d.workouts.length+' workouts');
   if (d.habits.length)   parts.push(d.habits.length+' habits');
   if (d.recovery.length) parts.push(d.recovery.length+' recovery logs');
   if (d.goals.length)    parts.push(d.goals.length+' goals');
+  if (bw.length)         parts.push(bw.length+' vægtmålinger');
+  if (inj.length)        parts.push(inj.filter(i=>!i.resolved).length+' aktive skader');
   document.getElementById('dashSub').textContent = parts.length ? parts.join(' · ') : 'No data yet — start tracking on the Dashboard';
 }
 
