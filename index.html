@@ -2844,9 +2844,11 @@ function renderWeeklyAnalytics(habits) {
       const day = new Date(today); day.setDate(day.getDate() - (w * 7 + d));
       const ds  = dateToStr(day);
       habits.forEach(h => {
-        if (ds >= h.createdDate) {
+        const isDone   = (h.completedDates || []).includes(ds);
+        const existed  = ds >= h.createdDate;
+        if (existed || isDone) {
           total++;
-          if ((h.completedDates || []).includes(ds)) done++;
+          if (isDone) done++;
         }
       });
     }
