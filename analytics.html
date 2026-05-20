@@ -787,7 +787,7 @@ function renderRecoveryMonitor() {
     const temp   = rec.bodyTemp != null ? rec.bodyTemp : null;
 
     if (sleep  != null) grid.appendChild(tile('😴', sleep+'h',   'Søvn',         sleep>=7?'God nat':'Kort søvn', cls(sleep, 5, 7)));
-    if (stress != null) grid.appendChild(tile('🧠', stress+'/10','Stress',        stress<=3?'Lav':stress<=6?'Moderat':'Høj', clsInv(stress, 7, 4)));
+    if (stress != null) grid.appendChild(tile('🧠', stress+'/100','Stress',        stress<=30?'Lav':stress<=60?'Moderat':'Høj', clsInv(stress, 70, 40)));
     if (score  != null) grid.appendChild(tile('💚', score+'%',   'Recovery Score',score>=70?'Klar til træning':'Brug hvile', cls(score, 40, 70)));
     if (temp   != null) {
       const tc = temp >= 37.5 ? 'bad' : temp >= 37.2 ? 'mid' : 'good';
@@ -808,7 +808,16 @@ function renderRecoveryMonitor() {
 
     if (rhr      != null) grid.appendChild(tile('❤️', rhr+'bpm',      'Resting HR',       rhr<=55?'Fremragende':rhr<=65?'God':'Høj', clsInv(rhr, 75, 65)));
     if (battery  != null) grid.appendChild(tile('🔋', battery+'%',    'Body Battery',     battery>=70?'Høj energi':battery>=40?'Moderat':'Lav energi', cls(battery, 40, 70)));
-    if (hrv      != null) grid.appendChild(tile('📊', hrv+'ms',       'HRV',              hrv>=60?'Fremragende':hrv>=40?'God':'Lav', cls(hrv, 30, 50)));
+    if (hrv      != null) {
+      const hrvStr = typeof hrv === 'string';
+      const hrvDisp = hrvStr ? hrv : hrv+'ms';
+      const harvGood = ['excellent','good','fremragende','god'];
+      const hrvc = hrvStr
+        ? (harvGood.includes(hrv.toLowerCase()) ? 'good' : hrv.toLowerCase()==='fair'||hrv.toLowerCase()==='moderat' ? 'mid' : 'bad')
+        : cls(hrv, 30, 50);
+      const hrvSub = hrvStr ? '' : hrv>=60?'Fremragende':hrv>=40?'God':'Lav';
+      grid.appendChild(tile('📊', hrvDisp, 'HRV', hrvSub, hrvc));
+    }
     if (steps    != null) {
       const sk = Math.round(steps/100)/10;
       grid.appendChild(tile('👟', sk+'k',          'Skridt',           steps>=10000?'Mål nået':'Under mål', cls(steps, 5000, 10000)));
@@ -816,8 +825,11 @@ function renderRecoveryMonitor() {
     if (resp     != null) grid.appendChild(tile('🌬', resp+' rpm',     'Respiration',      resp>=12&&resp<=20?'Normal':'Unormal', resp>=12&&resp<=20?'good':'mid'));
     if (spo2     != null) grid.appendChild(tile('🩸', spo2+'%',       'Pulse Ox',         spo2>=97?'Fremragende':spo2>=95?'Normal':'Lav', cls(spo2, 95, 97)));
     if (health   != null) {
-      const hc = health>=80?'good':health>=60?'mid':'bad';
-      grid.appendChild(tile('🏥', health,          'Health Status',    '', hc));
+      const healthGood = ['excellent','good','fremragende'];
+      const hc = typeof health === 'string'
+        ? (healthGood.includes(health.toLowerCase()) ? 'good' : health.toLowerCase()==='fair' ? 'mid' : 'bad')
+        : health>=80?'good':health>=60?'mid':'bad';
+      grid.appendChild(tile('🏥', health, 'Health Status', '', hc));
     }
     if (recovery != null) grid.appendChild(tile('⏱', recovery+'t',   'Recovery Time',    recovery<=12?'Klar':'Brug hvile', clsInv(recovery, 48, 24)));
     if (snapshot != null) {
@@ -834,8 +846,7 @@ function renderRecovery() {
   const mg = document.getElementById('rv-metrics'); mg.innerHTML='';
   mg.appendChild(mkMetric('😴', rm.avgSleep!=null?rm.avgSleep+'h':'—', 'Avg Sleep',     null, null));
   mg.appendChild(mkMetric('💚', rm.avgScore!=null?rm.avgScore+'%':'—', 'Avg Recovery',  null, rm.delta));
-  mg.appendChild(mkMetric('🌡', rm.avgTemp!=null?rm.avgTemp+'°C':'—',  'Avg Temp',      null, null));
-  mg.appendChild(mkMetric('🧠', rm.avgStress!=null?rm.avgStress+'/10':'—','Avg Stress', null, null));
+mg.appendChild(mkMetric('🧠', rm.avgStress!=null?rm.avgStress+'/10':'—','Avg Stress', null, null));
   if (rm.bestDay) mg.appendChild(mkMetric('🏅', rm.bestDay.recoveryScore+'%','Best Day', formatDate(rm.bestDay.date), null));
 
   const labs=last7Labels();
