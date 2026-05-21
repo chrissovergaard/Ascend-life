@@ -2355,6 +2355,17 @@ function saveProfile() {
   const notes    = document.getElementById('profNotesInput').value.trim();
   const bmi      = calculateBMI(weight, height);
   storeSet('lifeos_profile', { name, age, weight, height, activity, focus, notes, bmi, updatedAt: Date.now() });
+
+  // Sync weight to bodyweight log
+  if (weight) {
+    const today = dateToStr(new Date());
+    const bwLog = storeGet('lifeos_bodyweight') || [];
+    const existing = bwLog.findIndex(e => e.date === today);
+    if (existing >= 0) bwLog[existing].w = weight;
+    else bwLog.push({ date: today, w: weight });
+    storeSet('lifeos_bodyweight', bwLog);
+  }
+
   renderProfile();
 }
 
@@ -4285,6 +4296,10 @@ renderProfile();
     if (idx >= 0) arr[idx].w = val; else arr.push({ date: today, w: val });
     arr.sort(function(a,b) { return a.date.localeCompare(b.date); });
     saveBW(arr);
+    // Sync to profile weight
+    var prof = storeGet('lifeos_profile') || {};
+    prof.weight = val; prof.updatedAt = Date.now();
+    storeSet('lifeos_profile', prof);
     document.getElementById('bwInput').value = '';
     renderBW();
   });
