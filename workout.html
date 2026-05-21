@@ -661,6 +661,10 @@
     .cw-prog-detail { padding: 2px 0 12px 44px; }
     .cw-prog-ex { font-size: 12px; color: var(--text-secondary); padding: 2px 0; }
     .cw-prog-ex .ew { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px; }
+    .cw-dur-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .cw-dur-row label { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+    .cw-dur-input { width: 70px; background: #1A1A1A; border: 1px solid #2C2C2C; border-radius: 6px; color: var(--text-primary); font-size: 12px; font-family: var(--font-mono); padding: 4px 8px; text-align: center; }
+    .cw-dur-input:focus { outline: none; border-color: rgba(255,255,255,0.28); }
     .cw-prog-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     .cw-act-btn {
       font-size: 11px; font-family: var(--font-mono); font-weight: 700;
@@ -2769,7 +2773,7 @@ function cwRenderProgram() {
         name: day.label || ('Program Day ' + day.dayNumber),
         date: new Date(day.date + 'T12:00:00').toISOString(),
         notes: '',
-        duration: isRest ? 0 : 60,
+        duration: day.duration || (isRest ? 0 : 60),
         exercises: exs,
         programDayId: dayKey
       });
@@ -2840,6 +2844,22 @@ function cwRenderProgram() {
       cmp.appendChild(pl); cmp.appendChild(ac); det.appendChild(cmp);
     }
 
+    // Duration input (shown for all uncompleted days)
+    const durRow = document.createElement('div'); durRow.className = 'cw-dur-row';
+    const durLbl = document.createElement('label'); durLbl.textContent = '⏱ Varighed (min)';
+    const durInp = document.createElement('input');
+    durInp.type = 'number'; durInp.min = '1'; durInp.max = '300';
+    durInp.className = 'cw-dur-input';
+    durInp.value = day.duration || (isRest ? 90 : 60);
+    durInp.placeholder = 'min';
+    if (day.completed) {
+      durLbl.textContent = '⏱ ' + (day.duration || '—') + ' min';
+      durRow.appendChild(durLbl);
+    } else {
+      durRow.appendChild(durLbl); durRow.appendChild(durInp);
+    }
+    det.appendChild(durRow);
+
     // Actions
     {
       const acts = document.createElement('div'); acts.className = 'cw-prog-actions';
@@ -2859,13 +2879,15 @@ function cwRenderProgram() {
         doneBtn.textContent = '✓ Mark Done';
         doneBtn.addEventListener('click', e => {
           e.stopPropagation();
+          const dur = Math.max(1, parseInt(durInp.value) || (isRest ? 90 : 60));
           const p = storeGet('lifeos_custom_program');
           p.days[di].completed = true;
+          p.days[di].duration = dur;
           storeSet('lifeos_custom_program', p);
 
           // Also log to lifeos_workouts so analytics counts it
           const workouts = storeGet('lifeos_workouts') || [];
-          const dayKey = (storeGet('lifeos_custom_program')?.id || 'prog') + '_' + day.dayNumber;
+          const dayKey = (p.id || 'prog') + '_' + day.dayNumber;
           const alreadyLogged = workouts.some(w => w.programDayId === dayKey);
           if (!alreadyLogged) {
             const exs = isRest ? [] : (day.exercises || [])
@@ -2882,7 +2904,7 @@ function cwRenderProgram() {
               name: day.label || ('Program Day ' + day.dayNumber),
               date: new Date(day.date + 'T12:00:00').toISOString(),
               notes: '',
-              duration: isRest ? 0 : 60,
+              duration: dur,
               exercises: exs,
               programDayId: dayKey
             });
