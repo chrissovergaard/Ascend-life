@@ -1520,7 +1520,7 @@ function saveWorkout() {
   const exercises = currentWorkout.exercises.map(ex => ({
     ...ex, sets: ex.sets.filter(validSet).map(s => ({ ...s, weight: convertBWtoKg(s.weight) }))
   })).filter(ex => ex.sets.length > 0);
-  const isCardioSession = /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(currentWorkout.name || '');
+  const isCardioSession = currentWorkout.isCardio || /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(currentWorkout.name || '');
   if (exercises.length === 0 && !isCardioSession) { alert('Add at least one exercise with a valid set.'); return; }
 
   const dur = currentWorkout.manualDuration != null
@@ -2996,10 +2996,12 @@ function cwShowActualForm(container, di, day) {
 function cwStartDay(di, day) {
   if (currentWorkout && !confirm('You have an active workout. Discard it and start this day?')) return;
   clearInterval(wtTimerInterval); wtTimerInterval = null;
+  const dayIsCardio = day.exercises.every(e => e.type === 'cardio' || e.type === 'rest' || /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(e.name));
   currentWorkout = {
     editingId: null,
     name: day.label ? `Day ${day.dayNumber}: ${day.label}` : `Day ${day.dayNumber} Workout`,
     startTime: Date.now(), notes: '', manualDuration: null,
+    isCardio: dayIsCardio,
     exercises: day.exercises.filter(e => e.type === 'strength').map(ex => ({
       id: Date.now() + Math.random(), name: ex.name,
       sets: Array.from({ length: ex.sets || 3 }, () => ({
