@@ -1727,9 +1727,9 @@ function renderWorkoutHistory() {
     filterEl.appendChild(opt);
   });
 
-  const workouts = filterEl.value
+  const workouts = (filterEl.value
     ? allWorkouts.filter(w => w.date && w.date.startsWith(filterEl.value))
-    : allWorkouts;
+    : allWorkouts).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   counter.textContent = `${workouts.length} workout${workouts.length !== 1 ? 's' : ''}`;
   emptyEl.style.display = workouts.length === 0 ? '' : 'none';
@@ -3004,25 +3004,11 @@ function cwStartDay(di, day) {
 
 // ---- Init ----
 (function initCustomWorkouts() {
-  // Deduplicate: same date+name, OR old flat name is prefix of new "· Session 1" name
-  (function dedupeWorkouts() {
+  // Remove all stale backfill entries (any entry with programDayId) — backfill will recreate them correctly
+  (function cleanBackfillEntries() {
     const ws = storeGet('lifeos_workouts') || [];
-    if (ws.length === 0) return;
-    // Normalise name: strip " · Session N" suffix for grouping
-    const baseName = n => (n || '').replace(/\s*·\s*Session\s*\d+$/i, '').trim();
-    const seen = new Map(); // key: date|baseName → index of best entry
-    const toRemove = new Set();
-    ws.forEach((w, i) => {
-      const key = (w.date || '').slice(0, 10) + '|' + baseName(w.name);
-      if (!seen.has(key)) { seen.set(key, i); return; }
-      const bestIdx = seen.get(key);
-      const best = ws[bestIdx];
-      // Prefer: more exercises > has programDayId > has session suffix (newer format)
-      const score = w => (w.exercises || []).length * 100 + (w.programDayId ? 10 : 0) + (/Session\s*\d+/i.test(w.name || '') ? 1 : 0);
-      if (score(w) > score(best)) { toRemove.add(bestIdx); seen.set(key, i); }
-      else                        { toRemove.add(i); }
-    });
-    if (toRemove.size > 0) storeSet('lifeos_workouts', ws.filter((_, i) => !toRemove.has(i)));
+    const cleaned = ws.filter(w => !w.programDayId);
+    if (cleaned.length !== ws.length) storeSet('lifeos_workouts', cleaned);
   })();
 
   cwRenderProgram();
