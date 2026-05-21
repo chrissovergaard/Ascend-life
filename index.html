@@ -2847,33 +2847,38 @@ function renderWeeklyAnalytics(habits) {
   const grid  = document.getElementById('hbWeekGrid');
   grid.innerHTML = '';
   if (!habits.length) return;
-  const today = new Date();
+  const today      = new Date();
+  const dow        = today.getDay();               // 0=Sun … 6=Sat
+  const daysFromMon = (dow + 6) % 7;              // Mon=0, Tue=1 … Sun=6
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - daysFromMon);
+
   const weeks = [];
   for (let w = 0; w < 4; w++) {
     let done = 0, total = 0;
-    for (let d = 0; d < 7; d++) {
-      const day = new Date(today); day.setDate(day.getDate() - (w * 7 + d));
-      const ds  = dateToStr(day);
+    const monday   = new Date(thisMonday);
+    monday.setDate(thisMonday.getDate() - w * 7);
+    const numDays  = w === 0 ? daysFromMon + 1 : 7; // this week: Mon→today; past weeks: Mon→Sun
+    for (let d = 0; d < numDays; d++) {
+      const day = new Date(monday); day.setDate(monday.getDate() + d);
+      if (day > today) break;
+      const ds = dateToStr(day);
       habits.forEach(h => {
-        const isDone   = (h.completedDates || []).includes(ds);
-        const existed  = !h.createdDate || ds >= h.createdDate;
-        if (existed) {
-          total++;
-          if (isDone) done++;
-        }
+        const isDone  = (h.completedDates || []).includes(ds);
+        const existed = !h.createdDate || ds >= h.createdDate;
+        if (existed) { total++; if (isDone) done++; }
       });
     }
     weeks.push({
       label: w === 0 ? 'This week' : w === 1 ? 'Last week' : `${w}w ago`,
-      pct:   total > 0 ? Math.round(done / total * 100) : 0,
-      done, total
+      pct:   total > 0 ? Math.round(done / total * 100) : 0
     });
   }
   const bestPct = Math.max(...weeks.map(w => w.pct));
   weeks.forEach(w => {
     const el = document.createElement('div');
     el.className = 'hb-week-item' + (w.pct === bestPct && bestPct > 0 ? ' best-week' : '');
-    el.innerHTML = `<div class="hb-week-label">${w.label}</div><div class="hb-week-pct">${w.pct}%</div><div style="font-size:10px;opacity:0.5">${w.done}/${w.total}</div>`;
+    el.innerHTML = `<div class="hb-week-label">${w.label}</div><div class="hb-week-pct">${w.pct}%</div>`;
     grid.appendChild(el);
   });
 }
