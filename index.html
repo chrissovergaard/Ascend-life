@@ -4211,6 +4211,22 @@ document.getElementById('profEditBtn').addEventListener('click', showProfileEdit
 document.getElementById('profCancelBtn').addEventListener('click', cancelProfileEdit);
 renderProfile();
 
+// One-time sync: if profile has a weight, make sure today's BW log matches
+(function syncProfileWeightToBWLog() {
+  const prof = storeGet('lifeos_profile') || {};
+  if (!prof.weight) return;
+  const today = dateToStr(new Date());
+  const bwLog = storeGet('lifeos_bodyweight') || [];
+  const latest = bwLog.length ? bwLog[bwLog.length - 1] : null;
+  // Only write if today has no entry yet, or today's entry differs from profile weight
+  const todayEntry = bwLog.find(e => e.date === today);
+  if (!todayEntry) {
+    bwLog.push({ date: today, w: prof.weight });
+    bwLog.sort((a, b) => a.date.localeCompare(b.date));
+    storeSet('lifeos_bodyweight', bwLog);
+  }
+})();
+
 // ══════════════════════════════════════════
 // BODYWEIGHT TRACKER
 // ══════════════════════════════════════════
