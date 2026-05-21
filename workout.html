@@ -2768,7 +2768,7 @@ function cwRenderProgram() {
         const sessDur = sessions ? (sessions[si]?.duration || (isRest ? 0 : 60)) : (day.duration || (isRest ? 0 : 60));
         const exs = isRest ? [] : (day.exercises || [])
           .filter(ex => ex.type !== 'rest')
-          .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' })) : [] }))
+          .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: convertBWtoKg(ex.weight != null ? String(ex.weight) : 'BW') })) : [] }))
           .filter(ex => ex.sets.length > 0);
         workouts.push({ id: Date.now() + Math.random(), name: (day.label || ('Program Day ' + day.dayNumber)) + (sessionCount > 1 ? ' · Session ' + (si + 1) : ''), date: new Date(day.date + 'T12:00:00').toISOString(), notes: '', duration: sessDur, exercises: exs, programDayId: sessKey });
         changed = true;
@@ -2854,7 +2854,7 @@ function cwRenderProgram() {
       if (workouts.some(w => w.programDayId === sessKey)) return;
       const exs = noGym ? [] : (day.exercises || [])
         .filter(ex => ex.type !== 'rest')
-        .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' })) : [] }))
+        .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: convertBWtoKg(ex.weight != null ? String(ex.weight) : 'BW') })) : [] }))
         .filter(ex => ex.sets.length > 0);
       workouts.unshift({ id: Date.now() + sessionIdx, name: (day.label || 'Program Day ' + day.dayNumber) + (sessionCount > 1 ? ' · Session ' + (sessionIdx + 1) : ''), date: new Date(day.date + 'T12:00:00').toISOString(), notes: '', duration: dur, exercises: exs, programDayId: sessKey });
       storeSet('lifeos_workouts', workouts);

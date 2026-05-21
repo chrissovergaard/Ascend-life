@@ -435,10 +435,12 @@ function calculateWorkoutStats(days) {
   const filtered = all.filter(w => w.date >= start);
   const total    = filtered.length;
   const avgDur   = total > 0 ? Math.round(filtered.reduce((s,w)=>s+(w.duration||0),0)/total) : 0;
+  const bwKg = (storeGet('lifeos_profile')||{}).weight || ((storeGet('lifeos_bodyweight')||[]).slice(-1)[0]||{}).w || 75;
+  const resolveWeight = w => String(w).trim().toUpperCase() === 'BW' ? bwKg : parseFloat(w);
   const totalVol = filtered.reduce((s,w) => {
     const sets = (w.exercises||[]).flatMap(e => e.sets||[]);
     return s + sets.reduce((sv,set) => {
-      const wt = parseFloat(set.weight); const r = parseInt(set.reps);
+      const wt = resolveWeight(set.weight); const r = parseInt(set.reps);
       return sv + (!isNaN(wt) && !isNaN(r) ? wt*r : 0);
     }, 0);
   }, 0);
@@ -463,7 +465,7 @@ function calculateWorkoutStats(days) {
   // Top exercises by 1RM (max weight × set)
   const exMap = {};
   all.forEach(w => (w.exercises||[]).forEach(ex => {
-    const maxW = Math.max(0, ...(ex.sets||[]).map(s=>s.weight||0));
+    const maxW = Math.max(0, ...(ex.sets||[]).map(s => resolveWeight(s.weight)).filter(v => !isNaN(v)));
     if (maxW > 0) exMap[ex.name] = Math.max(exMap[ex.name]||0, maxW);
   }));
   const topEx = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
