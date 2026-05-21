@@ -4118,13 +4118,11 @@ function renderCalendar() {
     const num = document.createElement('div'); num.className = 'cal-day-num'; num.textContent = dayNum;
     cell.appendChild(num);
 
-    // Coloured dots for events
+    // One dot per event (max 5)
     const dayEvs = events.filter(e => e.date === ds);
     if (dayEvs.length > 0) {
       const dotWrap = document.createElement('div'); dotWrap.className = 'cal-dots';
-      const shown = new Set();
-      dayEvs.slice(0, 4).forEach(ev => {
-        if (shown.has(ev.category)) return; shown.add(ev.category);
+      dayEvs.slice(0, 5).forEach(ev => {
         const dot = document.createElement('div');
         dot.className = 'cal-dot cal-dot-' + (ev.category || 'Custom');
         dotWrap.appendChild(dot);
