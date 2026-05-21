@@ -2752,7 +2752,8 @@ function cwRenderProgram() {
     const loggedIds = new Set(workouts.map(w => w.programDayId).filter(Boolean));
     let changed = false;
     prog.days.forEach(day => {
-      if (!day.completed || loggedIds.has(day.id)) return;
+      const dayKey = (prog.id || 'prog') + '_' + day.dayNumber;
+      if (!day.completed || loggedIds.has(dayKey)) return;
       const isRest = day.exercises.length === 1 && day.exercises[0].type === 'rest';
       const exs = isRest ? [] : (day.exercises || [])
         .filter(ex => ex.type !== 'rest')
@@ -2770,7 +2771,7 @@ function cwRenderProgram() {
         notes: '',
         duration: isRest ? 0 : 60,
         exercises: exs,
-        programDayId: day.id
+        programDayId: dayKey
       });
       changed = true;
     });
@@ -2864,7 +2865,8 @@ function cwRenderProgram() {
 
           // Also log to lifeos_workouts so analytics counts it
           const workouts = storeGet('lifeos_workouts') || [];
-          const alreadyLogged = workouts.some(w => w.programDayId === day.id);
+          const dayKey = (storeGet('lifeos_custom_program')?.id || 'prog') + '_' + day.dayNumber;
+          const alreadyLogged = workouts.some(w => w.programDayId === dayKey);
           if (!alreadyLogged) {
             const exs = isRest ? [] : (day.exercises || [])
               .filter(ex => ex.type !== 'rest')
@@ -2882,7 +2884,7 @@ function cwRenderProgram() {
               notes: '',
               duration: isRest ? 0 : 60,
               exercises: exs,
-              programDayId: day.id
+              programDayId: dayKey
             });
             storeSet('lifeos_workouts', workouts);
           }
