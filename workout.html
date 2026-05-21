@@ -2809,18 +2809,20 @@ function cwRenderProgram() {
     }
 
     // Actions
-    if (!isRest) {
+    {
       const acts = document.createElement('div'); acts.className = 'cw-prog-actions';
       if (!day.completed) {
-        // Start in Workout Tracker
-        const startBtn = document.createElement('button'); startBtn.className = 'cw-act-btn start';
-        startBtn.textContent = '▶ Start Workout';
-        startBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          cwStartDay(di, day);
-        });
-        acts.appendChild(startBtn);
-        // Mark complete
+        if (!isRest) {
+          // Start in Workout Tracker
+          const startBtn = document.createElement('button'); startBtn.className = 'cw-act-btn start';
+          startBtn.textContent = '▶ Start Workout';
+          startBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            cwStartDay(di, day);
+          });
+          acts.appendChild(startBtn);
+        }
+        // Mark complete (all day types)
         const doneBtn = document.createElement('button'); doneBtn.className = 'cw-act-btn done';
         doneBtn.textContent = '✓ Mark Done';
         doneBtn.addEventListener('click', e => {
@@ -2831,15 +2833,17 @@ function cwRenderProgram() {
           cwRenderProgram();
         });
         acts.appendChild(doneBtn);
-        // Log actual
-        const logBtn = document.createElement('button'); logBtn.className = 'cw-act-btn log';
-        logBtn.textContent = '⊕ Log Actual';
-        logBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          det.style.display = ''; ico.textContent = '▴';
-          cwShowActualForm(det, di, day);
-        });
-        acts.appendChild(logBtn);
+        if (!isRest) {
+          // Log actual
+          const logBtn = document.createElement('button'); logBtn.className = 'cw-act-btn log';
+          logBtn.textContent = '⊕ Log Actual';
+          logBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            det.style.display = ''; ico.textContent = '▴';
+            cwShowActualForm(det, di, day);
+          });
+          acts.appendChild(logBtn);
+        }
       }
       const delBtn = document.createElement('button'); delBtn.className = 'cw-act-btn del';
       delBtn.textContent = '✕ Remove';
