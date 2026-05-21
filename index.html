@@ -2742,7 +2742,7 @@ function calculateConsistency(habit) {
   for (let i = 0; i < 30; i++) {
     const d  = new Date(today); d.setDate(d.getDate() - i);
     const ds = dateToStr(d);
-    if (ds >= habit.createdDate) { total++; if (done.has(ds)) count++; }
+    if (!habit.createdDate || ds >= habit.createdDate) { total++; if (done.has(ds)) count++; }
   }
   return total > 0 ? Math.round(count / total * 100) : 0;
 }
@@ -2857,7 +2857,7 @@ function renderWeeklyAnalytics(habits) {
       habits.forEach(h => {
         const isDone   = (h.completedDates || []).includes(ds);
         const existed  = !h.createdDate || ds >= h.createdDate;
-        if (existed || isDone) {
+        if (existed) {
           total++;
           if (isDone) done++;
         }
