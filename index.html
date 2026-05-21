@@ -2865,14 +2865,15 @@ function renderWeeklyAnalytics(habits) {
     }
     weeks.push({
       label: w === 0 ? 'This week' : w === 1 ? 'Last week' : `${w}w ago`,
-      pct:   total > 0 ? Math.round(done / total * 100) : 0
+      pct:   total > 0 ? Math.round(done / total * 100) : 0,
+      done, total
     });
   }
   const bestPct = Math.max(...weeks.map(w => w.pct));
   weeks.forEach(w => {
     const el = document.createElement('div');
     el.className = 'hb-week-item' + (w.pct === bestPct && bestPct > 0 ? ' best-week' : '');
-    el.innerHTML = `<div class="hb-week-label">${w.label}</div><div class="hb-week-pct">${w.pct}%</div>`;
+    el.innerHTML = `<div class="hb-week-label">${w.label}</div><div class="hb-week-pct">${w.pct}%</div><div style="font-size:10px;opacity:0.5">${w.done}/${w.total}</div>`;
     grid.appendChild(el);
   });
 }
