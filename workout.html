@@ -1520,7 +1520,8 @@ function saveWorkout() {
   const exercises = currentWorkout.exercises.map(ex => ({
     ...ex, sets: ex.sets.filter(validSet).map(s => ({ ...s, weight: convertBWtoKg(s.weight) }))
   })).filter(ex => ex.sets.length > 0);
-  if (exercises.length === 0) { alert('Add at least one exercise with a valid set.'); return; }
+  const isCardioSession = /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(currentWorkout.name || '');
+  if (exercises.length === 0 && !isCardioSession) { alert('Add at least one exercise with a valid set.'); return; }
 
   const dur = currentWorkout.manualDuration != null
     ? currentWorkout.manualDuration
