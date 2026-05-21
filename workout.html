@@ -2757,28 +2757,22 @@ function cwRenderProgram() {
     const loggedIds = new Set(workouts.map(w => w.programDayId).filter(Boolean));
     let changed = false;
     prog.days.forEach(day => {
-      const dayKey = (prog.id || 'prog') + '_' + day.dayNumber;
-      if (!day.completed || loggedIds.has(dayKey)) return;
-      const isRest = day.exercises.length === 1 && day.exercises[0].type === 'rest';
-      const exs = isRest ? [] : (day.exercises || [])
-        .filter(ex => ex.type !== 'rest')
-        .map(ex => ({
-          name: ex.name,
-          sets: (ex.sets && ex.reps)
-            ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' }))
-            : []
-        }))
-        .filter(ex => ex.sets.length > 0);
-      workouts.push({
-        id: Date.now() + Math.random(),
-        name: day.label || ('Program Day ' + day.dayNumber),
-        date: new Date(day.date + 'T12:00:00').toISOString(),
-        notes: '',
-        duration: day.duration || (isRest ? 0 : 60),
-        exercises: exs,
-        programDayId: dayKey
-      });
-      changed = true;
+      const isRest = day.exercises.every(e => e.type === 'rest');
+      const xMatch = (day.label || '').match(/[xX×](\d+)/);
+      const sessionCount = xMatch ? parseInt(xMatch[1]) : 1;
+      const sessions = day.sessions && day.sessions.length === sessionCount ? day.sessions : null;
+      for (let si = 0; si < sessionCount; si++) {
+        const sessKey = (prog.id || 'prog') + '_' + day.dayNumber + '_s' + si;
+        const sessCompleted = sessions ? sessions[si]?.completed : (si === 0 && day.completed);
+        if (!sessCompleted || loggedIds.has(sessKey)) continue;
+        const sessDur = sessions ? (sessions[si]?.duration || (isRest ? 0 : 60)) : (day.duration || (isRest ? 0 : 60));
+        const exs = isRest ? [] : (day.exercises || [])
+          .filter(ex => ex.type !== 'rest')
+          .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' })) : [] }))
+          .filter(ex => ex.sets.length > 0);
+        workouts.push({ id: Date.now() + Math.random(), name: (day.label || ('Program Day ' + day.dayNumber)) + (sessionCount > 1 ? ' · Session ' + (si + 1) : ''), date: new Date(day.date + 'T12:00:00').toISOString(), notes: '', duration: sessDur, exercises: exs, programDayId: sessKey });
+        changed = true;
+      }
     });
     if (changed) storeSet('lifeos_workouts', workouts);
   })();
@@ -2847,85 +2841,79 @@ function cwRenderProgram() {
       cmp.appendChild(pl); cmp.appendChild(ac); det.appendChild(cmp);
     }
 
-    // Duration input (shown for all uncompleted days)
-    const durRow = document.createElement('div'); durRow.className = 'cw-dur-row';
-    const durLbl = document.createElement('label'); durLbl.textContent = '⏱ Varighed (min)';
-    const durInp = document.createElement('input');
-    durInp.type = 'number'; durInp.min = '1'; durInp.max = '300';
-    durInp.className = 'cw-dur-input';
-    durInp.value = day.duration || (isRest ? 90 : 60);
-    durInp.placeholder = 'min';
-    if (day.completed) {
-      durLbl.textContent = '⏱ ' + (day.duration || '—') + ' min';
-      durRow.appendChild(durLbl);
-    } else {
-      durRow.appendChild(durLbl); durRow.appendChild(durInp);
-    }
-    det.appendChild(durRow);
+    // Parse X2/X3 multiplier from label
+    const xMatch      = (day.label || '').match(/[xX×](\d+)/);
+    const sessionCount = xMatch ? parseInt(xMatch[1]) : 1;
+    const sessions     = day.sessions && day.sessions.length === sessionCount
+      ? day.sessions
+      : Array.from({ length: sessionCount }, (_, si) => ({ completed: !!(day.sessions?.[si]?.completed || (sessionCount === 1 && day.completed)), duration: day.sessions?.[si]?.duration || (noGym ? 90 : 60) }));
 
-    // Actions
+    function logSessionWorkout(sessionIdx, dur, progId) {
+      const workouts = storeGet('lifeos_workouts') || [];
+      const sessKey  = (progId || 'prog') + '_' + day.dayNumber + '_s' + sessionIdx;
+      if (workouts.some(w => w.programDayId === sessKey)) return;
+      const exs = noGym ? [] : (day.exercises || [])
+        .filter(ex => ex.type !== 'rest')
+        .map(ex => ({ name: ex.name, sets: (ex.sets && ex.reps) ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' })) : [] }))
+        .filter(ex => ex.sets.length > 0);
+      workouts.unshift({ id: Date.now() + sessionIdx, name: (day.label || 'Program Day ' + day.dayNumber) + (sessionCount > 1 ? ' · Session ' + (sessionIdx + 1) : ''), date: new Date(day.date + 'T12:00:00').toISOString(), notes: '', duration: dur, exercises: exs, programDayId: sessKey });
+      storeSet('lifeos_workouts', workouts);
+    }
+
+    // Render session rows
+    sessions.forEach((sess, si) => {
+      const sessRow = document.createElement('div'); sessRow.className = 'cw-dur-row'; sessRow.style.marginTop = si === 0 ? '10px' : '6px';
+      if (sessionCount > 1) {
+        const sessLbl = document.createElement('label'); sessLbl.textContent = 'Session ' + (si + 1);
+        sessLbl.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-secondary);min-width:64px';
+        sessRow.appendChild(sessLbl);
+      }
+      if (sess.completed) {
+        const doneTag = document.createElement('span');
+        doneTag.style.cssText = 'font-size:11px;color:var(--success);font-weight:700';
+        doneTag.textContent = '✓ ' + sess.duration + ' min';
+        sessRow.appendChild(doneTag);
+      } else {
+        const durLbl = document.createElement('label'); durLbl.textContent = '⏱ Varighed (min)';
+        const durInp = document.createElement('input');
+        durInp.type = 'number'; durInp.min = '1'; durInp.max = '300';
+        durInp.className = 'cw-dur-input'; durInp.value = sess.duration; durInp.placeholder = 'min';
+        sessRow.appendChild(durLbl); sessRow.appendChild(durInp);
+
+        const sessDoneBtn = document.createElement('button'); sessDoneBtn.className = 'cw-act-btn done';
+        sessDoneBtn.style.cssText = 'margin-left:4px;padding:4px 10px;font-size:11px';
+        sessDoneBtn.textContent = '✓ Done';
+        sessDoneBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const dur = Math.max(1, parseInt(durInp.value) || (noGym ? 90 : 60));
+          const p = storeGet('lifeos_custom_program');
+          if (!p.days[di].sessions || p.days[di].sessions.length !== sessionCount)
+            p.days[di].sessions = sessions.map(s => ({ ...s }));
+          p.days[di].sessions[si].completed = true;
+          p.days[di].sessions[si].duration  = dur;
+          p.days[di].completed = p.days[di].sessions.every(s => s.completed);
+          p.days[di].duration  = p.days[di].sessions.reduce((t, s) => t + (s.duration || 0), 0);
+          storeSet('lifeos_custom_program', p);
+          logSessionWorkout(si, dur, p.id);
+          cwRenderProgram();
+        });
+        sessRow.appendChild(sessDoneBtn);
+      }
+      det.appendChild(sessRow);
+    });
+
+    // Bottom actions (Start Workout, Log Actual, Remove)
     {
       const acts = document.createElement('div'); acts.className = 'cw-prog-actions';
       if (!day.completed) {
         if (!noGym) {
-          // Start in Workout Tracker
           const startBtn = document.createElement('button'); startBtn.className = 'cw-act-btn start';
           startBtn.textContent = '▶ Start Workout';
-          startBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            cwStartDay(di, day);
-          });
+          startBtn.addEventListener('click', e => { e.stopPropagation(); cwStartDay(di, day); });
           acts.appendChild(startBtn);
-        }
-        // Mark complete (all day types)
-        const doneBtn = document.createElement('button'); doneBtn.className = 'cw-act-btn done';
-        doneBtn.textContent = '✓ Mark Done';
-        doneBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          const dur = Math.max(1, parseInt(durInp.value) || (isRest ? 90 : 60));
-          const p = storeGet('lifeos_custom_program');
-          p.days[di].completed = true;
-          p.days[di].duration = dur;
-          storeSet('lifeos_custom_program', p);
-
-          // Also log to lifeos_workouts so analytics counts it
-          const workouts = storeGet('lifeos_workouts') || [];
-          const dayKey = (p.id || 'prog') + '_' + day.dayNumber;
-          const alreadyLogged = workouts.some(w => w.programDayId === dayKey);
-          if (!alreadyLogged) {
-            const exs = isRest ? [] : (day.exercises || [])
-              .filter(ex => ex.type !== 'rest')
-              .map(ex => ({
-                name: ex.name,
-                sets: (ex.sets && ex.reps)
-                  ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' }))
-                  : []
-              }))
-              .filter(ex => ex.sets.length > 0);
-            workouts.unshift({
-              id: Date.now(),
-              name: day.label || ('Program Day ' + day.dayNumber),
-              date: new Date(day.date + 'T12:00:00').toISOString(),
-              notes: '',
-              duration: dur,
-              exercises: exs,
-              programDayId: dayKey
-            });
-            storeSet('lifeos_workouts', workouts);
-          }
-
-          cwRenderProgram();
-        });
-        acts.appendChild(doneBtn);
-        if (!noGym) {
-          // Log actual
           const logBtn = document.createElement('button'); logBtn.className = 'cw-act-btn log';
           logBtn.textContent = '⊕ Log Actual';
-          logBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            det.style.display = ''; ico.textContent = '▴';
-            cwShowActualForm(det, di, day);
-          });
+          logBtn.addEventListener('click', e => { e.stopPropagation(); det.style.display = ''; ico.textContent = '▴'; cwShowActualForm(det, di, day); });
           acts.appendChild(logBtn);
         }
       }
