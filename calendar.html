@@ -973,7 +973,7 @@ function renderDayEvents(dateStr) {
     const body = document.createElement('div');
     body.className = 'evt-body';
     body.innerHTML = `<div class="evt-title">${escHtml(e.title || 'Untitled')}</div>
-      <div class="evt-meta">${e.time ? formatTime(e.time) : ''}${e.category ? ` · <span class="cat-badge ${escHtml(e.category)}">${escHtml(e.category)}</span>` : ''}</div>
+      <div class="evt-meta">${e.time ? formatTime(e.time) : ''}${e.category ? ` · <span class="cat-badge" style="background:${catColor(e.category)}22;color:${catColor(e.category)}">${escHtml(e.category)}</span>` : ''}</div>
       ${e.description ? `<div class="evt-desc">${escHtml(e.description)}</div>` : ''}`;
 
     const actions = document.createElement('div');
@@ -1025,7 +1025,7 @@ function renderUpcoming() {
       </div>
       <div class="upcoming-body">
         <div class="upcoming-title">${escHtml(e.title || 'Untitled')}</div>
-        <div class="upcoming-meta">${e.time ? formatTime(e.time) + ' · ' : ''}<span class="cat-badge ${escHtml(e.category || 'Other')}">${escHtml(e.category || 'Other')}</span></div>
+        <div class="upcoming-meta">${e.time ? formatTime(e.time) + ' · ' : ''}<span class="cat-badge" style="background:${catColor(e.category||'Other')}22;color:${catColor(e.category||'Other')}">${escHtml(e.category || 'Other')}</span></div>
       </div>`;
     item.style.cursor = 'pointer';
     item.addEventListener('click', () => {
