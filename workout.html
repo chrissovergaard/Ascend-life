@@ -2830,6 +2830,32 @@ function cwRenderProgram() {
           const p = storeGet('lifeos_custom_program');
           p.days[di].completed = true;
           storeSet('lifeos_custom_program', p);
+
+          // Also log to lifeos_workouts so analytics counts it
+          const workouts = storeGet('lifeos_workouts') || [];
+          const alreadyLogged = workouts.some(w => w.programDayId === day.id);
+          if (!alreadyLogged) {
+            const exs = isRest ? [] : (day.exercises || [])
+              .filter(ex => ex.type !== 'rest')
+              .map(ex => ({
+                name: ex.name,
+                sets: (ex.sets && ex.reps)
+                  ? Array.from({ length: ex.sets }, () => ({ reps: String(ex.reps), weight: ex.weight != null ? String(ex.weight) : 'BW' }))
+                  : []
+              }))
+              .filter(ex => ex.sets.length > 0);
+            workouts.unshift({
+              id: Date.now(),
+              name: day.label || ('Program Day ' + day.dayNumber),
+              date: new Date(day.date + 'T12:00:00').toISOString(),
+              notes: '',
+              duration: isRest ? 0 : 60,
+              exercises: exs,
+              programDayId: day.id
+            });
+            storeSet('lifeos_workouts', workouts);
+          }
+
           cwRenderProgram();
         });
         acts.appendChild(doneBtn);
