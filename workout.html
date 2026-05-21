@@ -2786,7 +2786,9 @@ function cwRenderProgram() {
   list.innerHTML = '';
 
   prog.days.forEach((day, di) => {
-    const isRest = day.exercises.length === 1 && day.exercises[0].type === 'rest';
+    const isRest    = day.exercises.every(e => e.type === 'rest');
+    const isCardio  = !isRest && day.exercises.every(e => e.type === 'cardio' || /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(e.name));
+    const noGym     = isRest || isCardio;
     const isToday = day.date === today;
     const isPast  = day.date < today && !day.completed;
     const item = document.createElement('div'); item.className = 'cw-prog-item';
@@ -2815,7 +2817,7 @@ function cwRenderProgram() {
     });
 
     // Planned exercises
-    if (!isRest) {
+    if (!noGym) {
       day.exercises.forEach(ex => {
         const line = document.createElement('div'); line.className = 'cw-prog-ex';
         const sr   = ex.sets && ex.reps ? ` ${ex.sets}×${ex.reps}` : '';
@@ -2864,7 +2866,7 @@ function cwRenderProgram() {
     {
       const acts = document.createElement('div'); acts.className = 'cw-prog-actions';
       if (!day.completed) {
-        if (!isRest) {
+        if (!noGym) {
           // Start in Workout Tracker
           const startBtn = document.createElement('button'); startBtn.className = 'cw-act-btn start';
           startBtn.textContent = '▶ Start Workout';
@@ -2914,7 +2916,7 @@ function cwRenderProgram() {
           cwRenderProgram();
         });
         acts.appendChild(doneBtn);
-        if (!isRest) {
+        if (!noGym) {
           // Log actual
           const logBtn = document.createElement('button'); logBtn.className = 'cw-act-btn log';
           logBtn.textContent = '⊕ Log Actual';
