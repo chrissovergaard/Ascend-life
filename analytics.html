@@ -437,7 +437,10 @@ function calculateWorkoutStats(days) {
   const avgDur   = total > 0 ? Math.round(filtered.reduce((s,w)=>s+(w.duration||0),0)/total) : 0;
   const totalVol = filtered.reduce((s,w) => {
     const sets = (w.exercises||[]).flatMap(e => e.sets||[]);
-    return s + sets.reduce((sv,set)=>sv+(set.weight||0)*(set.reps||0),0);
+    return s + sets.reduce((sv,set) => {
+      const wt = parseFloat(set.weight); const r = parseInt(set.reps);
+      return sv + (!isNaN(wt) && !isNaN(r) ? wt*r : 0);
+    }, 0);
   }, 0);
   const weeklyFreq = days > 0 ? (total/Math.max(1,days/7)).toFixed(1) : total;
 
