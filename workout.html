@@ -3011,6 +3011,28 @@ function cwStartDay(di, day) {
 
 // ---- Init ----
 (function initCustomWorkouts() {
+  // Deduplicate workout entries that were created by buggy backfill (same date + name = keep best)
+  (function dedupeWorkouts() {
+    const ws = storeGet('lifeos_workouts') || [];
+    if (ws.length === 0) return;
+    const seen = new Map(); // key: date(YYYY-MM-DD)+name → index of best entry
+    const toRemove = new Set();
+    ws.forEach((w, i) => {
+      const key = (w.date || '').slice(0, 10) + '|' + (w.name || '');
+      if (!seen.has(key)) { seen.set(key, i); return; }
+      const bestIdx = seen.get(key);
+      const best = ws[bestIdx];
+      // Keep whichever has more exercises; prefer the one with a programDayId
+      const isBetter = (w.exercises || []).length > (best.exercises || []).length
+        || ((w.exercises || []).length === (best.exercises || []).length && w.programDayId && !best.programDayId);
+      if (isBetter) { toRemove.add(bestIdx); seen.set(key, i); }
+      else           { toRemove.add(i); }
+    });
+    if (toRemove.size > 0) {
+      storeSet('lifeos_workouts', ws.filter((_, i) => !toRemove.has(i)));
+    }
+  })();
+
   cwRenderProgram();
 })();
 
