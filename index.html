@@ -639,6 +639,8 @@
     }
     .gs-item-vals { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
     .gs-item-current { color: var(--text-primary); font-weight: 600; }
+    .gs-item-current-editable { cursor: pointer; border-bottom: 1px dashed var(--text-tertiary); }
+    .gs-item-current-editable:hover { color: var(--accent); border-bottom-color: var(--accent); }
     .gs-item-sep { color: var(--text-tertiary); margin: 0 2px; }
     .gs-item-target { color: var(--text-tertiary); }
     .gs-item-pct { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-tertiary); }
@@ -2500,7 +2502,29 @@ function renderGoals() {
     meta.className = 'gs-item-meta';
     const vals = document.createElement('span');
     vals.className = 'gs-item-vals';
-    const cur = document.createElement('span'); cur.className = 'gs-item-current'; cur.textContent = g.current;
+    const cur = document.createElement('span');
+    cur.className = 'gs-item-current gs-item-current-editable';
+    cur.textContent = g.current;
+    cur.title = 'Click to update';
+    cur.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.value = g.current;
+      inp.className = 'gs-current-input';
+      inp.style.cssText = 'width:48px;background:transparent;border:none;border-bottom:1px solid var(--accent);color:inherit;font:inherit;text-align:right;outline:none;';
+      cur.replaceWith(inp);
+      inp.focus(); inp.select();
+      const save = () => {
+        const val = parseFloat(inp.value);
+        if (!isNaN(val)) {
+          const gs = storeGet('lifeos_goals') || [];
+          const gObj = gs.find(x => x.id === g.id);
+          if (gObj) { gObj.current = val; storeSet('lifeos_goals', gs); }
+        }
+        renderGoals();
+      };
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') renderGoals(); });
+      inp.addEventListener('blur', save);
+    });
     const sep = document.createElement('span'); sep.className = 'gs-item-sep';     sep.textContent = ' / ';
     const tgt = document.createElement('span'); tgt.className = 'gs-item-target'; tgt.textContent = g.target;
     vals.appendChild(cur); vals.appendChild(sep); vals.appendChild(tgt);
