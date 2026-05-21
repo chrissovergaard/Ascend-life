@@ -3786,7 +3786,7 @@ function calculateRecommendationScore() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const ds = dateToStr(d);
-    if (workouts.some(w => w.date === ds)) weekCount++;
+    if (workouts.some(w => dateToStr(new Date(w.date)) === ds)) weekCount++;
   }
   const workoutScore = weekCount >= 5 ? 100 : weekCount >= 3 ? 75 : weekCount >= 1 ? 45 : 10;
   score += workoutScore * 0.25; weight += 0.25;
@@ -3843,7 +3843,7 @@ function generateRecommendations() {
   let weekCount  = 0;
   for (let i = 0; i < 7; i++) {
     const d = new Date(now); d.setDate(d.getDate() - i);
-    if (workouts.some(w => w.date === dateToStr(d))) weekCount++;
+    if (workouts.some(w => dateToStr(new Date(w.date)) === dateToStr(d))) weekCount++;
   }
   if (weekCount === 0) {
     recs.push({ icon:'📅', text:'Week Empty — time to get moving',                                 source:'Workouts', type:'danger',  priority:9  });
