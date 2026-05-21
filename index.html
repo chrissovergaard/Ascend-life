@@ -2856,7 +2856,7 @@ function renderWeeklyAnalytics(habits) {
       const ds  = dateToStr(day);
       habits.forEach(h => {
         const isDone   = (h.completedDates || []).includes(ds);
-        const existed  = ds >= h.createdDate;
+        const existed  = !h.createdDate || ds >= h.createdDate;
         if (existed || isDone) {
           total++;
           if (isDone) done++;
