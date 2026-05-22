@@ -1136,6 +1136,42 @@
     .ai-report-btn { background:none; border:1px solid rgba(126,184,247,0.3); border-radius:8px; padding:4px 10px; color:#7EB8F7; font-size:11px; cursor:pointer; }
     .ai-report-btn:hover { background:rgba(126,184,247,0.1); }
 
+    /* ===== DECISION FATIGUE ELIMINATION ===== */
+    .dpf-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .dpf-actions { display:flex; gap:8px; flex-shrink:0; align-items:center; flex-wrap:wrap; }
+    .dpf-approve-btn { background:rgba(107,227,164,0.12); border:1px solid rgba(107,227,164,0.3); color:#6BE3A4; border-radius:10px; padding:8px 16px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background 0.15s; }
+    .dpf-approve-btn:hover { background:rgba(107,227,164,0.22); }
+    .dpf-approved-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(107,227,164,0.1); border:1px solid rgba(107,227,164,0.25); color:#6BE3A4; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:700; }
+    .dpf-regen-btn { background:none; border:1px solid #252525; color:var(--text-tertiary); border-radius:10px; padding:8px 12px; font-size:12px; cursor:pointer; transition:border-color 0.15s, color 0.15s; }
+    .dpf-regen-btn:hover { border-color:#333; color:var(--text-secondary); }
+    .dpf-totals { display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; }
+    .dpf-total-chip { font-family:var(--font-mono); font-size:10px; padding:3px 9px; border-radius:6px; background:#111; border:1px solid #1C1C1C; color:var(--text-secondary); }
+    .dpf-timeline { display:flex; flex-direction:column; }
+    .dpf-item { display:flex; gap:0; }
+    .dpf-item-time-col { width:50px; flex-shrink:0; text-align:right; padding-right:10px; padding-top:2px; font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--text-tertiary); }
+    .dpf-item-vis-col { display:flex; flex-direction:column; align-items:center; width:18px; flex-shrink:0; }
+    .dpf-item-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .dpf-item-line { width:2px; background:#1C1C1C; flex:1; min-height:20px; margin-top:4px; }
+    .dpf-item-content { flex:1; padding:0 0 18px 12px; }
+    .dpf-item-header { display:flex; align-items:center; gap:7px; margin-bottom:3px; }
+    .dpf-item-icon { font-size:15px; flex-shrink:0; line-height:1; }
+    .dpf-item-label { font-size:13px; font-weight:700; color:var(--text-primary); }
+    .dpf-ov-badge { font-size:9px; padding:2px 6px; background:rgba(255,193,7,0.12); color:#FFC107; border-radius:4px; font-weight:700; letter-spacing:.04em; }
+    .dpf-item-detail { font-size:12px; color:var(--text-secondary); margin-bottom:3px; font-weight:500; }
+    .dpf-item-reason { font-size:11px; color:var(--text-tertiary); line-height:1.5; }
+    .dpf-edit-btn { background:none; border:1px solid #1C1C1C; color:var(--text-tertiary); border-radius:6px; padding:2px 7px; font-size:11px; cursor:pointer; margin-left:auto; opacity:0; transition:opacity 0.15s; flex-shrink:0; }
+    .dpf-item:hover .dpf-edit-btn { opacity:1; }
+    .dpf-edit-panel { background:#111; border:1px solid #1C1C1C; border-radius:12px; padding:12px 14px; margin:0 0 16px 80px; }
+    .dpf-edit-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .dpf-edit-row label { font-size:11px; color:var(--text-tertiary); width:56px; flex-shrink:0; }
+    .dpf-edit-inp { background:#1a1a1a; border:1px solid #252525; border-radius:8px; padding:6px 10px; color:var(--text-primary); font-size:12px; outline:none; flex:1; }
+    .dpf-edit-inp:focus { border-color:#333; }
+    .dpf-edit-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+    .dpf-save-btn { background:rgba(107,227,164,0.12); border:1px solid rgba(107,227,164,0.3); color:#6BE3A4; border-radius:8px; padding:5px 12px; font-size:11px; cursor:pointer; }
+    .dpf-cancel-btn { background:none; border:1px solid #252525; color:var(--text-tertiary); border-radius:8px; padding:5px 12px; font-size:11px; cursor:pointer; }
+    .dpf-coach-note { margin-top:14px; padding:12px 14px; background:rgba(126,184,247,0.06); border:1px solid rgba(126,184,247,0.12); border-radius:12px; font-size:12px; color:var(--text-secondary); line-height:1.6; }
+    .dpf-coach-note strong { color:#7EB8F7; }
+
     /* ===== CIRCADIAN RHYTHM ===== */
     .circ-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     @media (max-width:540px) { .circ-grid { grid-template-columns:1fr; } }
@@ -1894,6 +1930,12 @@
     <div class="gm-card">
       <div class="ai-insights-grid" id="aiInsightsGrid"></div>
     </div>
+  </div>
+
+  <!-- Decision Fatigue Elimination -->
+  <div class="section" id="dayPlanSection">
+    <div class="section-title">Din Perfekte Dag</div>
+    <div class="gm-card" id="dayPlanCard"></div>
   </div>
 
   <!-- Bodyweight Tracker -->
@@ -4323,6 +4365,206 @@ function renderCircadian() {
     </div>`;
 }
 
+// ==================== DECISION FATIGUE ELIMINATION ====================
+
+function generateDayPlan() {
+  const { wake, sleep } = getSchedule();
+  const today = getActiveDateString();
+  const workouts = storeGet('lifeos_workouts') || [];
+  const recovery = loadRecoveryHistory();
+  const garmin = storeGet('lifeos_garmin') || {};
+  const profile = storeGet('lifeos_profile') || {};
+
+  function normH(h) { return ((h % 24) + 24) % 24; }
+
+  const yesterday = dateToStr(new Date(Date.now() - 86400000));
+  const twoDaysAgo = dateToStr(new Date(Date.now() - 2 * 86400000));
+  const workedYesterday = workouts.some(w => dateToStr(new Date(w.date)) === yesterday);
+  const workedTwoDaysAgo = workouts.some(w => dateToStr(new Date(w.date)) === twoDaysAgo);
+  const recentCount = workouts.filter(w => {
+    const diff = (Date.now() - new Date(w.date)) / 86400000;
+    return diff <= 7;
+  }).length;
+
+  const todayRec = recovery.find(r => r.date === today);
+  const recovScore = todayRec?.score ?? null;
+  const battery = typeof garmin.bodyBattery === 'number' ? garmin.bodyBattery : null;
+  const hrv = typeof garmin.hrv === 'number' ? garmin.hrv : null;
+
+  // Workout recommendation
+  let workoutIntensity, workoutDuration, workoutReason, workoutType;
+  if (recovScore !== null && recovScore < 35) {
+    workoutIntensity = 'Aktiv hvile'; workoutDuration = 20; workoutType = 'recovery';
+    workoutReason = `Recovery score ${recovScore}/100 — kroppen signalerer hvile`;
+  } else if (battery !== null && battery < 25) {
+    workoutIntensity = 'Let bevægelse'; workoutDuration = 30; workoutType = 'light';
+    workoutReason = `Body Battery ${battery}% — lav energireserve, spar overskud`;
+  } else if (workedYesterday && workedTwoDaysAgo) {
+    workoutIntensity = 'Moderat — deload dag'; workoutDuration = 40; workoutType = 'moderate';
+    workoutReason = '2 dage i træk — reducer volumen for at undgå overtræning';
+  } else if (recentCount >= 5) {
+    workoutIntensity = 'Moderat'; workoutDuration = 45; workoutType = 'moderate';
+    workoutReason = `${recentCount} træninger denne uge — høj volumen, hold intensiteten i skak`;
+  } else if (recovScore !== null && recovScore >= 75 && (battery === null || battery >= 60)) {
+    workoutIntensity = 'Høj intensitet'; workoutDuration = 65; workoutType = 'hard';
+    workoutReason = `Recovery ${recovScore}/100${battery !== null ? ` & Battery ${battery}%` : ''} — grønt lys til hård session`;
+  } else {
+    workoutIntensity = 'Moderat–høj'; workoutDuration = 55; workoutType = 'normal';
+    workoutReason = 'Baseline plan — tilpas ud fra dagens energiniveau';
+  }
+
+  const workoutTime = normH(wake + 9);
+  const bfTime     = normH(wake + 1);
+  const lunchTime  = normH(wake + 5.5);
+  const dinnerTime = normH(sleep - 3);
+  const recovTime  = normH(workoutTime + 1.5);
+
+  const bw = parseFloat(profile.weight) || 75;
+  const isHard = workoutType === 'hard' || workoutType === 'normal';
+  const totalKcal    = Math.round(bw * (isHard ? 33 : workoutType === 'recovery' ? 27 : 30));
+  const totalProtein = Math.round(bw * (workoutType === 'recovery' ? 1.8 : 2.1));
+  const totalCarbs   = Math.round(bw * (isHard ? 3.8 : workoutType === 'recovery' ? 2 : 2.8));
+
+  const bfKcal = Math.round(totalKcal * 0.25);   const bfProt = Math.round(totalProtein * 0.25);
+  const lKcal  = Math.round(totalKcal * 0.35);   const lProt  = Math.round(totalProtein * 0.35);
+  const dKcal  = Math.round(totalKcal * 0.40);   const dProt  = Math.round(totalProtein * 0.40);
+
+  const coachNote = workoutType === 'recovery'
+    ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag.`
+    : workoutType === 'hard'
+    ? `Optimaldag til hård træning. Peak-window kl. ${fmtHour(workoutTime)} er beregnet ud fra din opvågning (${fmtHour(wake)}) — kropstemperatur og reaktionstid er på maks.`
+    : `Planens samlede kaloriebudget (${totalKcal} kcal) er tilpasset din vægt (${bw} kg) og dagens belastning. Juster middag op/ned baseret på sult.`;
+
+  const items = [
+    { type:'wake',     time: wake,        icon:'🌅', label:'Opvågning',    detail:`Naturligt lys + et glas vand inden for 15 min`,     reason:'Sætter kortisol-kurven og nulstiller dit circadiane ur' },
+    { type:'meal',     time: bfTime,      icon:'🥣', label:'Morgenmad',    detail:`${bfKcal} kcal · ${bfProt}g protein`,               reason:'1h efter opvågning — insulin følsomhed er høj, protein starter muskelopbygning' },
+    { type:'workout',  time: workoutTime, icon:'🏋️', label:'Træning',      detail:`${workoutDuration} min · ${workoutIntensity}`,       reason: workoutReason },
+    { type:'meal',     time: lunchTime,   icon:'☀️', label:'Frokost',      detail:`${lKcal} kcal · ${lProt}g protein`,                 reason:'Største måltid — peak fordøjelse og energi midt på dagen' },
+    { type:'recovery', time: recovTime,   icon:'💆', label:'Recovery',     detail:`Foam roll · mobilitet · kold bruser`,               reason:'Post-workout window — reducerer DOMS og kortisol, fremskynder restitution' },
+    { type:'meal',     time: dinnerTime,  icon:'🌙', label:'Aftensmad',    detail:`${dKcal} kcal · ${dProt}g protein`,                 reason:'3h før søvn — fordøjelse færdig inden bedtime, ingen spike i kropstemperatur' },
+    { type:'sleep',    time: sleep,       icon:'😴', label:'Søvn',         detail:`${fmtHour(sleep)} → ${fmtHour(wake)} — ${(((wake + 24 - sleep) % 24) || 24).toFixed(1)}h`, reason:'5 søvncykler (7.5h) — optimal for kognitiv funktion, hormonbalance og muskelreparation' }
+  ];
+
+  // Sort by time relative to wake
+  items.sort((a, b) => {
+    const ta = normH(a.time - wake); const tb = normH(b.time - wake);
+    return ta - tb;
+  });
+
+  return { date: today, generated: new Date().toISOString(), approved: false, overrides: {}, items, totalKcal, totalProtein, totalCarbs, coachNote };
+}
+
+function renderDayPlan() {
+  const card = document.getElementById('dayPlanCard');
+  if (!card) return;
+
+  const today = getActiveDateString();
+  let plan = storeGet('lifeos_day_plan');
+  if (!plan || plan.date !== today) {
+    plan = generateDayPlan();
+    storeSet('lifeos_day_plan', plan);
+  }
+
+  const typeColors = { wake:'#7EB8F7', meal:'#FFC107', workout:'#6BE3A4', recovery:'#C084FC', sleep:'#7EB8F7' };
+
+  const timelineHtml = plan.items.map((item, i) => {
+    const ov = (plan.overrides || {})[i] || {};
+    const time   = ov.time   !== undefined ? ov.time   : item.time;
+    const detail = ov.detail !== undefined ? ov.detail : (item.detail || '');
+    const isLast = i === plan.items.length - 1;
+    const color  = typeColors[item.type] || '#888';
+    const ovBadge = Object.keys(ov).length ? `<span class="dpf-ov-badge">ÆNDRET</span>` : '';
+    return `<div class="dpf-item" data-index="${i}">
+      <div class="dpf-item-time-col">${fmtHour(time)}</div>
+      <div class="dpf-item-vis-col">
+        <div class="dpf-item-dot" style="background:${color}"></div>
+        ${!isLast ? '<div class="dpf-item-line"></div>' : ''}
+      </div>
+      <div class="dpf-item-content">
+        <div class="dpf-item-header">
+          <span class="dpf-item-icon">${item.icon}</span>
+          <span class="dpf-item-label">${item.label}</span>
+          ${ovBadge}
+          <button class="dpf-edit-btn" onclick="dpfEditItem(${i})">✎</button>
+        </div>
+        ${detail ? `<div class="dpf-item-detail">${detail}</div>` : ''}
+        <div class="dpf-item-reason">${item.reason}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const actionHtml = plan.approved
+    ? `<span class="dpf-approved-badge">✓ Godkendt for i dag</span>`
+    : `<button class="dpf-approve-btn" onclick="dpfApprove()">✓ Godkend plan</button>`;
+
+  card.innerHTML = `
+    <div class="dpf-header">
+      <div>
+        <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:6px">AI-optimeret dag baseret på din recovery, energi og mål</div>
+        <div class="dpf-totals">
+          <span class="dpf-total-chip">${plan.totalKcal} kcal</span>
+          <span class="dpf-total-chip">${plan.totalProtein}g protein</span>
+          <span class="dpf-total-chip">${plan.totalCarbs}g kulhydrat</span>
+        </div>
+      </div>
+      <div class="dpf-actions">
+        ${actionHtml}
+        <button class="dpf-regen-btn" onclick="dpfRegenerate()">↺ Ny plan</button>
+      </div>
+    </div>
+    <div class="dpf-timeline">${timelineHtml}</div>
+    <div class="dpf-coach-note"><strong>Coach:</strong> ${plan.coachNote}</div>`;
+}
+
+function dpfEditItem(index) {
+  const existing = document.getElementById(`dpf-edit-${index}`);
+  if (existing) { existing.remove(); return; }
+  const plan = storeGet('lifeos_day_plan');
+  if (!plan) return;
+  const item = plan.items[index];
+  const ov = (plan.overrides || {})[index] || {};
+  const t = ov.time !== undefined ? ov.time : item.time;
+  const d = ov.detail !== undefined ? ov.detail : (item.detail || '');
+  const hh = String(Math.floor(t) % 24).padStart(2, '0');
+  const mm = String(Math.round((t - Math.floor(t)) * 60)).padStart(2, '0');
+
+  const panel = document.createElement('div');
+  panel.id = `dpf-edit-${index}`;
+  panel.className = 'dpf-edit-panel';
+  panel.innerHTML = `
+    <div class="dpf-edit-row"><label>Tid</label><input class="dpf-edit-inp" type="time" value="${hh}:${mm}" id="dpfT${index}" style="width:110px;flex:none"></div>
+    <div class="dpf-edit-row"><label>Detaljer</label><input class="dpf-edit-inp" type="text" value="${d}" id="dpfD${index}"></div>
+    <div class="dpf-edit-footer">
+      <button class="dpf-save-btn" onclick="dpfSaveOverride(${index})">Gem</button>
+      <button class="dpf-cancel-btn" onclick="document.getElementById('dpf-edit-${index}').remove()">Annuller</button>
+    </div>`;
+
+  const itemEl = document.querySelector(`.dpf-item[data-index="${index}"]`);
+  if (itemEl) itemEl.after(panel);
+}
+
+function dpfSaveOverride(index) {
+  const plan = storeGet('lifeos_day_plan') || {};
+  if (!plan.overrides) plan.overrides = {};
+  const timeStr = document.getElementById(`dpfT${index}`).value || '00:00';
+  const [hh, mm] = timeStr.split(':').map(Number);
+  plan.overrides[index] = { time: hh + mm / 60, detail: document.getElementById(`dpfD${index}`).value };
+  storeSet('lifeos_day_plan', plan);
+  renderDayPlan();
+}
+
+function dpfApprove() {
+  const plan = storeGet('lifeos_day_plan') || {};
+  plan.approved = true;
+  storeSet('lifeos_day_plan', plan);
+  renderDayPlan();
+}
+
+function dpfRegenerate() {
+  storeSet('lifeos_day_plan', generateDayPlan());
+  renderDayPlan();
+}
+
 // ==================== SMART RECOMMENDATIONS ====================
 
 function calculateRecommendationScore() {
@@ -4733,7 +4975,8 @@ document.getElementById('rmSettingsReset').addEventListener('click', function() 
 renderRecommendations();
 renderAiInsights();
 renderCircadian();
-window.addEventListener('data-changed', () => { updateRecommendationsOnDataChange(); renderAiInsights(); renderCircadian(); });
+renderDayPlan();
+window.addEventListener('data-changed', () => { updateRecommendationsOnDataChange(); renderAiInsights(); renderCircadian(); renderDayPlan(); });
 
 // Calendar init
 document.getElementById('calPrev').addEventListener('click', () => {
