@@ -4475,10 +4475,11 @@ function generateDayPlan() {
   const lKcal  = Math.round(totalKcal * 0.35);   const lProt  = Math.round(totalProtein * 0.35);
   const dKcal  = Math.round(totalKcal * 0.40);   const dProt  = Math.round(totalProtein * 0.40);
 
-  // Build workout item — use calendar event name/details if available
-  const workoutLabel  = calWorkout ? calWorkout.name : 'Træning';
+  // Build workout item — use calendar event title/name/details if available
+  function evLabel(ev) { return ev.title || ev.name || ''; }
+  const workoutLabel  = calWorkout ? evLabel(calWorkout) : 'Træning';
   const workoutDetail = calWorkout
-    ? [workoutDuration + ' min', workoutIntensity, calWorkout.description].filter(Boolean).join(' · ').substring(0, 90)
+    ? (calWorkout.description ? calWorkout.description.substring(0, 100) : workoutIntensity)
     : `${workoutDuration} min · ${workoutIntensity}`;
   const workoutReason2 = calWorkout
     ? `Fra kalender (${calWorkout.category}) — ${workoutReason}`
@@ -4486,7 +4487,7 @@ function generateDayPlan() {
 
   const kcalSource = nutGoals.cal ? `dit nutrition mål (${totalKcal} kcal)` : `estimat baseret på din vægt (${bw} kg)`;
   const coachNote = calWorkout
-    ? `Træning kl. ${fmtHour(workoutTime)} fra din kalender: "${calWorkout.name}". ${workoutReason}. Kaloriebudget fra ${kcalSource}.`
+    ? `Træning kl. ${fmtHour(workoutTime)} fra din kalender: "${evLabel(calWorkout)}". ${workoutReason}. Kaloriebudget fra ${kcalSource}.`
     : workoutType === 'recovery'
     ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag. Kaloriebudget fra ${kcalSource}.`
     : workoutType === 'hard'
@@ -4507,7 +4508,7 @@ function generateDayPlan() {
   calEventsToday.forEach(ev => {
     if (ev === calWorkout) return;
     const [h, m] = ev.time.split(':').map(Number);
-    items.push({ type:'custom', time: h + m/60, icon: CAL_ICON[ev.category]||'📅', label: ev.name, detail: ev.description ? ev.description.substring(0,80) : (ev.category||''), reason:`Fra kalender — ${ev.category||'planlagt aktivitet'}` });
+    items.push({ type:'custom', time: h + m/60, icon: CAL_ICON[ev.category]||'📅', label: evLabel(ev), detail: ev.description ? ev.description.substring(0,80) : (ev.category||''), reason:`Fra kalender — ${ev.category||'planlagt aktivitet'}` });
   });
 
   // Sort by time relative to wake
@@ -4627,7 +4628,7 @@ function dpfAddCalEvt(i) {
   if (!ev) return;
   const [hh, mm] = (ev.time || '12:00').split(':').map(Number);
   const iconMap = { Workout:'🏋️', Habit:'✅', Recovery:'💆', Goal:'🎯', Program:'📋' };
-  _dpfEditItems.push({ type:'custom', time: hh + (mm||0)/60, icon: iconMap[ev.category] || '📅', label: ev.name, detail: ev.category || '', reason:'' });
+  _dpfEditItems.push({ type:'custom', time: hh + (mm||0)/60, icon: iconMap[ev.category] || '📅', label: ev.title || ev.name || '', detail: ev.description || ev.category || '', reason:'' });
   renderDayPlanEdit();
 }
 
@@ -4683,7 +4684,7 @@ function renderDayPlanEdit() {
       ${_dpfCalToday.map((e, i) => `
         <div class="dpf-cal-chip">
           <span class="dpf-cal-time">${e.time}</span>
-          <span class="dpf-cal-name">${e.name}</span>
+          <span class="dpf-cal-name">${e.title || e.name || ''}</span>
           <button class="dpf-cal-add" onclick="dpfAddCalEvt(${i})">+ Tilføj</button>
         </div>`).join('')}
     </div>` : '';
