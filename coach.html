@@ -683,9 +683,53 @@ function buildContext(data, a) {
 
   const loadAlerts = buildDayLoadAnalysis(data.events || [], data.workouts || [], today);
 
+  // AI Insight signals (discipline score, burnout, overtraining, energy)
+  var discScore = (function() {
+    var habits = data.habits || [], workouts = data.workouts || [], recovery = data.recovery || [];
+    var now = new Date(), h7t = 0, h7d = 0, wkC = 0; var rec7 = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(now); d.setDate(d.getDate() - i);
+      var ds = toDateStr(d);
+      h7t += habits.length;
+      h7d += habits.filter(function(h){ return (h.completedDates||[]).includes(ds); }).length;
+      if (workouts.some(function(w){ return w.date && w.date.slice(0,10) === ds; })) wkC++;
+      var r = recovery.find(function(r){ return r.date === ds; }); if (r) rec7.push(r);
+    }
+    var hs = h7t > 0 ? (h7d/h7t)*100 : null;
+    var ws = Math.min(wkC/4,1)*100;
+    var ss = rec7.length >= 3 ? (rec7.filter(function(r){ return parseFloat(r.sleep)>=6.5; }).length / Math.min(rec7.length,7))*100 : null;
+    var ls = (rec7.length/7)*100;
+    var total = 0, weight = 0;
+    if (hs!==null){total+=hs*0.35;weight+=0.35;} if(workouts.length>0){total+=ws*0.30;weight+=0.30;}
+    if(ss!==null){total+=ss*0.20;weight+=0.20;} if(rec7.length>0){total+=ls*0.15;weight+=0.15;}
+    return weight >= 0.30 ? Math.round(total/weight) : null;
+  })();
+
+  var burnoutSignals = (function() {
+    var workouts = data.workouts || [], habits = data.habits || [], recovery = data.recovery || [], now = new Date();
+    function wm(wa) {
+      var wkC=0,hD=0,hT=0,recs=[];
+      for(var i=0;i<7;i++){var d=new Date(now);d.setDate(d.getDate()-wa*7-i);var ds=toDateStr(d);
+        if(workouts.some(function(w){return w.date&&w.date.slice(0,10)===ds;}))wkC++;
+        hT+=habits.length; hD+=habits.filter(function(h){return(h.completedDates||[]).includes(ds);}).length;
+        var r=recovery.find(function(r){return r.date===ds;});if(r)recs.push(r);}
+      return{workouts:wkC,habitPct:hT>0?hD/hT*100:null,avgSleep:recs.length?recs.reduce(function(s,r){return s+(parseFloat(r.sleep)||0);},0)/recs.length:null,avgStress:recs.length?recs.reduce(function(s,r){return s+(parseFloat(r.stress)||0);},0)/recs.length:null};}
+    var w0=wm(0),w1=wm(1),w2=wm(2),sigs=[];
+    if(w2.workouts>=2&&w1.workouts<w2.workouts&&w0.workouts<w1.workouts)sigs.push('declining training frequency');
+    if(w2.habitPct!==null&&w1.habitPct!==null&&w0.habitPct!==null&&w1.habitPct<w2.habitPct-10&&w0.habitPct<w1.habitPct-10)sigs.push('declining habit adherence');
+    if(w2.avgSleep!==null&&w1.avgSleep!==null&&w0.avgSleep!==null&&w1.avgSleep<w2.avgSleep-0.3&&w0.avgSleep<w1.avgSleep-0.3)sigs.push('declining sleep quality');
+    if(w0.avgStress!==null&&w1.avgStress!==null&&w0.avgStress>70&&w1.avgStress>70)sigs.push('sustained high stress 2 weeks');
+    return sigs.length >= 2 ? sigs : null;
+  })();
+
+  var weeklyReport = storeGet('lifeos_weekly_report');
+
   const lines = [
     'USER: ' + (p.name||'Chris') + (p.age ? ', age '+p.age : '') + (p.weight ? ', '+p.weight+'kg' : '') + (p.height ? ', '+p.height+'cm' : ''),
     'TODAY: ' + new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + ' — kl. ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}),
+    discScore !== null ? 'DISCIPLINE SCORE: ' + discScore + '/100' : '',
+    burnoutSignals ? 'BURNOUT WARNING — signals: ' + burnoutSignals.join(', ') : '',
+    weeklyReport ? ('LAST WEEKLY REPORT (' + weeklyReport.generatedDate + '): ' + weeklyReport.workouts + ' workouts' + (weeklyReport.habitPct!==null?', '+weeklyReport.habitPct+'% habits':'') + (weeklyReport.avgSleep?', '+weeklyReport.avgSleep+'h sleep':'') + (weeklyReport.focus.length?' | focus: '+weeklyReport.focus.join('; '):'')) : '',
     '',
     loadAlerts.length ? 'LOAD ALERTS (read these first — they affect all advice):\n' + loadAlerts.map(function(a){ return '  ' + a; }).join('\n') : '',
     loadAlerts.length ? '' : '',

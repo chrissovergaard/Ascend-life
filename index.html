@@ -1109,6 +1109,33 @@
       letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary);
     }
 
+    /* ===== AI INSIGHTS ===== */
+    .ai-insights-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:520px) { .ai-insights-grid { grid-template-columns:1fr; } }
+    .ai-metric-card { background:#111111; border:1px solid #1C1C1C; border-radius:14px; padding:16px; }
+    .ai-metric-label { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; }
+    .ai-metric-value { font-size:34px; font-weight:800; line-height:1; margin-bottom:4px; }
+    .ai-metric-sub { font-size:12px; color:var(--text-secondary); line-height:1.4; }
+    .ai-metric-bar { height:4px; border-radius:2px; background:rgba(255,255,255,0.07); margin-top:10px; overflow:hidden; }
+    .ai-metric-bar-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
+    .ai-alert-card { border-radius:14px; padding:14px 16px; display:flex; align-items:flex-start; gap:12px; grid-column:1/-1; }
+    .ai-alert-card.burnout { background:rgba(255,107,107,0.07); border:1px solid rgba(255,107,107,0.25); }
+    .ai-alert-card.overtraining { background:rgba(255,193,7,0.07); border:1px solid rgba(255,193,7,0.25); }
+    .ai-alert-icon { font-size:22px; flex-shrink:0; margin-top:1px; }
+    .ai-alert-title { font-size:13px; font-weight:700; margin-bottom:4px; }
+    .ai-alert-body { font-size:12px; color:var(--text-secondary); line-height:1.5; }
+    .ai-weekly-report { background:rgba(126,184,247,0.04); border:1px solid rgba(126,184,247,0.16); border-radius:14px; padding:16px; grid-column:1/-1; }
+    .ai-report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .ai-report-title { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:#7EB8F7; }
+    .ai-report-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+    .ai-report-stat { text-align:center; }
+    .ai-report-stat-val { font-size:22px; font-weight:800; }
+    .ai-report-stat-lbl { font-size:10px; color:var(--text-tertiary); margin-top:2px; }
+    .ai-report-section { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:4px; }
+    .ai-report-lines { font-size:12px; color:var(--text-secondary); line-height:1.7; }
+    .ai-report-btn { background:none; border:1px solid rgba(126,184,247,0.3); border-radius:8px; padding:4px 10px; color:#7EB8F7; font-size:11px; cursor:pointer; }
+    .ai-report-btn:hover { background:rgba(126,184,247,0.1); }
+
     /* ── Recovery Settings ── */
     .rm-gear-btn {
       position: absolute; top: 12px; right: 12px;
@@ -1820,6 +1847,14 @@
       <div class="sr-grid" id="srGrid">
         <div class="sr-empty">No data yet — log workouts, habits and recovery to get personalised tips.</div>
       </div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="section">
+    <div class="section-title">AI Insights</div>
+    <div class="gm-card">
+      <div class="ai-insights-grid" id="aiInsightsGrid"></div>
     </div>
   </div>
 
@@ -3794,6 +3829,315 @@ function renderRecovery() {
   if (history.length > 0) setTimeout(renderRecoveryChart, 0);
 }
 
+// ==================== DISCIPLINE SCORE ====================
+function calculateDisciplineScore() {
+  const habits   = loadHabits();
+  const workouts = storeGet('lifeos_workouts') || [];
+  const recovery = loadRecoveryHistory();
+  const now      = new Date();
+
+  // Habit adherence last 7 days (35%)
+  let h7total = 0, h7done = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const ds = dateToStr(d);
+    h7total += habits.length;
+    h7done  += habits.filter(h => (h.completedDates || []).includes(ds)).length;
+  }
+  const habitScore = h7total > 0 ? (h7done / h7total) * 100 : null;
+
+  // Workout frequency last 7 days vs target 4/week (30%)
+  let wkCount = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    if (workouts.some(w => dateToStr(new Date(w.date)) === dateToStr(d))) wkCount++;
+  }
+  const workoutScore = Math.min(wkCount / 4, 1) * 100;
+
+  // Sleep consistency: days >= 6.5h in last 7 (20%)
+  const rec7 = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const r = recovery.find(r => r.date === dateToStr(d));
+    if (r) rec7.push(r);
+  }
+  const sleepScore = rec7.length >= 3
+    ? (rec7.filter(r => parseFloat(r.sleep) >= 6.5).length / Math.min(rec7.length, 7)) * 100
+    : null;
+
+  // Recovery logging consistency (15%)
+  const logScore = (rec7.length / 7) * 100;
+
+  let total = 0, weight = 0;
+  if (habitScore !== null)            { total += habitScore  * 0.35; weight += 0.35; }
+  if (workouts.length > 0)            { total += workoutScore * 0.30; weight += 0.30; }
+  if (sleepScore !== null)            { total += sleepScore  * 0.20; weight += 0.20; }
+  if (rec7.length > 0)                { total += logScore    * 0.15; weight += 0.15; }
+  return weight >= 0.30 ? Math.round(total / weight) : null;
+}
+
+// ==================== BURNOUT DETECTION ====================
+function detectBurnout() {
+  const workouts = storeGet('lifeos_workouts') || [];
+  const habits   = loadHabits();
+  const recovery = loadRecoveryHistory();
+  const now      = new Date();
+
+  function weekMetrics(weeksAgo) {
+    let wkCount = 0, hDone = 0, hTotal = 0;
+    const recs = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now); d.setDate(d.getDate() - weeksAgo * 7 - i);
+      const ds = dateToStr(d);
+      if (workouts.some(w => dateToStr(new Date(w.date)) === ds)) wkCount++;
+      hTotal += habits.length;
+      hDone  += habits.filter(h => (h.completedDates || []).includes(ds)).length;
+      const r = recovery.find(r => r.date === ds); if (r) recs.push(r);
+    }
+    return {
+      workouts:  wkCount,
+      habitPct:  hTotal > 0 ? hDone / hTotal * 100 : null,
+      avgSleep:  recs.length ? recs.reduce((s,r) => s + (parseFloat(r.sleep)||0), 0) / recs.length : null,
+      avgStress: recs.length ? recs.reduce((s,r) => s + (parseFloat(r.stress)||0), 0) / recs.length : null,
+    };
+  }
+
+  const w0 = weekMetrics(0), w1 = weekMetrics(1), w2 = weekMetrics(2);
+  const signals = [];
+
+  if (w2.workouts >= 2 && w1.workouts < w2.workouts && w0.workouts < w1.workouts)
+    signals.push('faldende træningsfrekvens');
+  if (w2.habitPct !== null && w1.habitPct !== null && w0.habitPct !== null
+    && w1.habitPct < w2.habitPct - 10 && w0.habitPct < w1.habitPct - 10)
+    signals.push('faldende habit-konsistens');
+  if (w2.avgSleep !== null && w1.avgSleep !== null && w0.avgSleep !== null
+    && w1.avgSleep < w2.avgSleep - 0.3 && w0.avgSleep < w1.avgSleep - 0.3)
+    signals.push('faldende søvnkvalitet');
+  if (w0.avgStress !== null && w1.avgStress !== null && w0.avgStress > 70 && w1.avgStress > 70)
+    signals.push('vedvarende høj stress (2 uger)');
+
+  if (signals.length >= 2) return { detected: true, level: signals.length >= 3 ? 'high' : 'moderate', signals };
+  return { detected: false };
+}
+
+// ==================== OVERTRAINING DETECTION ====================
+function detectOvertraining() {
+  const workouts = storeGet('lifeos_workouts') || [];
+  const recovery = loadRecoveryHistory();
+  const now      = new Date();
+
+  let count14 = 0;
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    if (workouts.some(w => dateToStr(new Date(w.date)) === dateToStr(d))) count14++;
+  }
+  const weeklyRate = count14 / 2;
+
+  const rec7 = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const r = recovery.find(r => r.date === dateToStr(d)); if (r) rec7.push(r);
+  }
+  const avgSleep  = rec7.length ? rec7.reduce((s,r) => s + (parseFloat(r.sleep)||0), 0) / rec7.length : null;
+  const avgStress = rec7.length ? rec7.reduce((s,r) => s + (parseFloat(r.stress)||0), 0) / rec7.length : null;
+
+  const signals = [];
+  if (weeklyRate >= 5.5) signals.push(`${Math.round(weeklyRate * 10) / 10} træninger/uge (14-dages snit)`);
+  if (avgSleep  !== null && avgSleep  < 6.5) signals.push(`kun ${Math.round(avgSleep * 10) / 10}h søvn/nat`);
+  if (avgStress !== null && avgStress > 65)  signals.push(`stressniveau ${Math.round(avgStress)}/100`);
+
+  if (weeklyRate >= 5 && signals.length >= 2) return { detected: true, signals };
+  if (weeklyRate >= 6 && signals.length >= 1) return { detected: true, signals };
+  return { detected: false };
+}
+
+// ==================== ENERGY PREDICTION ====================
+function predictTomorrowEnergy() {
+  const today    = getActiveDateString();
+  const recovery = loadRecoveryHistory();
+  const garmin   = storeGet('lifeos_garmin') || [];
+  const rec = recovery.find(r => r.date === today);
+  const gar = garmin.find(g => g.date === today);
+  if (!rec && !gar) return null;
+
+  let pts = 0, factors = 0;
+  if (rec) {
+    const sleep = parseFloat(rec.sleep);
+    if (!isNaN(sleep)) {
+      factors++;
+      pts += sleep >= 8 ? 2 : sleep >= 7 ? 1.5 : sleep >= 6 ? 0.5 : -1;
+    }
+    const stress = parseFloat(rec.stress);
+    if (!isNaN(stress)) {
+      factors++;
+      pts += stress <= 30 ? 2 : stress <= 55 ? 1 : stress <= 75 ? 0 : -1;
+    }
+  }
+  if (gar) {
+    if (gar.battery != null) {
+      factors++;
+      const b = parseFloat(gar.battery);
+      pts += b >= 70 ? 2 : b >= 45 ? 1 : -0.5;
+    }
+    if (gar.hrv) {
+      factors++;
+      pts += ['good','excellent','balanced'].includes(gar.hrv.toLowerCase()) ? 1.5 : -0.5;
+    }
+    if (gar.recovery != null) {
+      factors++;
+      const r = parseFloat(gar.recovery);
+      pts += r <= 12 ? 2 : r <= 20 ? 1 : -0.5;
+    }
+  }
+  if (factors === 0) return null;
+  const avg = pts / factors;
+  if (avg >= 1.4) return { level: 'High',     color: '#6BE3A4', desc: 'Kroppen er klar — god dag til at presse på i morgen.' };
+  if (avg >= 0.5) return { level: 'Moderate', color: '#FFC107', desc: 'Normal energi forventet — træn, men hold intensiteten.' };
+  return         { level: 'Low',      color: '#FF6B6B', desc: 'Kroppen har brug for hvile — sænk intensiteten i morgen.' };
+}
+
+// ==================== WEEKLY REPORT ====================
+function getISOWeek(d) {
+  const date = new Date(d); date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return `${date.getFullYear()}-W${String(1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)).padStart(2,'0')}`;
+}
+
+function generateWeeklyReport(force) {
+  const now     = new Date();
+  const weekStr = getISOWeek(now);
+  const cached  = storeGet('lifeos_weekly_report');
+  if (!force && cached && cached.weekStr === weekStr) return cached;
+  if (!force && now.getDay() !== 1) return cached || null;
+
+  const workouts = storeGet('lifeos_workouts') || [];
+  const habits   = loadHabits();
+  const recovery = loadRecoveryHistory();
+  const goals    = storeGet('lifeos_goals') || [];
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i); weekDates.push(dateToStr(d));
+  }
+
+  const wkWks = workouts.filter(w => { try { return weekDates.includes(dateToStr(new Date(w.date))); } catch { return false; } });
+  const bwKg  = (storeGet('lifeos_profile') || {}).weight || 75;
+  const totalVol = wkWks.reduce((sum, w) =>
+    sum + (w.exercises || []).flatMap(e => e.sets || []).reduce((sv, s) => {
+      const wt = String(s.weight||'').trim().toUpperCase() === 'BW' ? bwKg : parseFloat(s.weight);
+      const r  = parseInt(s.reps);
+      return sv + (!isNaN(wt) && !isNaN(r) ? wt * r : 0);
+    }, 0), 0);
+
+  let hTotal = 0, hDone = 0;
+  weekDates.forEach(ds => {
+    hTotal += habits.length;
+    hDone  += habits.filter(h => (h.completedDates || []).includes(ds)).length;
+  });
+
+  const rec7 = recovery.filter(r => weekDates.includes(r.date));
+  const avgSleep  = rec7.length ? Math.round(rec7.reduce((s,r) => s + (parseFloat(r.sleep)||0), 0) / rec7.length * 10) / 10 : null;
+  const avgStress = rec7.length ? Math.round(rec7.reduce((s,r) => s + (parseFloat(r.stress)||0), 0) / rec7.length) : null;
+  const habitPct  = hTotal > 0 ? Math.round(hDone / hTotal * 100) : null;
+  const discScore = calculateDisciplineScore();
+
+  const wins = [];
+  if (wkWks.length >= 4)                              wins.push(`${wkWks.length} træninger gennemført`);
+  if (habitPct !== null && habitPct >= 80)            wins.push(`${habitPct}% habit-adherence`);
+  if (avgSleep !== null && avgSleep >= 7.5)           wins.push(`${avgSleep}h gennemsnitlig søvn`);
+  if (discScore !== null && discScore >= 75)          wins.push(`Discipline Score: ${discScore}`);
+  const closedGoal = goals.find(g => g.current >= g.target);
+  if (closedGoal)                                     wins.push(`Mål nået: "${closedGoal.name}"`);
+
+  const focus = [];
+  if (wkWks.length < 3)                              focus.push('Øg træningsfrekvensen — mål: 4/uge');
+  if (habitPct !== null && habitPct < 70)            focus.push(`Habit-adherence kun ${habitPct}% — konsistens mangler`);
+  if (avgSleep !== null && avgSleep < 7)             focus.push(`Søvn ${avgSleep}h — sigt efter 7.5h`);
+  if (avgStress !== null && avgStress > 65)          focus.push('Stressniveau for højt — prioriter recovery');
+
+  const report = { weekStr, generatedDate: dateToStr(now), workouts: wkWks.length,
+    totalVol: Math.round(totalVol), habitPct, avgSleep, avgStress, discScore, wins, focus };
+  storeSet('lifeos_weekly_report', report);
+  return report;
+}
+
+// ==================== RENDER AI INSIGHTS ====================
+function renderAiInsights() {
+  const grid = document.getElementById('aiInsightsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Discipline Score
+  const disc = calculateDisciplineScore();
+  const discColor = disc === null ? '#888' : disc >= 75 ? '#6BE3A4' : disc >= 50 ? '#FFC107' : '#FF6B6B';
+  const discLabel = disc === null ? 'Log data for at aktivere' : disc >= 75 ? 'Strong' : disc >= 50 ? 'Building' : 'Needs Work';
+  const discCard = document.createElement('div'); discCard.className = 'ai-metric-card';
+  discCard.innerHTML = `<div class="ai-metric-label">Discipline Score</div>
+    <div class="ai-metric-value" style="color:${discColor}">${disc !== null ? disc : '—'}</div>
+    <div class="ai-metric-sub">${discLabel} — habits, træning & søvn kombineret</div>
+    ${disc !== null ? `<div class="ai-metric-bar"><div class="ai-metric-bar-fill" style="width:${disc}%;background:${discColor}"></div></div>` : ''}`;
+  grid.appendChild(discCard);
+
+  // Energy Prediction
+  const energy = predictTomorrowEnergy();
+  const energyCard = document.createElement('div'); energyCard.className = 'ai-metric-card';
+  if (energy) {
+    energyCard.innerHTML = `<div class="ai-metric-label">Energy Prediction — I morgen</div>
+      <div class="ai-metric-value" style="color:${energy.color}">${energy.level}</div>
+      <div class="ai-metric-sub">${energy.desc}</div>`;
+  } else {
+    energyCard.innerHTML = `<div class="ai-metric-label">Energy Prediction — I morgen</div>
+      <div class="ai-metric-value" style="color:#888">—</div>
+      <div class="ai-metric-sub">Log søvn og recovery for at aktivere forudsigelsen</div>`;
+  }
+  grid.appendChild(energyCard);
+
+  // Burnout
+  const burnout = detectBurnout();
+  if (burnout.detected) {
+    const card = document.createElement('div'); card.className = 'ai-alert-card burnout';
+    card.innerHTML = `<div class="ai-alert-icon">${burnout.level === 'high' ? '🚨' : '⚠️'}</div>
+      <div><div class="ai-alert-title" style="color:#FF6B6B">Burnout ${burnout.level === 'high' ? 'Risk' : 'Warning'} — 3-ugers mønster detekteret</div>
+      <div class="ai-alert-body">Signaler: ${burnout.signals.join(' · ')}. Tag 1–2 dages aktiv hvile, reducer intensiteten og prioriter søvn nu.</div></div>`;
+    grid.appendChild(card);
+  }
+
+  // Overtraining
+  const over = detectOvertraining();
+  if (over.detected) {
+    const card = document.createElement('div'); card.className = 'ai-alert-card overtraining';
+    card.innerHTML = `<div class="ai-alert-icon">⚡</div>
+      <div><div class="ai-alert-title" style="color:#FFC107">Overtræning detekteret</div>
+      <div class="ai-alert-body">Signaler: ${over.signals.join(' · ')}. Høj volumen + utilstrækkelig recovery sænker fremgang. Indbyg en hviledag eller deload-uge.</div></div>`;
+    grid.appendChild(card);
+  }
+
+  // Weekly Report
+  const report = generateWeeklyReport(false);
+  if (report) {
+    const card = document.createElement('div'); card.className = 'ai-weekly-report';
+    const winsHtml  = report.wins.length  ? report.wins.map(w  => `✅ ${w}`).join('<br>') : '—';
+    const focusHtml = report.focus.length ? report.focus.map(f => `→ ${f}`).join('<br>') : '✅ Alle metrics on track';
+    const discCol = report.discScore >= 75 ? '#6BE3A4' : report.discScore >= 50 ? '#FFC107' : '#FF6B6B';
+    card.innerHTML = `
+      <div class="ai-report-header">
+        <div class="ai-report-title">Weekly Report — ${report.generatedDate}</div>
+        <button class="ai-report-btn" onclick="generateWeeklyReport(true);renderAiInsights()">Regenerer</button>
+      </div>
+      <div class="ai-report-stats">
+        <div class="ai-report-stat"><div class="ai-report-stat-val">${report.workouts}</div><div class="ai-report-stat-lbl">Træninger</div></div>
+        <div class="ai-report-stat"><div class="ai-report-stat-val">${report.habitPct !== null ? report.habitPct + '%' : '—'}</div><div class="ai-report-stat-lbl">Habits</div></div>
+        <div class="ai-report-stat"><div class="ai-report-stat-val">${report.avgSleep !== null ? report.avgSleep + 'h' : '—'}</div><div class="ai-report-stat-lbl">Søvn avg</div></div>
+        <div class="ai-report-stat"><div class="ai-report-stat-val" style="color:${discCol}">${report.discScore !== null ? report.discScore : '—'}</div><div class="ai-report-stat-lbl">Discipline</div></div>
+      </div>
+      <div class="ai-report-section">Wins denne uge</div>
+      <div class="ai-report-lines" style="margin-bottom:10px">${winsHtml}</div>
+      <div class="ai-report-section">Focus næste uge</div>
+      <div class="ai-report-lines">${focusHtml}</div>`;
+    grid.appendChild(card);
+  }
+}
+
 // ==================== SMART RECOMMENDATIONS ====================
 
 function calculateRecommendationScore() {
@@ -3895,6 +4239,19 @@ function generateRecommendations() {
       recs.push({ icon:'🚀', text:'Accelerate — step up your efforts on active goals',            source:'Goals', type:'warning', priority:7 });
       recs.push({ icon:'🎯', text:'Pick Up Pace — more consistency needed',                       source:'Goals', type:'danger',  priority:6 });
     }
+  }
+
+  // Burnout + Overtraining
+  const burnoutResult = detectBurnout();
+  if (burnoutResult.detected) {
+    recs.push({ icon: burnoutResult.level === 'high' ? '🚨' : '⚠️',
+      text: `Burnout ${burnoutResult.level === 'high' ? 'Risk' : 'Warning'} — ${burnoutResult.signals[0]}`,
+      source: 'AI Insights', type: 'danger', priority: 11 });
+  }
+  const overResult = detectOvertraining();
+  if (overResult.detected) {
+    recs.push({ icon: '⚡', text: 'Overtræning detekteret — indbyg en hviledag eller deload',
+      source: 'AI Insights', type: 'warning', priority: 10 });
   }
 
   // Habits-based
@@ -4189,7 +4546,8 @@ document.getElementById('rmSettingsReset').addEventListener('click', function() 
 });
 
 renderRecommendations();
-window.addEventListener('data-changed', updateRecommendationsOnDataChange);
+renderAiInsights();
+window.addEventListener('data-changed', () => { updateRecommendationsOnDataChange(); renderAiInsights(); });
 
 // Calendar init
 document.getElementById('calPrev').addEventListener('click', () => {
