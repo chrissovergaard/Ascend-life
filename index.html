@@ -4419,21 +4419,24 @@ function generateDayPlan() {
   const dinnerTime = normH(sleep - 3);
   const recovTime  = normH(workoutTime + 1.5);
 
+  // Read nutrition goals — fall back to bodyweight estimates only if not set
+  const nutGoals = storeGet('lifeos_nutrition_goals') || {};
   const bw = parseFloat(profile.weight) || 75;
   const isHard = workoutType === 'hard' || workoutType === 'normal';
-  const totalKcal    = Math.round(bw * (isHard ? 33 : workoutType === 'recovery' ? 27 : 30));
-  const totalProtein = Math.round(bw * (workoutType === 'recovery' ? 1.8 : 2.1));
-  const totalCarbs   = Math.round(bw * (isHard ? 3.8 : workoutType === 'recovery' ? 2 : 2.8));
+  const totalKcal    = nutGoals.cal     || Math.round(bw * (isHard ? 33 : workoutType === 'recovery' ? 27 : 30));
+  const totalProtein = nutGoals.protein || Math.round(bw * (workoutType === 'recovery' ? 1.8 : 2.1));
+  const totalCarbs   = nutGoals.carbs   || Math.round(bw * (isHard ? 3.8 : workoutType === 'recovery' ? 2 : 2.8));
 
   const bfKcal = Math.round(totalKcal * 0.25);   const bfProt = Math.round(totalProtein * 0.25);
   const lKcal  = Math.round(totalKcal * 0.35);   const lProt  = Math.round(totalProtein * 0.35);
   const dKcal  = Math.round(totalKcal * 0.40);   const dProt  = Math.round(totalProtein * 0.40);
 
+  const kcalSource = nutGoals.cal ? `dit nutrition mål (${totalKcal} kcal)` : `estimat baseret på din vægt (${bw} kg)`;
   const coachNote = workoutType === 'recovery'
-    ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag.`
+    ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag. Kaloriebudget fra ${kcalSource}.`
     : workoutType === 'hard'
-    ? `Optimaldag til hård træning. Peak-window kl. ${fmtHour(workoutTime)} er beregnet ud fra din opvågning (${fmtHour(wake)}) — kropstemperatur og reaktionstid er på maks.`
-    : `Planens samlede kaloriebudget (${totalKcal} kcal) er tilpasset din vægt (${bw} kg) og dagens belastning. Juster middag op/ned baseret på sult.`;
+    ? `Optimaldag til hård træning. Peak-window kl. ${fmtHour(workoutTime)} er beregnet ud fra din opvågning (${fmtHour(wake)}). Kaloriebudget fra ${kcalSource}.`
+    : `Planens kaloriebudget er fra ${kcalSource}. Fordelt 25% morgenmad · 35% frokost · 40% aftensmad. Juster aftensmad op/ned baseret på sult.`;
 
   const items = [
     { type:'wake',     time: wake,        icon:'🌅', label:'Opvågning',    detail:`Naturligt lys + et glas vand inden for 15 min`,     reason:'Sætter kortisol-kurven og nulstiller dit circadiane ur' },
@@ -4460,7 +4463,10 @@ function renderDayPlan() {
 
   const today = getActiveDateString();
   let plan = storeGet('lifeos_day_plan');
-  if (!plan || plan.date !== today) {
+  const nutGoalsNow = storeGet('lifeos_nutrition_goals') || {};
+  const cachedKcal = plan && plan.totalKcal;
+  const goalKcal = nutGoalsNow.cal || null;
+  if (!plan || plan.date !== today || (goalKcal && cachedKcal !== goalKcal)) {
     plan = generateDayPlan();
     storeSet('lifeos_day_plan', plan);
   }
