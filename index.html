@@ -1171,6 +1171,35 @@
     .dpf-cancel-btn { background:none; border:1px solid #252525; color:var(--text-tertiary); border-radius:8px; padding:5px 12px; font-size:11px; cursor:pointer; }
     .dpf-coach-note { margin-top:14px; padding:12px 14px; background:rgba(126,184,247,0.06); border:1px solid rgba(126,184,247,0.12); border-radius:12px; font-size:12px; color:var(--text-secondary); line-height:1.6; }
     .dpf-coach-note strong { color:#7EB8F7; }
+    .dpf-edit-plan-btn { background:none; border:1px solid rgba(126,184,247,0.25); color:#7EB8F7; border-radius:10px; padding:8px 12px; font-size:12px; cursor:pointer; transition:background 0.15s; }
+    .dpf-edit-plan-btn:hover { background:rgba(126,184,247,0.08); }
+    /* Edit mode */
+    .dpf-edit-mode { }
+    .dpf-edit-sec { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:8px; margin-top:14px; }
+    .dpf-edit-sec:first-child { margin-top:0; }
+    .dpf-cal-strip { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+    .dpf-cal-chip { display:flex; align-items:center; gap:7px; background:#111; border:1px solid #1C1C1C; border-radius:8px; padding:5px 10px; }
+    .dpf-cal-time { font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--text-secondary); }
+    .dpf-cal-name { font-size:11px; color:var(--text-secondary); }
+    .dpf-cal-add { background:none; border:1px solid rgba(126,184,247,0.2); color:#7EB8F7; border-radius:6px; padding:2px 8px; font-size:10px; cursor:pointer; }
+    .dpf-cal-add:hover { background:rgba(126,184,247,0.1); }
+    .dpf-edit-rows { display:flex; flex-direction:column; gap:0; }
+    .dpf-ei-row { display:flex; align-items:center; gap:7px; padding:7px 0; border-bottom:1px solid #111; flex-wrap:wrap; }
+    .dpf-ei-row:last-child { border-bottom:none; }
+    .dpf-ei-icon { background:#111; border:1px solid #1C1C1C; border-radius:7px; padding:5px 6px; font-size:14px; width:40px; text-align:center; outline:none; color:var(--text-primary); cursor:pointer; }
+    .dpf-ei-time { font-family:var(--font-mono); background:#111; border:1px solid #1C1C1C; border-radius:7px; padding:5px 8px; color:var(--text-primary); font-size:11px; width:86px; outline:none; }
+    .dpf-ei-label { flex:1.2; min-width:90px; background:#111; border:1px solid #1C1C1C; border-radius:7px; padding:5px 8px; color:var(--text-primary); font-size:12px; outline:none; }
+    .dpf-ei-detail { flex:2; min-width:120px; background:#111; border:1px solid #1C1C1C; border-radius:7px; padding:5px 8px; color:var(--text-primary); font-size:12px; outline:none; }
+    .dpf-ei-icon:focus,.dpf-ei-time:focus,.dpf-ei-label:focus,.dpf-ei-detail:focus { border-color:#333; }
+    .dpf-ei-del { background:none; border:1px solid #1C1C1C; color:#444; border-radius:7px; padding:4px 9px; font-size:12px; cursor:pointer; flex-shrink:0; }
+    .dpf-ei-del:hover { border-color:#333; color:#FF6B6B; }
+    .dpf-new-row { display:flex; align-items:center; gap:7px; padding:10px 0 4px; flex-wrap:wrap; }
+    .dpf-new-add-btn { background:rgba(107,227,164,0.1); border:1px solid rgba(107,227,164,0.25); color:#6BE3A4; border-radius:8px; padding:6px 14px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .dpf-new-add-btn:hover { background:rgba(107,227,164,0.18); }
+    .dpf-edit-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; padding-top:14px; border-top:1px solid #111; }
+    .dpf-edit-save-btn { background:rgba(107,227,164,0.12); border:1px solid rgba(107,227,164,0.3); color:#6BE3A4; border-radius:10px; padding:8px 18px; font-size:12px; font-weight:700; cursor:pointer; }
+    .dpf-edit-save-btn:hover { background:rgba(107,227,164,0.22); }
+    .dpf-edit-cancel-btn2 { background:none; border:1px solid #252525; color:var(--text-tertiary); border-radius:10px; padding:8px 14px; font-size:12px; cursor:pointer; }
 
     /* ===== CIRCADIAN RHYTHM ===== */
     .circ-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -4515,6 +4544,7 @@ function renderDayPlan() {
       </div>
       <div class="dpf-actions">
         ${actionHtml}
+        <button class="dpf-edit-plan-btn" onclick="dpfOpenEdit()">✎ Edit plan</button>
         <button class="dpf-regen-btn" onclick="dpfRegenerate()">↺ Ny plan</button>
       </div>
     </div>
@@ -4522,40 +4552,73 @@ function renderDayPlan() {
     <div class="dpf-coach-note"><strong>Coach:</strong> ${plan.coachNote}</div>`;
 }
 
-function dpfEditItem(index) {
-  const existing = document.getElementById(`dpf-edit-${index}`);
-  if (existing) { existing.remove(); return; }
+let _dpfEditItems = null;
+let _dpfCalToday  = [];
+
+function dpfOpenEdit() {
   const plan = storeGet('lifeos_day_plan');
   if (!plan) return;
-  const item = plan.items[index];
-  const ov = (plan.overrides || {})[index] || {};
-  const t = ov.time !== undefined ? ov.time : item.time;
-  const d = ov.detail !== undefined ? ov.detail : (item.detail || '');
-  const hh = String(Math.floor(t) % 24).padStart(2, '0');
-  const mm = String(Math.round((t - Math.floor(t)) * 60)).padStart(2, '0');
-
-  const panel = document.createElement('div');
-  panel.id = `dpf-edit-${index}`;
-  panel.className = 'dpf-edit-panel';
-  panel.innerHTML = `
-    <div class="dpf-edit-row"><label>Tid</label><input class="dpf-edit-inp" type="time" value="${hh}:${mm}" id="dpfT${index}" style="width:110px;flex:none"></div>
-    <div class="dpf-edit-row"><label>Detaljer</label><input class="dpf-edit-inp" type="text" value="${d}" id="dpfD${index}"></div>
-    <div class="dpf-edit-footer">
-      <button class="dpf-save-btn" onclick="dpfSaveOverride(${index})">Gem</button>
-      <button class="dpf-cancel-btn" onclick="document.getElementById('dpf-edit-${index}').remove()">Annuller</button>
-    </div>`;
-
-  const itemEl = document.querySelector(`.dpf-item[data-index="${index}"]`);
-  if (itemEl) itemEl.after(panel);
+  _dpfEditItems = plan.items.map((item, i) => {
+    const ov = (plan.overrides || {})[i] || {};
+    return { ...item, ...ov };
+  });
+  renderDayPlanEdit();
 }
 
-function dpfSaveOverride(index) {
+function dpfCloseEdit() {
+  _dpfEditItems = null;
+  renderDayPlan();
+}
+
+function dpfFlushEdit() {
+  if (!_dpfEditItems) return;
+  document.querySelectorAll('.dpf-ei-row[data-index]').forEach(row => {
+    const i = parseInt(row.dataset.index);
+    if (isNaN(i) || !_dpfEditItems[i]) return;
+    const ts = row.querySelector('.dpf-ei-time')?.value || '00:00';
+    const [hh, mm] = ts.split(':').map(Number);
+    _dpfEditItems[i].time   = hh + (mm || 0) / 60;
+    _dpfEditItems[i].icon   = row.querySelector('.dpf-ei-icon')?.value  || _dpfEditItems[i].icon;
+    _dpfEditItems[i].label  = row.querySelector('.dpf-ei-label')?.value || _dpfEditItems[i].label;
+    _dpfEditItems[i].detail = row.querySelector('.dpf-ei-detail')?.value || '';
+  });
+}
+
+function dpfDeleteEditItem(i) {
+  dpfFlushEdit();
+  _dpfEditItems.splice(i, 1);
+  renderDayPlanEdit();
+}
+
+function dpfAddCalEvt(i) {
+  dpfFlushEdit();
+  const ev = _dpfCalToday[i];
+  if (!ev) return;
+  const [hh, mm] = (ev.time || '12:00').split(':').map(Number);
+  const iconMap = { Workout:'🏋️', Habit:'✅', Recovery:'💆', Goal:'🎯', Program:'📋' };
+  _dpfEditItems.push({ type:'custom', time: hh + (mm||0)/60, icon: iconMap[ev.category] || '📅', label: ev.name, detail: ev.category || '', reason:'' });
+  renderDayPlanEdit();
+}
+
+function dpfAddNewItem() {
+  dpfFlushEdit();
+  const label = document.getElementById('dpfNLabel')?.value?.trim();
+  if (!label) { document.getElementById('dpfNLabel')?.focus(); return; }
+  const ts = document.getElementById('dpfNTime')?.value || '12:00';
+  const [hh, mm] = ts.split(':').map(Number);
+  _dpfEditItems.push({ type:'custom', time: hh + (mm||0)/60, icon: document.getElementById('dpfNIcon')?.value || '📌', label, detail: document.getElementById('dpfNDetail')?.value?.trim() || '', reason:'' });
+  renderDayPlanEdit();
+}
+
+function dpfSaveEdit() {
+  dpfFlushEdit();
   const plan = storeGet('lifeos_day_plan') || {};
-  if (!plan.overrides) plan.overrides = {};
-  const timeStr = document.getElementById(`dpfT${index}`).value || '00:00';
-  const [hh, mm] = timeStr.split(':').map(Number);
-  plan.overrides[index] = { time: hh + mm / 60, detail: document.getElementById(`dpfD${index}`).value };
+  const { wake } = getSchedule();
+  function normH(h) { return ((h % 24) + 24) % 24; }
+  plan.items = [..._dpfEditItems].sort((a, b) => normH(a.time - wake) - normH(b.time - wake));
+  plan.overrides = {};
   storeSet('lifeos_day_plan', plan);
+  _dpfEditItems = null;
   renderDayPlan();
 }
 
@@ -4567,8 +4630,66 @@ function dpfApprove() {
 }
 
 function dpfRegenerate() {
+  _dpfEditItems = null;
   storeSet('lifeos_day_plan', generateDayPlan());
   renderDayPlan();
+}
+
+function dpfEditItem(i) {
+  dpfOpenEdit();
+}
+
+function renderDayPlanEdit() {
+  const card = document.getElementById('dayPlanCard');
+  if (!card || !_dpfEditItems) return;
+
+  const today = getActiveDateString();
+  _dpfCalToday = loadEvents().filter(e => e.date === today && e.time).sort((a,b) => (a.time||'').localeCompare(b.time||''));
+
+  const calHtml = _dpfCalToday.length ? `
+    <div class="dpf-edit-sec">📅 Kalender i dag — tilføj til planen</div>
+    <div class="dpf-cal-strip">
+      ${_dpfCalToday.map((e, i) => `
+        <div class="dpf-cal-chip">
+          <span class="dpf-cal-time">${e.time}</span>
+          <span class="dpf-cal-name">${e.name}</span>
+          <button class="dpf-cal-add" onclick="dpfAddCalEvt(${i})">+ Tilføj</button>
+        </div>`).join('')}
+    </div>` : '';
+
+  const ICONS = ['🌅','🥣','☀️','🌙','🏋️','💆','😴','🧘','💊','🚶','📚','⚽','☕','💧','📅','📌','🎯','🧴'];
+
+  const rowsHtml = _dpfEditItems.map((item, i) => {
+    const hh = String(Math.floor(item.time) % 24).padStart(2,'0');
+    const mm = String(Math.round((item.time - Math.floor(item.time)) * 60)).padStart(2,'0');
+    const opts = ICONS.map(ic => `<option value="${ic}"${ic===item.icon?' selected':''}>${ic}</option>`).join('');
+    return `<div class="dpf-ei-row" data-index="${i}" data-type="${item.type||'custom'}">
+      <select class="dpf-ei-icon">${opts}</select>
+      <input class="dpf-ei-time" type="time" value="${hh}:${mm}">
+      <input class="dpf-ei-label" type="text" value="${item.label}" placeholder="Navn...">
+      <input class="dpf-ei-detail" type="text" value="${item.detail||''}" placeholder="Detaljer (valgfri)">
+      <button class="dpf-ei-del" onclick="dpfDeleteEditItem(${i})">✕</button>
+    </div>`;
+  }).join('');
+
+  const newOpts = ICONS.map(ic => `<option value="${ic}">${ic}</option>`).join('');
+
+  card.innerHTML = `
+    <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:14px">Juster tid, tilføj eller fjern aktiviteter — gem for at opdatere din plan.</div>
+    ${calHtml}
+    <div class="dpf-edit-sec">Plan aktiviteter</div>
+    <div class="dpf-edit-rows">${rowsHtml}</div>
+    <div class="dpf-new-row">
+      <select class="dpf-ei-icon" id="dpfNIcon">${newOpts}</select>
+      <input class="dpf-ei-time" type="time" id="dpfNTime" value="12:00">
+      <input class="dpf-ei-label" type="text" id="dpfNLabel" placeholder="Ny aktivitet...">
+      <input class="dpf-ei-detail" type="text" id="dpfNDetail" placeholder="Detaljer (valgfri)">
+      <button class="dpf-new-add-btn" onclick="dpfAddNewItem()">+ Tilføj</button>
+    </div>
+    <div class="dpf-edit-footer">
+      <button class="dpf-edit-cancel-btn2" onclick="dpfCloseEdit()">Annuller</button>
+      <button class="dpf-edit-save-btn" onclick="dpfSaveEdit()">Gem plan</button>
+    </div>`;
 }
 
 // ==================== SMART RECOMMENDATIONS ====================
