@@ -1541,6 +1541,15 @@
             </select>
           </div>
           <div class="prof-field prof-field-wide">
+            <label class="prof-label" for="profIntensityInput">Træningsintensitet</label>
+            <select class="prof-select" id="profIntensityInput">
+              <option value="easy">Let — 1–3 sessioner/uge, lav belastning</option>
+              <option value="moderate" selected>Moderat — 3–5 sessioner/uge, standard</option>
+              <option value="hard">Hård — 5–6 sessioner/uge, høj intensitet</option>
+              <option value="extreme">Extrem — 6+ sessioner/uge, atletisk/militær niveau</option>
+            </select>
+          </div>
+          <div class="prof-field prof-field-wide">
             <label class="prof-label" for="profNotesInput">Notes / Lifestyle priorities</label>
             <textarea class="wt-notes" id="profNotesInput" placeholder="E.g. sleep 7–8 hours, eat clean on weekdays…" style="min-height:52px;margin-top:0"></textarea>
           </div>
@@ -2502,11 +2511,12 @@ function saveProfile() {
   const age      = parseInt(document.getElementById('profAgeInput').value)      || null;
   const weight   = parseFloat(document.getElementById('profWeightInput').value) || null;
   const height   = parseInt(document.getElementById('profHeightInput').value)   || null;
-  const activity = document.getElementById('profActivityInput').value;
-  const focus    = document.getElementById('profFocusInput').value;
-  const notes    = document.getElementById('profNotesInput').value.trim();
-  const bmi      = calculateBMI(weight, height);
-  storeSet('lifeos_profile', { name, age, weight, height, activity, focus, notes, bmi, updatedAt: Date.now() });
+  const activity  = document.getElementById('profActivityInput').value;
+  const focus     = document.getElementById('profFocusInput').value;
+  const intensity = document.getElementById('profIntensityInput').value;
+  const notes     = document.getElementById('profNotesInput').value.trim();
+  const bmi       = calculateBMI(weight, height);
+  storeSet('lifeos_profile', { name, age, weight, height, activity, focus, intensity, notes, bmi, updatedAt: Date.now() });
 
   // Sync weight to bodyweight log
   if (weight) {
@@ -2541,8 +2551,10 @@ function renderProfile() {
   if (p.age)      parts.push(`${p.age} yrs`);
   if (p.weight)   parts.push(`${p.weight}kg`);
   if (p.height)   parts.push(`${p.height}cm`);
-  if (p.activity) parts.push(p.activity);
-  if (p.focus)    parts.push(p.focus);
+  if (p.activity)  parts.push(p.activity);
+  if (p.focus)     parts.push(p.focus);
+  const intensityLabels = { easy:'Let intensitet', moderate:'Moderat intensitet', hard:'Hård intensitet', extreme:'Extrem intensitet' };
+  if (p.intensity && p.intensity !== 'moderate') parts.push(intensityLabels[p.intensity] || p.intensity);
   document.getElementById('profViewStats').textContent = parts.join(' · ');
 
   // BMI row
@@ -2581,9 +2593,10 @@ function renderProfile() {
   document.getElementById('profAgeInput').value      = p.age      || '';
   document.getElementById('profWeightInput').value   = p.weight   || '';
   document.getElementById('profHeightInput').value   = p.height   || '';
-  document.getElementById('profActivityInput').value = p.activity || 'Moderate';
-  document.getElementById('profFocusInput').value    = p.focus    || 'Mixed';
-  document.getElementById('profNotesInput').value    = p.notes    || '';
+  document.getElementById('profActivityInput').value  = p.activity  || 'Moderate';
+  document.getElementById('profFocusInput').value     = p.focus     || 'Mixed';
+  document.getElementById('profIntensityInput').value = p.intensity || 'moderate';
+  document.getElementById('profNotesInput').value     = p.notes     || '';
 }
 
 function showProfileEdit() {
@@ -4406,19 +4419,33 @@ function generateDayPlan() {
 
   function normH(h) { return ((h % 24) + 24) % 24; }
 
-  const yesterday = dateToStr(new Date(Date.now() - 86400000));
-  const twoDaysAgo = dateToStr(new Date(Date.now() - 2 * 86400000));
-  const workedYesterday = workouts.some(w => dateToStr(new Date(w.date)) === yesterday);
-  const workedTwoDaysAgo = workouts.some(w => dateToStr(new Date(w.date)) === twoDaysAgo);
-  const recentCount = workouts.filter(w => {
-    const diff = (Date.now() - new Date(w.date)) / 86400000;
-    return diff <= 7;
-  }).length;
+  const intensity = profile.intensity || 'moderate'; // easy | moderate | hard | extreme
+
+  const yesterday    = dateToStr(new Date(Date.now() - 86400000));
+  const twoDaysAgo   = dateToStr(new Date(Date.now() - 2 * 86400000));
+  const threeDaysAgo = dateToStr(new Date(Date.now() - 3 * 86400000));
+  const workedYesterday    = workouts.some(w => dateToStr(new Date(w.date)) === yesterday);
+  const workedTwoDaysAgo   = workouts.some(w => dateToStr(new Date(w.date)) === twoDaysAgo);
+  const workedThreeDaysAgo = workouts.some(w => dateToStr(new Date(w.date)) === threeDaysAgo);
+  const recentCount = workouts.filter(w => (Date.now() - new Date(w.date)) / 86400000 <= 7).length;
+
+  // Consecutive day thresholds and volume limits by intensity level
+  const thresholds = {
+    easy:     { consecDeload: 1, highVolume: 4,  defaultIntensity: 'Let–moderat',  defaultDuration: 40 },
+    moderate: { consecDeload: 2, highVolume: 5,  defaultIntensity: 'Moderat–høj', defaultDuration: 55 },
+    hard:     { consecDeload: 3, highVolume: 6,  defaultIntensity: 'Høj intensitet', defaultDuration: 65 },
+    extreme:  { consecDeload: 99, highVolume: 9, defaultIntensity: 'Høj intensitet', defaultDuration: 70 },
+  };
+  const thr = thresholds[intensity] || thresholds.moderate;
+
+  // Count consecutive days
+  const consecDays = [workedYesterday, workedTwoDaysAgo, workedThreeDaysAgo].filter(Boolean).length;
+  // (only count from yesterday backwards without gap)
+  const trueConsec = workedYesterday ? (workedTwoDaysAgo ? (workedThreeDaysAgo ? 3 : 2) : 1) : 0;
 
   const todayRec = recovery.find(r => r.date === today);
   const recovScore = todayRec?.score ?? null;
   const battery = typeof garmin.bodyBattery === 'number' ? garmin.bodyBattery : null;
-  const hrv = typeof garmin.hrv === 'number' ? garmin.hrv : null;
 
   // Workout recommendation
   let workoutIntensity, workoutDuration, workoutReason, workoutType;
@@ -4428,18 +4455,22 @@ function generateDayPlan() {
   } else if (battery !== null && battery < 25) {
     workoutIntensity = 'Let bevægelse'; workoutDuration = 30; workoutType = 'light';
     workoutReason = `Body Battery ${battery}% — lav energireserve, spar overskud`;
-  } else if (workedYesterday && workedTwoDaysAgo) {
-    workoutIntensity = 'Moderat — deload dag'; workoutDuration = 40; workoutType = 'moderate';
-    workoutReason = '2 dage i træk — reducer volumen for at undgå overtræning';
-  } else if (recentCount >= 5) {
+  } else if (trueConsec >= thr.consecDeload) {
+    workoutIntensity = intensity === 'extreme' ? thr.defaultIntensity : 'Moderat — deload dag';
+    workoutDuration  = intensity === 'extreme' ? thr.defaultDuration  : 40;
+    workoutType      = intensity === 'extreme' ? 'hard' : 'moderate';
+    workoutReason    = intensity === 'extreme'
+      ? `${trueConsec} dage i træk — du kører extrem protokol, baseline holder`
+      : `${trueConsec} dage i træk — reducer volumen for at undgå overtræning`;
+  } else if (recentCount >= thr.highVolume) {
     workoutIntensity = 'Moderat'; workoutDuration = 45; workoutType = 'moderate';
-    workoutReason = `${recentCount} træninger denne uge — høj volumen, hold intensiteten i skak`;
+    workoutReason = `${recentCount} træninger denne uge — hold intensiteten i skak (dit niveau: ${intensity})`;
   } else if (recovScore !== null && recovScore >= 75 && (battery === null || battery >= 60)) {
-    workoutIntensity = 'Høj intensitet'; workoutDuration = 65; workoutType = 'hard';
+    workoutIntensity = 'Høj intensitet'; workoutDuration = thr.defaultDuration; workoutType = 'hard';
     workoutReason = `Recovery ${recovScore}/100${battery !== null ? ` & Battery ${battery}%` : ''} — grønt lys til hård session`;
   } else {
-    workoutIntensity = 'Moderat–høj'; workoutDuration = 55; workoutType = 'normal';
-    workoutReason = 'Baseline plan — tilpas ud fra dagens energiniveau';
+    workoutIntensity = thr.defaultIntensity; workoutDuration = thr.defaultDuration; workoutType = 'normal';
+    workoutReason = `Baseline plan (${intensity} niveau) — tilpas ud fra dagens energiniveau`;
   }
 
   // --- Calendar events today ---
