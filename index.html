@@ -4442,7 +4442,22 @@ function generateDayPlan() {
     workoutReason = 'Baseline plan — tilpas ud fra dagens energiniveau';
   }
 
-  const workoutTime = normH(wake + 9);
+  // --- Calendar events today ---
+  const calEventsToday = loadEvents().filter(e => e.date === today && e.time)
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+  const CAL_ICON = { Workout:'🏋️', Program:'📋', Personal:'👤', Work:'💼', Health:'❤️', Sport:'⚽', Rest:'😴', Habit:'✅', Recovery:'💆', Goal:'🎯', Other:'📅' };
+
+  // Use scheduled workout/program event time if available
+  const calWorkout = calEventsToday.find(e => e.category === 'Workout' || e.category === 'Program' || e.category === 'Sport');
+  let workoutTime;
+  if (calWorkout) {
+    const [wh, wm] = calWorkout.time.split(':').map(Number);
+    workoutTime = wh + wm / 60;
+  } else {
+    workoutTime = normH(wake + 9);
+  }
+
   const bfTime     = normH(wake + 1);
   const lunchTime  = normH(wake + 5.5);
   const dinnerTime = normH(sleep - 3);
@@ -4460,8 +4475,19 @@ function generateDayPlan() {
   const lKcal  = Math.round(totalKcal * 0.35);   const lProt  = Math.round(totalProtein * 0.35);
   const dKcal  = Math.round(totalKcal * 0.40);   const dProt  = Math.round(totalProtein * 0.40);
 
+  // Build workout item — use calendar event name/details if available
+  const workoutLabel  = calWorkout ? calWorkout.name : 'Træning';
+  const workoutDetail = calWorkout
+    ? [workoutDuration + ' min', workoutIntensity, calWorkout.description].filter(Boolean).join(' · ').substring(0, 90)
+    : `${workoutDuration} min · ${workoutIntensity}`;
+  const workoutReason2 = calWorkout
+    ? `Fra kalender (${calWorkout.category}) — ${workoutReason}`
+    : workoutReason;
+
   const kcalSource = nutGoals.cal ? `dit nutrition mål (${totalKcal} kcal)` : `estimat baseret på din vægt (${bw} kg)`;
-  const coachNote = workoutType === 'recovery'
+  const coachNote = calWorkout
+    ? `Træning kl. ${fmtHour(workoutTime)} fra din kalender: "${calWorkout.name}". ${workoutReason}. Kaloriebudget fra ${kcalSource}.`
+    : workoutType === 'recovery'
     ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag. Kaloriebudget fra ${kcalSource}.`
     : workoutType === 'hard'
     ? `Optimaldag til hård træning. Peak-window kl. ${fmtHour(workoutTime)} er beregnet ud fra din opvågning (${fmtHour(wake)}). Kaloriebudget fra ${kcalSource}.`
@@ -4470,20 +4496,24 @@ function generateDayPlan() {
   const items = [
     { type:'wake',     time: wake,        icon:'🌅', label:'Opvågning',    detail:`Naturligt lys + et glas vand inden for 15 min`,     reason:'Sætter kortisol-kurven og nulstiller dit circadiane ur' },
     { type:'meal',     time: bfTime,      icon:'🥣', label:'Morgenmad',    detail:`${bfKcal} kcal · ${bfProt}g protein`,               reason:'1h efter opvågning — insulin følsomhed er høj, protein starter muskelopbygning' },
-    { type:'workout',  time: workoutTime, icon:'🏋️', label:'Træning',      detail:`${workoutDuration} min · ${workoutIntensity}`,       reason: workoutReason },
+    { type:'workout',  time: workoutTime, icon: calWorkout ? (CAL_ICON[calWorkout.category]||'🏋️') : '🏋️', label: workoutLabel, detail: workoutDetail, reason: workoutReason2 },
     { type:'meal',     time: lunchTime,   icon:'☀️', label:'Frokost',      detail:`${lKcal} kcal · ${lProt}g protein`,                 reason:'Største måltid — peak fordøjelse og energi midt på dagen' },
     { type:'recovery', time: recovTime,   icon:'💆', label:'Recovery',     detail:`Foam roll · mobilitet · kold bruser`,               reason:'Post-workout window — reducerer DOMS og kortisol, fremskynder restitution' },
     { type:'meal',     time: dinnerTime,  icon:'🌙', label:'Aftensmad',    detail:`${dKcal} kcal · ${dProt}g protein`,                 reason:'3h før søvn — fordøjelse færdig inden bedtime, ingen spike i kropstemperatur' },
     { type:'sleep',    time: sleep,       icon:'😴', label:'Søvn',         detail:`${fmtHour(sleep)} → ${fmtHour(wake)} — ${(((wake + 24 - sleep) % 24) || 24).toFixed(1)}h`, reason:'5 søvncykler (7.5h) — optimal for kognitiv funktion, hormonbalance og muskelreparation' }
   ];
 
-  // Sort by time relative to wake
-  items.sort((a, b) => {
-    const ta = normH(a.time - wake); const tb = normH(b.time - wake);
-    return ta - tb;
+  // Add other calendar events (non-workout) that aren't already covered
+  calEventsToday.forEach(ev => {
+    if (ev === calWorkout) return;
+    const [h, m] = ev.time.split(':').map(Number);
+    items.push({ type:'custom', time: h + m/60, icon: CAL_ICON[ev.category]||'📅', label: ev.name, detail: ev.description ? ev.description.substring(0,80) : (ev.category||''), reason:`Fra kalender — ${ev.category||'planlagt aktivitet'}` });
   });
 
-  return { date: today, generated: new Date().toISOString(), approved: false, overrides: {}, items, totalKcal, totalProtein, totalCarbs, coachNote };
+  // Sort by time relative to wake
+  items.sort((a, b) => normH(a.time - wake) - normH(b.time - wake));
+
+  return { date: today, generated: new Date().toISOString(), approved: false, overrides: {}, items, totalKcal, totalProtein, totalCarbs, coachNote, calCount: calEventsToday.length };
 }
 
 function renderDayPlan() {
@@ -4495,12 +4525,13 @@ function renderDayPlan() {
   const nutGoalsNow = storeGet('lifeos_nutrition_goals') || {};
   const cachedKcal = plan && plan.totalKcal;
   const goalKcal = nutGoalsNow.cal || null;
-  if (!plan || plan.date !== today || (goalKcal && cachedKcal !== goalKcal)) {
+  const calCountNow = loadEvents().filter(e => e.date === today && e.time).length;
+  if (!plan || plan.date !== today || (goalKcal && cachedKcal !== goalKcal) || plan.calCount !== calCountNow) {
     plan = generateDayPlan();
     storeSet('lifeos_day_plan', plan);
   }
 
-  const typeColors = { wake:'#7EB8F7', meal:'#FFC107', workout:'#6BE3A4', recovery:'#C084FC', sleep:'#7EB8F7' };
+  const typeColors = { wake:'#7EB8F7', meal:'#FFC107', workout:'#6BE3A4', recovery:'#C084FC', sleep:'#7EB8F7', custom:'#FFA500' };
 
   const timelineHtml = plan.items.map((item, i) => {
     const ov = (plan.overrides || {})[i] || {};
