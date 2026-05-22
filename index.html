@@ -1136,6 +1136,44 @@
     .ai-report-btn { background:none; border:1px solid rgba(126,184,247,0.3); border-radius:8px; padding:4px 10px; color:#7EB8F7; font-size:11px; cursor:pointer; }
     .ai-report-btn:hover { background:rgba(126,184,247,0.1); }
 
+    /* ===== CIRCADIAN RHYTHM ===== */
+    .circ-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:540px) { .circ-grid { grid-template-columns:1fr; } }
+    .circ-card { background:#111111; border:1px solid #1C1C1C; border-radius:14px; padding:14px 16px; }
+    .circ-card-label { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+    .circ-cycles { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .circ-cycle { background:#1a1a1a; border:1px solid #252525; border-radius:10px; padding:8px 12px; text-align:center; cursor:pointer; transition:all 0.15s; flex:1; min-width:70px; }
+    .circ-cycle:hover { border-color:#333; }
+    .circ-cycle.best { background:rgba(107,227,164,0.08); border-color:rgba(107,227,164,0.3); }
+    .circ-cycle.selected { background:rgba(126,184,247,0.1); border-color:rgba(126,184,247,0.4); }
+    .circ-cycle-time { font-size:16px; font-weight:700; }
+    .circ-cycle-sub { font-size:10px; color:var(--text-tertiary); margin-top:2px; }
+    .circ-protocol { display:flex; flex-direction:column; gap:7px; }
+    .circ-proto-row { display:flex; align-items:center; gap:10px; font-size:12px; }
+    .circ-proto-time { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--text-primary); min-width:44px; }
+    .circ-proto-label { color:var(--text-secondary); }
+    .circ-proto-icon { font-size:14px; flex-shrink:0; }
+    .circ-windows { display:flex; flex-direction:column; gap:7px; }
+    .circ-window-row { display:flex; align-items:center; gap:10px; }
+    .circ-window-badge { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:.07em; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+    .circ-window-badge.peak   { background:rgba(107,227,164,0.12); color:#6BE3A4; }
+    .circ-window-badge.good   { background:rgba(255,193,7,0.12); color:#FFC107; }
+    .circ-window-badge.avoid  { background:rgba(255,107,107,0.10); color:#FF6B6B; }
+    .circ-window-text { font-size:12px; color:var(--text-secondary); }
+    .circ-light-alerts { display:flex; flex-direction:column; gap:7px; }
+    .circ-light-row { display:flex; align-items:flex-start; gap:10px; padding:8px 10px; border-radius:10px; font-size:12px; }
+    .circ-light-row.active { background:rgba(255,193,7,0.08); border:1px solid rgba(255,193,7,0.2); }
+    .circ-light-row.done   { background:rgba(107,227,164,0.06); border:1px solid rgba(107,227,164,0.15); opacity:0.7; }
+    .circ-light-row.future { background:rgba(255,255,255,0.03); border:1px solid #1C1C1C; }
+    .circ-light-icon { font-size:16px; flex-shrink:0; }
+    .circ-light-main { font-weight:600; color:var(--text-primary); }
+    .circ-light-sub  { color:var(--text-tertiary); font-size:11px; margin-top:1px; }
+    .circ-meal-row   { display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid #1a1a1a; }
+    .circ-meal-row:last-child { border-bottom:none; }
+    .circ-meal-time  { font-family:var(--font-mono); font-size:12px; font-weight:700; min-width:44px; }
+    .circ-meal-label { font-size:12px; color:var(--text-secondary); flex:1; }
+    .circ-meal-note  { font-size:10px; color:var(--text-tertiary); }
+
     /* ── Recovery Settings ── */
     .rm-gear-btn {
       position: absolute; top: 12px; right: 12px;
@@ -1878,6 +1916,12 @@
     <div class="gm-card" id="sleepAlarmCard">
       <div id="sleepAlarmContent" style="font-size:13px;color:var(--text-secondary)">Ingen kommende events — nyd en god nats søvn.</div>
     </div>
+  </div>
+
+  <!-- Circadian Rhythm Optimization -->
+  <div class="section" id="circadianSection">
+    <div class="section-title">Circadian Rhythm Optimization</div>
+    <div class="gm-card" id="circadianCard"></div>
   </div>
 
   <!-- Pre-kamp protokol -->
@@ -4138,6 +4182,147 @@ function renderAiInsights() {
   }
 }
 
+// ==================== CIRCADIAN RHYTHM ====================
+
+function renderCircadian() {
+  const card = document.getElementById('circadianCard');
+  if (!card) return;
+  const { wake, sleep } = getSchedule();
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
+
+  function normH(h) { return ((h % 24) + 24) % 24; }
+
+  // --- Sleep Cycles (90-min) ---
+  const cycleOptions = [
+    { n: 6, h: 9 },
+    { n: 5, h: 7.5 },
+    { n: 4, h: 6 },
+    { n: 3, h: 4.5 }
+  ];
+  cycleOptions.forEach(c => { c.bedtime = normH(wake - c.h); });
+
+  // Best cycle = 5 (7.5h); selected = closest to user's scheduled sleep
+  const selectedCycle = cycleOptions.reduce((best, c) => {
+    const diffC = Math.abs(normH(c.bedtime - sleep + 12) - 12);
+    const diffB = Math.abs(normH(best.bedtime - sleep + 12) - 12);
+    return diffC < diffB ? c : best;
+  }, cycleOptions[0]);
+
+  const cyclesHtml = cycleOptions.map(c => {
+    const isBest = c.n === 5;
+    const isSel = c === selectedCycle;
+    const cls = isSel ? 'circ-cycle selected' : isBest ? 'circ-cycle best' : 'circ-cycle';
+    const sub = isBest ? 'Optimal' : isSel ? 'Tættest på din plan' : c.h + 'h';
+    return `<div class="${cls}"><div class="circ-cycle-time">${fmtHour(c.bedtime)}</div><div class="circ-cycle-sub">${sub} · ${c.n}×90min</div></div>`;
+  }).join('');
+
+  // --- Pre-Sleep Protocol ---
+  const bedtime = selectedCycle.bedtime;
+  const protocol = [
+    { icon: '💡', time: normH(bedtime - 2),   label: 'Dæmp lyset i hjemmet' },
+    { icon: '📵', time: normH(bedtime - 0.5), label: 'Skærm slukket' },
+    { icon: '💧', time: normH(bedtime - 0.25),label: 'Drik et glas vand' },
+    { icon: '🛏',  time: bedtime,              label: 'I seng' }
+  ];
+  const protoHtml = protocol.map(p => {
+    const isPast = nowH > p.time && Math.abs(nowH - p.time) < 12;
+    const col = isPast ? 'color:var(--text-tertiary)' : '';
+    return `<div class="circ-proto-row" style="${col}">
+      <span class="circ-proto-icon">${p.icon}</span>
+      <span class="circ-proto-time">${fmtHour(p.time)}</span>
+      <span class="circ-proto-label">${p.label}</span>
+    </div>`;
+  }).join('');
+
+  // --- Workout Timing ---
+  const peakS = normH(wake + 8), peakE = normH(wake + 12);
+  const goodS = normH(wake + 5), goodE = normH(wake + 8);
+  const avoidS = normH(wake + 1), avoidE = normH(wake + 3);
+  const workoutWindows = [
+    { cls: 'peak',  label: 'PEAK',  time: `${fmtHour(peakS)} – ${fmtHour(peakE)}`,  desc: 'Høj kropstemperatur & testosteron' },
+    { cls: 'good',  label: 'GOD',   time: `${fmtHour(goodS)} – ${fmtHour(goodE)}`,  desc: 'Opvarmningsfase, styrke OK' },
+    { cls: 'avoid', label: 'UNDGÅ', time: `${fmtHour(avoidS)} – ${fmtHour(avoidE)}`,desc: 'For tæt på opvågning' }
+  ];
+  const windowHtml = workoutWindows.map(w =>
+    `<div class="circ-window-row">
+      <span class="circ-window-badge ${w.cls}">${w.label}</span>
+      <span class="circ-window-text"><strong>${w.time}</strong> — ${w.desc}</span>
+    </div>`
+  ).join('');
+
+  // --- Meal Timing ---
+  const meals = [
+    { icon: '🌅', time: normH(wake + 1),      label: 'Morgenmad',   note: 'Kortisol peak — høj energi til stofskiftet' },
+    { icon: '☀️', time: normH(wake + 5),      label: 'Frokost',     note: 'Største måltid — max fordøjelse' },
+    { icon: '🌙', time: normH(bedtime - 3),   label: 'Aftensmad',   note: 'Stop 3h før søvn' }
+  ];
+  const mealHtml = meals.map(m =>
+    `<div class="circ-meal-row">
+      <span style="font-size:16px">${m.icon}</span>
+      <span class="circ-meal-time">${fmtHour(m.time)}</span>
+      <span class="circ-meal-label">${m.label}</span>
+      <span class="circ-meal-note">${m.note}</span>
+    </div>`
+  ).join('');
+
+  // --- Light Exposure Alerts ---
+  const lightEvents = [
+    { icon: '☀️', time: normH(wake + 0.25),  main: 'Morgenlys',      sub: 'Naturligt lys inden for 15–30 min efter opvågning sætter din circadiane ur' },
+    { icon: '🌤', time: normH(wake + 6),     main: 'Middag sollys',   sub: 'Understøtter kortisol & vitamin D — 10–15 min ude' },
+    { icon: '🔆', time: normH(bedtime - 2),  main: 'Dæmp lyset',      sub: 'Blokér blåt lys 2h før søvn for melatonin-produktion' },
+    { icon: '🌑', time: normH(bedtime - 0.5),main: 'Mørkt miljø',     sub: 'Soveværelse mørkt og køligt (17–20°C)' }
+  ];
+  const lightHtml = lightEvents.map(e => {
+    const diffMin = (normH(e.time - nowH + 12) - 12) * 60;
+    const isPast = diffMin < -30;
+    const isActive = diffMin >= -30 && diffMin <= 30;
+    const cls = isPast ? 'done' : isActive ? 'active' : 'future';
+    const tag = isPast ? '✓ Færdig' : isActive ? `Nu (${Math.round(Math.abs(diffMin))}min)` : `kl. ${fmtHour(e.time)}`;
+    return `<div class="circ-light-row ${cls}">
+      <span class="circ-light-icon">${e.icon}</span>
+      <div><div class="circ-light-main">${e.main} <span style="font-size:10px;color:var(--text-tertiary);font-weight:400">${tag}</span></div>
+      <div class="circ-light-sub">${e.sub}</div></div>
+    </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="circ-grid">
+
+      <!-- Sleep Cycles -->
+      <div class="circ-card" style="grid-column:1/-1">
+        <div class="circ-card-label">🌙 Optimale Sengetider — baseret på opvågning kl. ${fmtHour(wake)}</div>
+        <div class="circ-cycles">${cyclesHtml}</div>
+        <div style="font-size:11px;color:var(--text-tertiary)">Vågn naturligt op i slutningen af et søvncyklus (90 min) — undgå dyb søvnforstyrrelse.</div>
+      </div>
+
+      <!-- Pre-sleep Protocol -->
+      <div class="circ-card">
+        <div class="circ-card-label">📋 Pre-søvn Protokol</div>
+        <div class="circ-protocol">${protoHtml}</div>
+      </div>
+
+      <!-- Workout Timing -->
+      <div class="circ-card">
+        <div class="circ-card-label">🏋️ Bedste Træningstider</div>
+        <div class="circ-windows">${windowHtml}</div>
+      </div>
+
+      <!-- Meal Timing -->
+      <div class="circ-card">
+        <div class="circ-card-label">🍽 Måltids-timing — Kortisol Kurve</div>
+        <div>${mealHtml}</div>
+      </div>
+
+      <!-- Light Exposure -->
+      <div class="circ-card">
+        <div class="circ-card-label">💡 Lys Eksponering</div>
+        <div class="circ-light-alerts">${lightHtml}</div>
+      </div>
+
+    </div>`;
+}
+
 // ==================== SMART RECOMMENDATIONS ====================
 
 function calculateRecommendationScore() {
@@ -4547,7 +4732,8 @@ document.getElementById('rmSettingsReset').addEventListener('click', function() 
 
 renderRecommendations();
 renderAiInsights();
-window.addEventListener('data-changed', () => { updateRecommendationsOnDataChange(); renderAiInsights(); });
+renderCircadian();
+window.addEventListener('data-changed', () => { updateRecommendationsOnDataChange(); renderAiInsights(); renderCircadian(); });
 
 // Calendar init
 document.getElementById('calPrev').addEventListener('click', () => {
