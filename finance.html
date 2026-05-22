@@ -1575,17 +1575,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 600px) {
   .sub-auto-toggle { width: 100%; justify-content: space-between; padding: 12px 14px; }
 }
+.site-nav {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 12px 16px 0; margin-bottom: 18px;
+}
+.nav-link {
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-link:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+.nav-link.is-active { background: #FFFFFF; color: #000000; }
 </style>
   <link rel="stylesheet" href="premium.css">
 </head>
 <body>
 <div class="shell">
 
-<!-- ===== BACK BUTTON ===== -->
-<a href="index.html" class="fin-back-btn" aria-label="Back to dashboard">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-  <span>Back</span>
-</a>
+<nav class="site-nav">
+  <a href="index.html"     class="nav-link">Dashboard</a>
+  <a href="workout.html"   class="nav-link">Workout</a>
+  <a href="calendar.html"  class="nav-link">Calendar</a>
+  <a href="analytics.html" class="nav-link">Analytics</a>
+  <a href="nutrition.html" class="nav-link">Nutrition</a>
+  <a href="coach.html"     class="nav-link">Coach</a>
+  <a href="finance.html"   class="nav-link is-active">Finance</a>
+</nav>
 
 <!-- ===== FINANCE TICKER (rotating subscription renewals) ===== -->
 <div class="finance-ticker hidden" id="financeTicker">
