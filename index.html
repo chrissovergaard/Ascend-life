@@ -1455,6 +1455,75 @@
     .cal-up-name { font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cal-up-meta { font-family:var(--font-mono); font-size:9px; color:var(--text-tertiary); margin-top:1px; }
 
+    /* ── Quick Launch Dock ── */
+    .ql-dock {
+      display: flex; gap: 10px; margin: 0 0 18px;
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .ql-dock::-webkit-scrollbar { display: none; }
+    .ql-btn {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 5px; width: 62px; height: 62px; border-radius: 15px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-top-color: rgba(255,255,255,0.13);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+      cursor: pointer; transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      padding: 0; color: var(--text-primary); text-decoration: none;
+      position: relative;
+    }
+    .ql-btn:active { transform: scale(0.91); }
+    .ql-btn:hover { background: linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.05) 100%); box-shadow: 0 6px 22px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.09) inset; }
+    .ql-btn-icon { font-size: 22px; line-height: 1; }
+    .ql-btn-label { font-family: var(--font-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); text-align: center; line-height: 1.1; max-width: 56px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .ql-add-btn {
+      flex-shrink: 0; width: 62px; height: 62px; border-radius: 15px;
+      background: rgba(255,255,255,0.03); border: 1.5px dashed rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--text-tertiary); cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .ql-add-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.25); }
+    /* Edit mode */
+    .ql-edit-mode .ql-btn { animation: ql-jiggle 0.45s ease-in-out infinite alternate; }
+    @keyframes ql-jiggle { 0%{transform:rotate(-1.5deg)} 100%{transform:rotate(1.5deg)} }
+    .ql-remove-badge {
+      position: absolute; top: -6px; left: -6px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #FF6B6B; border: 1.5px solid #000;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; line-height: 1; color: #fff; font-weight: 700;
+      cursor: pointer; z-index: 2;
+    }
+    /* Edit modal */
+    .ql-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; backdrop-filter: blur(8px);
+    }
+    .ql-modal {
+      background: #111; border: 1px solid rgba(255,255,255,0.12);
+      border-top-color: rgba(255,255,255,0.2);
+      border-radius: 20px; padding: 24px; width: min(360px, 90vw);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    }
+    .ql-modal-title { font-size: 13px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+    .ql-modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 55vh; overflow-y: auto; margin-bottom: 16px; }
+    .ql-modal-option {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 6px; border-radius: 12px; cursor: pointer;
+      background: rgba(255,255,255,0.04); border: 1px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ql-modal-option:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+    .ql-modal-option.selected { background: rgba(126,184,247,0.12); border-color: rgba(126,184,247,0.35); }
+    .ql-modal-opt-icon { font-size: 20px; }
+    .ql-modal-opt-label { font-family: var(--font-mono); font-size: 8px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); text-align: center; }
+    .ql-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .ql-modal-cancel { background: none; border: 1px solid rgba(255,255,255,0.15); color: var(--text-secondary); border-radius: 10px; padding: 8px 16px; font-size: 12px; cursor: pointer; }
+    .ql-modal-save { background: linear-gradient(135deg,#7EB8F7,#5A9ED4); border: none; color: #000; border-radius: 10px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; }
   </style>
   <link rel="stylesheet" href="premium.css">
 </head>
@@ -1520,8 +1589,11 @@
     </div>
   </div>
 
+  <!-- Quick Launch Dock -->
+  <div class="ql-dock" id="qlDock"></div>
+
   <!-- User Profile -->
-  <div class="section">
+  <div class="section" id="sec-profile">
     <div class="section-title">My Profile</div>
     <div class="gm-card" id="profCard">
 
@@ -1605,7 +1677,7 @@
   </div>
 
   <!-- Component 4: Goals System -->
-  <div class="section">
+  <div class="section" id="sec-goals">
     <div class="section-title">Goals System</div>
     <div class="gm-card">
       <div class="gm-header">
@@ -1629,7 +1701,7 @@
   </div>
 
   <!-- Daily Habits -->
-  <div class="section">
+  <div class="section" id="sec-habits">
     <div class="section-title">Daily Habits</div>
     <div class="gm-card" id="habitsCard">
 
@@ -1671,7 +1743,7 @@
   </div>
 
   <!-- Recovery Monitor -->
-  <div class="section">
+  <div class="section" id="sec-recovery">
     <div class="section-title">Recovery Monitor</div>
     <div class="gm-card" id="recoveryCard" style="position:relative">
 
@@ -1989,7 +2061,7 @@
   </div>
 
   <!-- Smart Recommendations -->
-  <div class="section">
+  <div class="section" id="sec-recommendations">
     <div class="section-title">Smart Recommendations</div>
     <div class="gm-card" id="srCard">
       <div class="sr-score-bar" id="srScoreBar">
@@ -2004,7 +2076,7 @@
   </div>
 
   <!-- AI Insights -->
-  <div class="section">
+  <div class="section" id="sec-insights">
     <div class="section-title">AI Insights</div>
     <div class="gm-card">
       <div class="ai-insights-grid" id="aiInsightsGrid"></div>
@@ -2018,7 +2090,7 @@
   </div>
 
   <!-- Bodyweight Tracker -->
-  <div class="section">
+  <div class="section" id="sec-bodyweight">
     <div class="section-title">Bodyweight Tracker</div>
     <div class="gm-card">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -5527,6 +5599,162 @@ renderProfile();
   });
 
   renderInj();
+})();
+
+// ==================== QUICK LAUNCH DOCK ====================
+(function() {
+  const ALL_SECTIONS = [
+    { id: 'sec-recovery',        icon: '💚', label: 'Recovery' },
+    { id: 'sec-goals',           icon: '🎯', label: 'Goals' },
+    { id: 'sec-habits',          icon: '✅', label: 'Habits' },
+    { id: 'dayPlanSection',      icon: '📅', label: 'Day Plan' },
+    { id: 'sec-insights',        icon: '🧠', label: 'AI Insights' },
+    { id: 'circadianSection',    icon: '🌙', label: 'Circadian' },
+    { id: 'sec-recommendations', icon: '⚡', label: 'Recs' },
+    { id: 'sec-bodyweight',      icon: '⚖️', label: 'Weight' },
+    { id: 'sleepAlarmSection',   icon: '⏰', label: 'Sleep Alarm' },
+    { id: 'sec-profile',         icon: '👤', label: 'Profile' },
+    { id: 'preGameSection',      icon: '🏆', label: 'Game Day' },
+  ];
+
+  const STORAGE_KEY = 'lifeos_ql_shortcuts';
+  const DEFAULT_IDS = ['sec-recovery', 'sec-goals', 'sec-habits', 'dayPlanSection', 'sec-insights', 'circadianSection'];
+
+  let shortcuts = storeGet(STORAGE_KEY) || DEFAULT_IDS;
+  let editMode = false;
+  let editingIndex = null;
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 16;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  function renderDock() {
+    const dock = document.getElementById('qlDock');
+    if (!dock) return;
+    dock.innerHTML = '';
+
+    shortcuts.forEach((id, i) => {
+      const sec = ALL_SECTIONS.find(s => s.id === id);
+      if (!sec) return;
+      const btn = document.createElement('button');
+      btn.className = 'ql-btn';
+      btn.title = sec.label;
+      btn.innerHTML = `
+        <span class="ql-btn-icon">${sec.icon}</span>
+        <span class="ql-btn-label">${sec.label}</span>
+      `;
+      if (editMode) {
+        const rm = document.createElement('span');
+        rm.className = 'ql-remove-badge';
+        rm.textContent = '−';
+        rm.addEventListener('click', e => {
+          e.stopPropagation();
+          shortcuts.splice(i, 1);
+          storeSet(STORAGE_KEY, shortcuts);
+          renderDock();
+        });
+        btn.appendChild(rm);
+        btn.addEventListener('click', () => openEditModal(i));
+      } else {
+        btn.addEventListener('click', () => scrollToSection(id));
+      }
+      dock.appendChild(btn);
+    });
+
+    // Add button
+    const addBtn = document.createElement('button');
+    addBtn.className = editMode ? 'ql-add-btn' : 'ql-add-btn';
+    addBtn.title = editMode ? 'Add shortcut' : 'Customise';
+    addBtn.textContent = editMode ? '+' : '✎';
+    addBtn.style.cssText = editMode ? '' : 'font-size:18px;';
+    addBtn.addEventListener('click', () => {
+      if (!editMode) {
+        editMode = true;
+        dock.classList.add('ql-edit-mode');
+        renderDock();
+      } else {
+        openAddModal();
+      }
+    });
+    dock.appendChild(addBtn);
+
+    if (editMode) {
+      dock.classList.add('ql-edit-mode');
+      // Done button
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'ql-add-btn';
+      doneBtn.style.cssText = 'font-size:11px;font-weight:700;font-family:var(--font-mono);color:#7EB8F7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.07);';
+      doneBtn.textContent = 'Done';
+      doneBtn.addEventListener('click', () => {
+        editMode = false;
+        dock.classList.remove('ql-edit-mode');
+        renderDock();
+      });
+      dock.appendChild(doneBtn);
+    } else {
+      dock.classList.remove('ql-edit-mode');
+    }
+  }
+
+  function openEditModal(idx) {
+    editingIndex = idx;
+    showModal(shortcuts[idx]);
+  }
+
+  function openAddModal() {
+    editingIndex = null;
+    showModal(null);
+  }
+
+  function showModal(currentId) {
+    const overlay = document.createElement('div');
+    overlay.className = 'ql-modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'ql-modal';
+    modal.innerHTML = `
+      <div class="ql-modal-title">${editingIndex !== null ? 'Change shortcut' : 'Add shortcut'}</div>
+      <div class="ql-modal-grid" id="qlModalGrid"></div>
+      <div class="ql-modal-btns">
+        <button class="ql-modal-cancel">Cancel</button>
+        <button class="ql-modal-save">Save</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    let selected = currentId;
+    const grid = modal.querySelector('#qlModalGrid');
+    ALL_SECTIONS.forEach(sec => {
+      const opt = document.createElement('div');
+      opt.className = 'ql-modal-option' + (sec.id === selected ? ' selected' : '');
+      opt.innerHTML = `<span class="ql-modal-opt-icon">${sec.icon}</span><span class="ql-modal-opt-label">${sec.label}</span>`;
+      opt.addEventListener('click', () => {
+        grid.querySelectorAll('.ql-modal-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selected = sec.id;
+      });
+      grid.appendChild(opt);
+    });
+
+    modal.querySelector('.ql-modal-cancel').addEventListener('click', () => overlay.remove());
+    modal.querySelector('.ql-modal-save').addEventListener('click', () => {
+      if (!selected) { overlay.remove(); return; }
+      if (editingIndex !== null) {
+        shortcuts[editingIndex] = selected;
+      } else {
+        if (!shortcuts.includes(selected)) shortcuts.push(selected);
+      }
+      storeSet(STORAGE_KEY, shortcuts);
+      overlay.remove();
+      renderDock();
+    });
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  }
+
+  renderDock();
 })();
 </script>
 </body>
