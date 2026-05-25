@@ -2278,9 +2278,19 @@ function impRenderPreview(days, startDateStr) {
         rIn.dataset.field = 'reps';
         const atLbl = document.createElement('span'); atLbl.className = 'imp-ex-lbl'; atLbl.textContent = '@';
         const wIn = document.createElement('input');
-        wIn.type = 'number'; wIn.className = 'imp-ex-num-input'; wIn.style.width = '62px';
-        wIn.value = ex.weight || ''; wIn.placeholder = 'kg'; wIn.min = '0'; wIn.step = '0.5';
+        wIn.type = 'text'; wIn.className = 'imp-ex-num-input'; wIn.style.width = '62px';
+        wIn.value = ex.weight || ''; wIn.placeholder = 'kg / BW';
         wIn.dataset.field = 'weight';
+        const updateBwHint = () => {
+          const v = wIn.value.trim().toUpperCase();
+          if (v === 'BW') {
+            const prof = loadProfile();
+            wIn.title = prof?.weight ? `BW = ${prof.weight} kg` : 'BW (sæt din vægt i profil)';
+            wIn.style.color = '#7EB8F7';
+          } else { wIn.title = ''; wIn.style.color = ''; }
+        };
+        wIn.addEventListener('input', updateBwHint);
+        updateBwHint();
         const kgLbl = document.createElement('span'); kgLbl.className = 'imp-ex-lbl'; kgLbl.textContent = 'kg';
         row.appendChild(sIn); row.appendChild(xLbl); row.appendChild(rIn);
         row.appendChild(atLbl); row.appendChild(wIn); row.appendChild(kgLbl);
@@ -2321,11 +2331,13 @@ function impReadFromDOM() {
       const name = row.querySelector('[data-field="name"]').value.trim();
       if (!name) return;
       if (type === 'strength') {
+        const rawW = (row.querySelector('[data-field="weight"]')?.value || '').trim();
+        const parsedW = rawW ? cwParseWeight(rawW) : null;
         exercises.push({
           type: 'strength', name,
           sets:   parseInt(row.querySelector('[data-field="sets"]')?.value)   || null,
           reps:   parseInt(row.querySelector('[data-field="reps"]')?.value)   || null,
-          weight: parseFloat(row.querySelector('[data-field="weight"]')?.value) || null,
+          weight: parsedW,
           duration: null
         });
       } else if (type === 'cardio') {
