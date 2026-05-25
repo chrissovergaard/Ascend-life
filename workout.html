@@ -1048,6 +1048,32 @@
     }
     .wtc-send-btn:hover { transform:scale(1.08); }
     .wtc-send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    /* ── Quick Launch Dock ── */
+    .ql-dock { display:flex;gap:10px;margin:0 0 18px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none; }
+    .ql-dock::-webkit-scrollbar { display:none; }
+    .ql-btn { flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:62px;height:62px;border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.03) 100%);border:1px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.13);box-shadow:0 4px 16px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.06) inset;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s,background 0.18s;padding:0;color:#fff;text-decoration:none;position:relative; }
+    .ql-btn:active { transform:scale(0.91); }
+    .ql-btn:hover { background:linear-gradient(145deg,rgba(255,255,255,0.11) 0%,rgba(255,255,255,0.05) 100%); }
+    .ql-btn-icon { font-size:22px;line-height:1; }
+    .ql-btn-label { font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:8.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#888;text-align:center;line-height:1.1;max-width:56px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
+    .ql-add-btn { flex-shrink:0;width:62px;height:62px;border-radius:15px;background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;color:#888;cursor:pointer;transition:background 0.15s,border-color 0.15s; }
+    .ql-add-btn:hover { background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.25); }
+    .ql-edit-mode .ql-btn { animation:ql-jiggle 0.45s ease-in-out infinite alternate; }
+    @keyframes ql-jiggle { 0%{transform:rotate(-1.5deg)} 100%{transform:rotate(1.5deg)} }
+    .ql-remove-badge { position:absolute;top:-6px;left:-6px;width:18px;height:18px;border-radius:50%;background:#FF6B6B;border:1.5px solid #000;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;color:#fff;font-weight:700;cursor:pointer;z-index:2; }
+    .ql-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(8px); }
+    .ql-modal { background:#111;border:1px solid rgba(255,255,255,0.12);border-top-color:rgba(255,255,255,0.2);border-radius:20px;padding:24px;width:min(360px,90vw);box-shadow:0 24px 80px rgba(0,0,0,0.8); }
+    .ql-modal-title { font-size:13px;font-weight:700;margin-bottom:16px;color:#fff; }
+    .ql-modal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:55vh;overflow-y:auto;margin-bottom:16px; }
+    .ql-modal-option { display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid transparent;transition:background 0.15s,border-color 0.15s; }
+    .ql-modal-option:hover { background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12); }
+    .ql-modal-option.selected { background:rgba(126,184,247,0.12);border-color:rgba(126,184,247,0.35); }
+    .ql-modal-opt-icon { font-size:20px; }
+    .ql-modal-opt-label { font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:8px;font-weight:700;text-transform:uppercase;color:#ccc;text-align:center; }
+    .ql-modal-btns { display:flex;gap:8px;justify-content:flex-end; }
+    .ql-modal-cancel { background:none;border:1px solid rgba(255,255,255,0.15);color:#ccc;border-radius:10px;padding:8px 16px;font-size:12px;cursor:pointer; }
+    .ql-modal-save { background:linear-gradient(135deg,#7EB8F7,#5A9ED4);border:none;color:#000;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="premium.css">
@@ -1064,6 +1090,7 @@
     <a href="coach.html" class="nav-link">Coach</a>
     <a href="finance.html" class="nav-link">Finance</a>
   </nav>
+  <div class="ql-dock" id="qlDock"></div>
 
   <h1 class="dash-title">Workout Tracker</h1>
 
@@ -4465,6 +4492,77 @@ Svar PÅ DANSK. Vær konkret og datadrevet — brug de faktiske tal. 2-4 sætnin
   const s = storeGet('coach_settings') || {};
   if ((s.groqKey || '').trim()) wtcUpdateBadge(true);
 
+})();
+
+// ==================== QUICK LAUNCH DOCK ====================
+(function() {
+  const ALL_SHORTCUTS = [
+    { key:'page-dashboard',type:'page',href:'index.html',    icon:'🏠',label:'Dashboard' },
+    { key:'page-workout',  type:'page',href:'workout.html',  icon:'🏋️',label:'Workout' },
+    { key:'page-coach',    type:'page',href:'coach.html',    icon:'🤖',label:'Coach' },
+    { key:'page-calendar', type:'page',href:'calendar.html', icon:'📆',label:'Calendar' },
+    { key:'page-analytics',type:'page',href:'analytics.html',icon:'📊',label:'Analytics' },
+    { key:'page-nutrition',type:'page',href:'nutrition.html',icon:'🥗',label:'Nutrition' },
+    { key:'page-finance',  type:'page',href:'finance.html',  icon:'💰',label:'Finance' },
+    { key:'sec-recovery',  type:'section',sectionId:'sec-recovery',       icon:'💚',label:'Recovery' },
+    { key:'sec-goals',     type:'section',sectionId:'sec-goals',          icon:'🎯',label:'Goals' },
+    { key:'sec-habits',    type:'section',sectionId:'sec-habits',         icon:'✅',label:'Habits' },
+    { key:'sec-dayplan',   type:'section',sectionId:'dayPlanSection',     icon:'📅',label:'Day Plan' },
+    { key:'sec-insights',  type:'section',sectionId:'sec-insights',       icon:'🧠',label:'AI' },
+    { key:'sec-circadian', type:'section',sectionId:'circadianSection',   icon:'🌙',label:'Circadian' },
+    { key:'sec-recs',      type:'section',sectionId:'sec-recommendations',icon:'⚡',label:'Recs' },
+    { key:'sec-weight',    type:'section',sectionId:'sec-bodyweight',     icon:'⚖️',label:'Weight' },
+    { key:'sec-alarm',     type:'section',sectionId:'sleepAlarmSection',  icon:'⏰',label:'Alarm' },
+    { key:'sec-profile',   type:'section',sectionId:'sec-profile',        icon:'👤',label:'Profile' },
+  ];
+  const STORAGE_KEY = 'lifeos_ql_shortcuts';
+  const DEFAULT_KEYS = ['sec-recovery','page-workout','page-coach','sec-goals','sec-habits','sec-dayplan'];
+  let shortcuts = (function(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||DEFAULT_KEYS; }catch(e){ return DEFAULT_KEYS; } })();
+  let editMode = false; let editingIndex = null;
+  function saveShortcuts(){ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(shortcuts)); }catch(e){} }
+  function handleClick(sc){ if(sc.type==='page'){ window.location.href=sc.href; } else { const el=document.getElementById(sc.sectionId); if(el){ window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-16,behavior:'smooth'}); } else { window.location.href='index.html#'+sc.sectionId; } } }
+  function renderDock(){
+    const dock=document.getElementById('qlDock'); if(!dock) return;
+    dock.innerHTML=''; if(editMode) dock.classList.add('ql-edit-mode'); else dock.classList.remove('ql-edit-mode');
+    shortcuts.forEach((key,i)=>{
+      const sc=ALL_SHORTCUTS.find(s=>s.key===key); if(!sc) return;
+      const btn=document.createElement('button'); btn.className='ql-btn'; btn.title=sc.label;
+      btn.innerHTML=`<span class="ql-btn-icon">${sc.icon}</span><span class="ql-btn-label">${sc.label}</span>`;
+      if(editMode){
+        const rm=document.createElement('span'); rm.className='ql-remove-badge'; rm.textContent='−';
+        rm.addEventListener('click',e=>{e.stopPropagation();shortcuts.splice(i,1);saveShortcuts();renderDock();});
+        btn.appendChild(rm); btn.addEventListener('click',()=>{editingIndex=i;showModal(key);});
+      } else { btn.addEventListener('click',()=>handleClick(sc)); }
+      dock.appendChild(btn);
+    });
+    const addBtn=document.createElement('button'); addBtn.className='ql-add-btn';
+    addBtn.title=editMode?'Add shortcut':'Customise'; addBtn.textContent=editMode?'+':'✎';
+    if(!editMode) addBtn.style.fontSize='18px';
+    addBtn.addEventListener('click',()=>{ if(!editMode){editMode=true;renderDock();} else{editingIndex=null;showModal(null);} });
+    dock.appendChild(addBtn);
+    if(editMode){
+      const doneBtn=document.createElement('button'); doneBtn.className='ql-add-btn';
+      doneBtn.style.cssText='font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:#7EB8F7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.07);';
+      doneBtn.textContent='Done'; doneBtn.addEventListener('click',()=>{editMode=false;renderDock();}); dock.appendChild(doneBtn);
+    }
+  }
+  function showModal(currentKey){
+    const overlay=document.createElement('div'); overlay.className='ql-modal-overlay';
+    const modal=document.createElement('div'); modal.className='ql-modal';
+    modal.innerHTML=`<div class="ql-modal-title">${editingIndex!==null?'Change shortcut':'Add shortcut'}</div><div class="ql-modal-grid" id="qlModalGrid"></div><div class="ql-modal-btns"><button class="ql-modal-cancel">Cancel</button><button class="ql-modal-save">Save</button></div>`;
+    overlay.appendChild(modal); document.body.appendChild(overlay);
+    let selected=currentKey; const grid=modal.querySelector('#qlModalGrid');
+    ALL_SHORTCUTS.forEach(sc=>{
+      const opt=document.createElement('div'); opt.className='ql-modal-option'+(sc.key===selected?' selected':'');
+      opt.innerHTML=`<span class="ql-modal-opt-icon">${sc.icon}</span><span class="ql-modal-opt-label">${sc.label}</span>`;
+      opt.addEventListener('click',()=>{grid.querySelectorAll('.ql-modal-option').forEach(o=>o.classList.remove('selected'));opt.classList.add('selected');selected=sc.key;});
+      grid.appendChild(opt);
+    });
+    modal.querySelector('.ql-modal-cancel').addEventListener('click',()=>overlay.remove());
+    modal.querySelector('.ql-modal-save').addEventListener('click',()=>{ if(!selected){overlay.remove();return;} if(editingIndex!==null) shortcuts[editingIndex]=selected; else if(!shortcuts.includes(selected)) shortcuts.push(selected); saveShortcuts();overlay.remove();renderDock(); });
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  }
+  renderDock();
 })();
 </script>
 </body>
