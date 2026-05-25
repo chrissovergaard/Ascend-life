@@ -1080,14 +1080,22 @@
         <span class="imp-toggle-badge" id="impToggleBadge"></span>
       </div>
       <div class="imp-body" id="impBody">
-        <div class="cw-config-row" style="margin-bottom:14px;align-items:flex-end">
-          <div class="cw-config-item">
+        <div class="cw-config-row" style="margin-bottom:14px;align-items:flex-end;flex-wrap:wrap;gap:12px">
+          <div class="cw-config-item" id="impStartDateWrap">
             <div class="cw-config-label" style="color:#FFA500">Program Start Date</div>
             <input type="date" id="impStartDate" class="imp-date-input">
           </div>
           <div class="cw-config-item">
             <div class="cw-config-label">Workout Time</div>
             <input type="time" id="impSchedTime" class="cw-time-input" value="18:00">
+          </div>
+          <div class="cw-config-item" style="align-self:center;padding-top:16px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+              <div id="impRepeatToggleBtn" style="width:36px;height:20px;background:#1C1C1C;border:1px solid #333;border-radius:10px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
+                <div id="impRepeatThumb" style="width:14px;height:14px;background:#666;border-radius:50%;position:absolute;top:2px;left:2px;transition:all 0.2s"></div>
+              </div>
+              <span id="impRepeatLabel" style="font-size:12px;color:var(--text-secondary)">Gentages ugentligt</span>
+            </label>
           </div>
         </div>
         <div class="imp-hint">
@@ -2141,6 +2149,24 @@ function impParseProgram(text) {
 // ---- Preview ----
 let _impDays = [];
 
+const DOW_DA   = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+const DOW_SHORT = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+
+function detectWeekday(label) {
+  const map = { 'mandag':1,'monday':1,'mon':1,'tirsdag':2,'tuesday':2,'tue':2,'onsdag':3,'wednesday':3,'wed':3,'torsdag':4,'thursday':4,'thu':4,'fredag':5,'friday':5,'fri':5,'lørdag':6,'saturday':6,'sat':6,'søndag':0,'sunday':0,'sun':0 };
+  const lower = label.toLowerCase();
+  for (const [k,v] of Object.entries(map)) { if (lower.includes(k)) return v; }
+  return null;
+}
+
+function nextWeekdayDate(wd) {
+  const today = new Date(); const todayDow = today.getDay();
+  let diff = wd - todayDow; if (diff < 0) diff += 7;
+  const d = new Date(today); d.setDate(today.getDate() + diff); return dateToStr(d);
+}
+
+let _impRepeat = false;
+
 function impRenderPreview(days, startDateStr) {
   _impDays = days;
   const preview  = document.getElementById('impPreview');
@@ -2152,7 +2178,7 @@ function impRenderPreview(days, startDateStr) {
 
   // Compute dates from startDate
   let startJs = null;
-  if (startDateStr) {
+  if (!_impRepeat && startDateStr) {
     const [sy, sm, sd] = startDateStr.split('-').map(Number);
     startJs = new Date(sy, sm - 1, sd);
   }
@@ -2165,11 +2191,15 @@ function impRenderPreview(days, startDateStr) {
     card.dataset.di = di;
     if (day._date) card.dataset.date = day._date;
 
-    // Compute date for this day
-    let dateLabel = '';
-    if (startJs) {
-      const d = new Date(startJs); d.setDate(startJs.getDate() + di);
-      dateLabel = formatDate(dateToStr(d));
+    // Compute date / weekday — prefer per-day override (_date) over start+offset
+    let computedDateStr = '';
+    if (!_impRepeat) {
+      if (day._date) {
+        computedDateStr = day._date;
+      } else if (startJs) {
+        const d = new Date(startJs); d.setDate(startJs.getDate() + di);
+        computedDateStr = dateToStr(d);
+      }
     }
 
     // Day header row
@@ -2178,11 +2208,33 @@ function impRenderPreview(days, startDateStr) {
     nameIn.type = 'text'; nameIn.className = 'imp-day-name-input';
     nameIn.value = day.dayLabel; nameIn.placeholder = 'Day name';
 
-    if (dateLabel) {
+    if (_impRepeat) {
+      const autoWd = detectWeekday(day.dayLabel) ?? ((di + 1) % 7);
+      const sel = document.createElement('select');
+      sel.className = 'imp-weekday-sel';
+      sel.style.cssText = 'background:#111;border:1px solid #333;border-radius:8px;padding:4px 10px;color:#7EB8F7;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;outline:none;flex-shrink:0;';
+      DOW_DA.forEach((d,i) => { const o=document.createElement('option'); o.value=i; o.textContent='Hver '+d; if(i===autoWd) o.selected=true; sel.appendChild(o); });
+      hdr.appendChild(nameIn); hdr.appendChild(sel);
+    } else if (computedDateStr) {
+      // Clickable date label → hidden date input
+      const dateWrap = document.createElement('span');
+      dateWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       const dateLbl = document.createElement('span');
-      dateLbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:#FFA500;flex-shrink:0;white-space:nowrap;';
-      dateLbl.textContent = dateLabel;
-      hdr.appendChild(nameIn); hdr.appendChild(dateLbl);
+      dateLbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:#FFA500;white-space:nowrap;cursor:pointer;border-bottom:1px dashed rgba(255,165,0,0.4);padding-bottom:1px;';
+      dateLbl.textContent = formatDate(computedDateStr);
+      dateLbl.title = 'Klik for at ændre dato';
+      const dateIn = document.createElement('input');
+      dateIn.type = 'date'; dateIn.value = computedDateStr;
+      dateIn.style.cssText = 'display:none;background:#111;border:1px solid #555;border-radius:7px;padding:3px 7px;color:#FFA500;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
+      dateLbl.addEventListener('click', e => { e.stopPropagation(); dateIn.style.display = ''; dateLbl.style.display = 'none'; dateIn.focus(); });
+      dateIn.addEventListener('change', () => {
+        if (!dateIn.value) return;
+        _impDays[di]._date = dateIn.value;
+        impRenderPreview([..._impDays], document.getElementById('impStartDate')?.value);
+      });
+      dateIn.addEventListener('blur', () => { dateIn.style.display = 'none'; dateLbl.style.display = ''; });
+      dateWrap.appendChild(dateLbl); dateWrap.appendChild(dateIn);
+      hdr.appendChild(nameIn); hdr.appendChild(dateWrap);
     } else {
       hdr.appendChild(nameIn);
     }
@@ -2286,7 +2338,9 @@ function impReadFromDOM() {
         exercises.push({ type: 'rest', name, sets:null, reps:null, weight:null, duration:null });
       }
     });
-    if (exercises.length > 0) result.push({ dayLabel, exercises, _date: card.dataset.date || null });
+    const wdSel = card.querySelector('.imp-weekday-sel');
+    const weekDay = wdSel ? parseInt(wdSel.value) : null;
+    if (exercises.length > 0) result.push({ dayLabel, exercises, _date: card.dataset.date || null, weekDay });
   });
   return result;
 }
@@ -2324,34 +2378,49 @@ function impImportAndSchedule() {
   });
   storeSet('lifeos_programs', programs);
 
-  // Start date: use picker value, fall back to today
-  const time        = (document.getElementById('impSchedTime') || {}).value || '18:00';
-  const pickerVal   = (document.getElementById('impStartDate') || {}).value;
-  const startDate   = pickerVal || dateToStr(new Date());
-  const [sy, sm, sd] = startDate.split('-').map(Number);
-  const startJs     = new Date(sy, sm - 1, sd);
-
-  // Original first date from JSON (if present)
+  const time = (document.getElementById('impSchedTime') || {}).value || '18:00';
   const origStartDate = days[0]?._date || null;
+  const today = dateToStr(new Date());
 
-  const programDays = days.map((day, i) => {
-    const d = new Date(startJs); d.setDate(startJs.getDate() + i);
-    return {
-      dayNumber: i + 1, label: day.dayLabel,
-      date: dateToStr(d),
-      week: day._meta?.week || null,
-      type: day._meta?.type || null,
-      exercises: day.exercises.map(e => ({ ...e })),
-      completed: false, completedDate: null, actual: null
-    };
-  });
+  let programDays;
+  let startDate;
+
+  if (_impRepeat) {
+    // Weekly repeat: each day assigned to a fixed day-of-week
+    startDate = today;
+    programDays = days.map((day, i) => {
+      const wd = day.weekDay ?? ((i + 1) % 7);
+      return {
+        dayNumber: i + 1, label: day.dayLabel,
+        date: nextWeekdayDate(wd), weekDay: wd,
+        exercises: day.exercises.map(e => ({ ...e })),
+        completed: false, completedDate: null, actual: null
+      };
+    });
+  } else {
+    const pickerVal = (document.getElementById('impStartDate') || {}).value;
+    startDate = pickerVal || today;
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const startJs = new Date(sy, sm - 1, sd);
+    programDays = days.map((day, i) => {
+      const d = new Date(startJs); d.setDate(startJs.getDate() + i);
+      return {
+        dayNumber: i + 1, label: day.dayLabel,
+        date: dateToStr(d),
+        week: day._meta?.week || null,
+        type: day._meta?.type || null,
+        exercises: day.exercises.map(e => ({ ...e })),
+        completed: false, completedDate: null, actual: null
+      };
+    });
+  }
 
   const program = {
     id: Date.now(), importedAt: new Date().toISOString(),
     name: `${days.length}-Day Training Program`,
-    totalDays: days.length, workoutTime: time, repeat: false,
+    totalDays: days.length, workoutTime: time, repeat: _impRepeat,
     startDate, originalStartDate: origStartDate,
-    importDate: dateToStr(new Date()),
+    importDate: today,
     days: programDays
   };
   storeSet('lifeos_custom_program', program);
@@ -2360,11 +2429,11 @@ function impImportAndSchedule() {
   const prog21 = {
     name: `${days.length}-Day Training Program`,
     startDate, originalStartDate: origStartDate,
-    importDate: dateToStr(new Date()),
+    importDate: today,
     workouts: programDays.map(d => ({
       id: d.dayNumber, date: d.date,
       day: d.label.split(' — ')[0] || d.label,
-      week: d.week, name: d.label, type: d.type,
+      week: d.week || null, name: d.label, type: d.type || null,
       exercises: d.exercises.filter(e => e.type === 'strength'),
       cardio: d.exercises.filter(e => e.type === 'cardio').map(e => e.name).join(', ') || null,
       completed: false, completedDate: null
@@ -2375,19 +2444,41 @@ function impImportAndSchedule() {
   // Create calendar events (skip rest days) — use 'Program' category (orange)
   const events = storeGet('lifeos_events') || [];
   let evtCreated = 0;
-  program.days.forEach(day => {
-    const isRest = day.exercises.every(e => e.type === 'rest');
-    if (isRest) return;
-    const title = day.label || `Day ${day.dayNumber} Workout`;
-    const desc  = day.exercises.filter(e => e.type !== 'rest').map(e => {
-      if (e.type === 'cardio') return `${e.name} ${e.duration || ''}min`.trim();
-      const sr = e.sets && e.reps ? ` ${e.sets}×${e.reps}` : '';
-      const w  = e.weight ? ` @ ${e.weight}kg` : '';
-      return `${e.name}${sr}${w}`;
-    }).join(', ');
-    events.push({ id: Date.now() + Math.random(), title, date: day.date, time, category: 'Program', description: desc });
-    evtCreated++;
-  });
+
+  if (_impRepeat) {
+    // Generate 8 weeks of recurring events per day
+    programDays.forEach(day => {
+      const isRest = day.exercises.every(e => e.type === 'rest');
+      if (isRest) return;
+      const title = day.label || `Day ${day.dayNumber} Workout`;
+      const desc  = day.exercises.filter(e => e.type !== 'rest').map(e => {
+        if (e.type === 'cardio') return `${e.name} ${e.duration || ''}min`.trim();
+        const sr = e.sets && e.reps ? ` ${e.sets}×${e.reps}` : '';
+        const w  = e.weight ? ` @ ${e.weight}kg` : '';
+        return `${e.name}${sr}${w}`;
+      }).join(', ');
+      for (let week = 0; week < 8; week++) {
+        const base = new Date(day.date + 'T12:00:00');
+        base.setDate(base.getDate() + week * 7);
+        events.push({ id: Date.now() + Math.random(), title, date: dateToStr(base), time, category: 'Program', description: desc, repeatWeekDay: day.weekDay });
+        evtCreated++;
+      }
+    });
+  } else {
+    programDays.forEach(day => {
+      const isRest = day.exercises.every(e => e.type === 'rest');
+      if (isRest) return;
+      const title = day.label || `Day ${day.dayNumber} Workout`;
+      const desc  = day.exercises.filter(e => e.type !== 'rest').map(e => {
+        if (e.type === 'cardio') return `${e.name} ${e.duration || ''}min`.trim();
+        const sr = e.sets && e.reps ? ` ${e.sets}×${e.reps}` : '';
+        const w  = e.weight ? ` @ ${e.weight}kg` : '';
+        return `${e.name}${sr}${w}`;
+      }).join(', ');
+      events.push({ id: Date.now() + Math.random(), title, date: day.date, time, category: 'Program', description: desc });
+      evtCreated++;
+    });
+  }
   storeSet('lifeos_events', events);
 
   // Reset UI
@@ -2406,8 +2497,9 @@ function impImportAndSchedule() {
   let sEl = document.getElementById('impSchedSuccess');
   if (!sEl) { sEl = document.createElement('div'); sEl.id = 'impSchedSuccess'; body.insertBefore(sEl, body.firstChild); }
   sEl.className = 'cw-success';
+  const repeatNote = _impRepeat ? ` · ↻ Gentages ugentligt (8 uger)` : ` · Starting ${formatDate(program.startDate)}`;
   sEl.innerHTML = `<div class="cw-success-main">✓ ${days.length} workout${days.length!==1?'s':''} imported!</div>
-    <div class="cw-success-sub">📅 ${evtCreated} orange calendar event${evtCreated!==1?'s':''} created · Starting ${formatDate(program.startDate)}</div>`;
+    <div class="cw-success-sub">📅 ${evtCreated} orange calendar event${evtCreated!==1?'s':''} created${repeatNote}</div>`;
 }
 
 // ---- Saved programs ----
@@ -2552,6 +2644,21 @@ function impStartFromTemplate(prog) {
     _impDays = [];
   });
   document.getElementById('impImportBtn').addEventListener('click', impImportAndSchedule);
+
+  document.getElementById('impRepeatToggleBtn').addEventListener('click', () => {
+    _impRepeat = !_impRepeat;
+    const thumb = document.getElementById('impRepeatThumb');
+    const btn   = document.getElementById('impRepeatToggleBtn');
+    const wrap  = document.getElementById('impStartDateWrap');
+    thumb.style.transform  = _impRepeat ? 'translateX(16px)' : '';
+    thumb.style.background = _impRepeat ? '#7EB8F7' : '#666';
+    btn.style.background   = _impRepeat ? 'rgba(126,184,247,0.2)' : '#1C1C1C';
+    btn.style.borderColor  = _impRepeat ? 'rgba(126,184,247,0.4)' : '#333';
+    wrap.style.opacity        = _impRepeat ? '0.35' : '1';
+    wrap.style.pointerEvents  = _impRepeat ? 'none' : '';
+    if (_impDays.length) impRenderPreview([..._impDays], document.getElementById('impStartDate')?.value);
+  });
+
   renderPrograms();
 })();
 
@@ -2760,9 +2867,16 @@ function cwRenderProgram() {
       if (!confirm('Delete the active program and remove all its calendar events?')) return;
       const p = storeGet('lifeos_custom_program');
       if (p?.days) {
-        const progDates = new Set(p.days.map(d => d.date));
-        const events = (storeGet('lifeos_events') || []).filter(e => !(e.category === 'Program' && progDates.has(e.date)));
-        storeSet('lifeos_events', events);
+        if (p.repeat) {
+          // Remove all Program events that share a title with any program day
+          const progTitles = new Set(p.days.map(d => d.label).filter(Boolean));
+          const events = (storeGet('lifeos_events') || []).filter(e => !(e.category === 'Program' && (e.repeatWeekDay != null || progTitles.has(e.title))));
+          storeSet('lifeos_events', events);
+        } else {
+          const progDates = new Set(p.days.map(d => d.date));
+          const events = (storeGet('lifeos_events') || []).filter(e => !(e.category === 'Program' && progDates.has(e.date)));
+          storeSet('lifeos_events', events);
+        }
       }
       localStorage.removeItem('lifeos_custom_program');
       localStorage.removeItem('lifeos_21day_program');
@@ -2809,8 +2923,12 @@ function cwRenderProgram() {
     const isRest    = day.exercises.every(e => e.type === 'rest');
     const isCardio  = !isRest && day.exercises.every(e => e.type === 'cardio' || /fodbold|football|soccer|løb|run|swim|cardio|cykling|bike/i.test(e.name));
     const noGym     = isRest || isCardio;
-    const isToday = day.date === today;
-    const isPast  = day.date < today && !day.completed;
+
+    // For repeat programs, compute dynamic next occurrence date
+    const displayDate = (prog.repeat && day.weekDay != null) ? nextWeekdayDate(day.weekDay) : day.date;
+    const isToday = displayDate === today;
+    const isPast  = !prog.repeat && displayDate < today && !day.completed;
+
     const item = document.createElement('div'); item.className = 'cw-prog-item';
 
     const hdr = document.createElement('div'); hdr.className = 'cw-prog-hdr';
@@ -2818,41 +2936,54 @@ function cwRenderProgram() {
     num.textContent = `DAY ${day.dayNumber}`;
     const lbl = document.createElement('span'); lbl.className = 'cw-prog-lbl';
     lbl.textContent = day.label || (isRest ? 'Rest' : 'Workout');
+
+    // Date column — repeat programs show "↻ Mandag" badge; others show editable date
     const dt = document.createElement('span'); dt.className = 'cw-prog-date';
-    dt.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;';
-    const dtLabel = document.createElement('span');
-    dtLabel.textContent = formatDate(day.date);
-    dtLabel.title = 'Klik for at ændre dato';
-    const dtInput = document.createElement('input');
-    dtInput.type = 'date'; dtInput.value = day.date;
-    dtInput.style.cssText = 'display:none;background:#111;border:1px solid #333;border-radius:7px;padding:3px 7px;color:#fff;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
-    dtLabel.addEventListener('click', e => { e.stopPropagation(); dtInput.style.display = ''; dtLabel.style.display = 'none'; dtInput.focus(); });
-    dtInput.addEventListener('change', e => {
-      e.stopPropagation();
-      const newDate = dtInput.value;
-      if (!newDate) return;
-      const p = storeGet('lifeos_custom_program');
-      if (p && p.days[di]) {
-        const oldDate = p.days[di].date;
-        p.days[di].date = newDate;
-        storeSet('lifeos_custom_program', p);
-        // Update matching calendar event date
-        const evs = storeGet('lifeos_events') || [];
-        const evIdx = evs.findIndex(ev => (ev.category === 'Program' || ev.category === 'Workout') && ev.date === oldDate && (ev.title || ev.name || '').includes(p.days[di].label || ''));
-        if (evIdx >= 0) { evs[evIdx].date = newDate; storeSet('lifeos_events', evs); }
-      }
-      dtLabel.textContent = formatDate(newDate);
-      dtInput.style.display = 'none'; dtLabel.style.display = '';
-      renderCwProgram();
-    });
-    dtInput.addEventListener('blur', () => { dtInput.style.display = 'none'; dtLabel.style.display = ''; });
-    dt.appendChild(dtLabel); dt.appendChild(dtInput);
+    if (prog.repeat && day.weekDay != null) {
+      dt.style.cssText = 'display:flex;align-items:center;gap:5px;';
+      const badge = document.createElement('span');
+      badge.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:#7EB8F7;background:rgba(126,184,247,0.1);border:1px solid rgba(126,184,247,0.25);border-radius:5px;padding:2px 7px;white-space:nowrap;';
+      badge.textContent = `↻ ${DOW_DA[day.weekDay]}`;
+      const nextLbl = document.createElement('span');
+      nextLbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);';
+      nextLbl.textContent = formatDate(displayDate);
+      dt.appendChild(badge); dt.appendChild(nextLbl);
+    } else {
+      dt.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;';
+      const dtLabel = document.createElement('span');
+      dtLabel.textContent = formatDate(displayDate);
+      dtLabel.title = 'Klik for at ændre dato';
+      const dtInput = document.createElement('input');
+      dtInput.type = 'date'; dtInput.value = displayDate;
+      dtInput.style.cssText = 'display:none;background:#111;border:1px solid #333;border-radius:7px;padding:3px 7px;color:#fff;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
+      dtLabel.addEventListener('click', e => { e.stopPropagation(); dtInput.style.display = ''; dtLabel.style.display = 'none'; dtInput.focus(); });
+      dtInput.addEventListener('change', e => {
+        e.stopPropagation();
+        const newDate = dtInput.value;
+        if (!newDate) return;
+        const p = storeGet('lifeos_custom_program');
+        if (p && p.days[di]) {
+          const oldDate = p.days[di].date;
+          p.days[di].date = newDate;
+          storeSet('lifeos_custom_program', p);
+          const evs = storeGet('lifeos_events') || [];
+          const evIdx = evs.findIndex(ev => (ev.category === 'Program' || ev.category === 'Workout') && ev.date === oldDate && (ev.title || ev.name || '').includes(p.days[di].label || ''));
+          if (evIdx >= 0) { evs[evIdx].date = newDate; storeSet('lifeos_events', evs); }
+        }
+        dtLabel.textContent = formatDate(newDate);
+        dtInput.style.display = 'none'; dtLabel.style.display = '';
+        cwRenderProgram();
+      });
+      dtInput.addEventListener('blur', () => { dtInput.style.display = 'none'; dtLabel.style.display = ''; });
+      dt.appendChild(dtLabel); dt.appendChild(dtInput);
+    }
+
     const st = document.createElement('span'); st.className = 'cw-prog-status';
     if (day.completed)      { st.classList.add('done');    st.textContent = '✓ Done'; }
     else if (isToday)       { st.classList.add('today');   st.textContent = 'Today'; }
     else if (isRest)        { st.classList.add('rest');    st.textContent = 'Rest'; }
     else if (isPast)        { st.classList.add('missed');  st.textContent = 'Missed'; }
-    else                    { st.classList.add('planned'); st.textContent = 'Planned'; }
+    else                    { st.classList.add('planned'); st.textContent = prog.repeat ? `Hver ${DOW_SHORT[day.weekDay]}` : 'Planned'; }
     const ico = document.createElement('span'); ico.className = 'wt-expand-icon'; ico.textContent = '▾';
     hdr.appendChild(num); hdr.appendChild(lbl); hdr.appendChild(dt); hdr.appendChild(st); hdr.appendChild(ico);
 
