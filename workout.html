@@ -2819,7 +2819,34 @@ function cwRenderProgram() {
     const lbl = document.createElement('span'); lbl.className = 'cw-prog-lbl';
     lbl.textContent = day.label || (isRest ? 'Rest' : 'Workout');
     const dt = document.createElement('span'); dt.className = 'cw-prog-date';
-    dt.textContent = formatDate(day.date);
+    dt.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;';
+    const dtLabel = document.createElement('span');
+    dtLabel.textContent = formatDate(day.date);
+    dtLabel.title = 'Klik for at ændre dato';
+    const dtInput = document.createElement('input');
+    dtInput.type = 'date'; dtInput.value = day.date;
+    dtInput.style.cssText = 'display:none;background:#111;border:1px solid #333;border-radius:7px;padding:3px 7px;color:#fff;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
+    dtLabel.addEventListener('click', e => { e.stopPropagation(); dtInput.style.display = ''; dtLabel.style.display = 'none'; dtInput.focus(); });
+    dtInput.addEventListener('change', e => {
+      e.stopPropagation();
+      const newDate = dtInput.value;
+      if (!newDate) return;
+      const p = storeGet('lifeos_custom_program');
+      if (p && p.days[di]) {
+        const oldDate = p.days[di].date;
+        p.days[di].date = newDate;
+        storeSet('lifeos_custom_program', p);
+        // Update matching calendar event date
+        const evs = storeGet('lifeos_events') || [];
+        const evIdx = evs.findIndex(ev => (ev.category === 'Program' || ev.category === 'Workout') && ev.date === oldDate && (ev.title || ev.name || '').includes(p.days[di].label || ''));
+        if (evIdx >= 0) { evs[evIdx].date = newDate; storeSet('lifeos_events', evs); }
+      }
+      dtLabel.textContent = formatDate(newDate);
+      dtInput.style.display = 'none'; dtLabel.style.display = '';
+      renderCwProgram();
+    });
+    dtInput.addEventListener('blur', () => { dtInput.style.display = 'none'; dtLabel.style.display = ''; });
+    dt.appendChild(dtLabel); dt.appendChild(dtInput);
     const st = document.createElement('span'); st.className = 'cw-prog-status';
     if (day.completed)      { st.classList.add('done');    st.textContent = '✓ Done'; }
     else if (isToday)       { st.classList.add('today');   st.textContent = 'Today'; }
