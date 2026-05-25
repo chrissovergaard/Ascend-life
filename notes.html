@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" rel="stylesheet">
+  <title>Notes — Ascend</title>
+  <style>
+    :root {
+      --text-primary: #FFFFFF;
+      --text-secondary: #D0D0D0;
+      --text-tertiary: #888888;
+      --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --transition: 0.18s cubic-bezier(0.16,1,0.3,1);
+      --card-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 8px 40px rgba(0,0,0,0.55);
+      --radius-card: 18px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #000;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: max(32px, env(safe-area-inset-top, 32px)) 24px 80px;
+      position: relative; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 78% 8%, rgba(192,132,252,0.04) 0%, transparent 52%),
+        radial-gradient(ellipse at 20% 88%, rgba(126,184,247,0.03) 0%, transparent 52%);
+      filter: blur(40px); pointer-events: none; z-index: 0;
+      animation: wash-drift 36s ease-in-out infinite alternate;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.014)'/%3E%3C/svg%3E");
+      background-repeat: repeat; pointer-events: none; z-index: 0;
+    }
+    @keyframes wash-drift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(2%,2%) scale(1.04)} }
+
+    .container { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* NAV */
+    .site-nav {
+      display: flex; gap: 4px; margin-bottom: 24px;
+      background: rgba(12,12,12,0.85); border: 1px solid rgba(255,255,255,0.08);
+      border-top-color: rgba(255,255,255,0.13); border-radius: 14px; padding: 4px;
+      width: fit-content; flex-wrap: wrap;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+    }
+    .nav-link {
+      font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+      color: var(--text-tertiary); padding: 7px 16px; border-radius: 10px;
+      transition: background var(--transition), color var(--transition);
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+    .nav-link.is-active {
+      background: linear-gradient(160deg,#FFFFFF 0%,#D8D8D8 100%); color: #000;
+      box-shadow: 0 2px 10px rgba(255,255,255,0.18), 0 1px 0 rgba(255,255,255,0.5) inset;
+    }
+
+    /* TITLE ROW */
+    .page-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:12px; }
+    .dash-title {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+      background: linear-gradient(180deg,#FFFFFF 0%,#C7C4BC 120%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .new-note-btn {
+      flex-shrink: 0;
+      background: linear-gradient(135deg,#C084FC,#9B5DDB); border: none; color: #fff;
+      border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+      transition: transform var(--transition), box-shadow var(--transition);
+      display:flex; align-items:center; gap:6px;
+    }
+    .new-note-btn:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(192,132,252,0.4); }
+
+    /* COLLECTION CHIPS */
+    .collections-row {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
+    }
+    .collections-row::-webkit-scrollbar { display:none; }
+    .coll-chip {
+      flex-shrink: 0; display:flex; align-items:center; gap:6px;
+      padding: 7px 14px; border-radius: 99px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: background var(--transition), border-color var(--transition), color var(--transition);
+      white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .coll-chip:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+    .coll-chip.active {
+      background: rgba(192,132,252,0.15); border-color: rgba(192,132,252,0.4);
+      color: #C084FC;
+    }
+    .coll-chip-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
+    /* CARD */
+    .gm-card {
+      background: linear-gradient(160deg,#111 0%,#0C0C0C 100%);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-top-color: rgba(255,255,255,0.12);
+      border-radius: var(--radius-card);
+      box-shadow: var(--card-shadow);
+      padding: 22px 24px;
+    }
+
+    /* EMPTY STATE */
+    .notes-empty {
+      text-align: center; padding: 64px 24px;
+      color: var(--text-tertiary); font-size: 14px; line-height: 1.7;
+    }
+    .notes-empty-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+    .notes-empty-title { font-weight: 700; color: var(--text-secondary); font-size: 16px; margin-bottom: 8px; }
+
+    /* NOTE VIEW */
+    .note-title-row { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+    .note-title-input {
+      flex: 1; background: none; border: none; outline: none;
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      font-family: var(--font-body); letter-spacing: -0.02em;
+    }
+    .note-title-input::placeholder { color: var(--text-tertiary); }
+    .note-del-btn {
+      background: none; border: 1px solid rgba(255,107,107,0.25); color: #FF6B6B;
+      border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer;
+      transition: background var(--transition); flex-shrink:0;
+    }
+    .note-del-btn:hover { background: rgba(255,107,107,0.1); }
+
+    /* ITEMS LIST */
+    .note-items { display:flex; flex-direction:column; gap:6px; margin-bottom:20px; min-height:10px; }
+
+    .note-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      transition: background var(--transition), opacity var(--transition), border-color var(--transition);
+      cursor: grab; position: relative;
+    }
+    .note-item:active { cursor: grabbing; }
+    .note-item.drag-over { border-color: rgba(192,132,252,0.5); background: rgba(192,132,252,0.07); }
+    .note-item.dragging { opacity: 0.35; }
+    .note-item.done { opacity: 0.5; }
+    .note-item.done .note-item-text { text-decoration: line-through; color: var(--text-tertiary); }
+
+    .note-item-drag { color: var(--text-tertiary); font-size: 14px; cursor: grab; flex-shrink:0; user-select:none; }
+    .note-item-check {
+      width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.2);
+      background: none; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .note-item-check.checked { background: #C084FC; border-color: #C084FC; }
+    .note-item-check.checked::after { content: '✓'; font-size: 11px; color: #fff; font-weight: 700; }
+    .note-item-emoji { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+    .note-item-text {
+      flex: 1; font-size: 14px; line-height: 1.4; color: var(--text-primary);
+      outline: none; background: none; border: none; font-family: var(--font-body);
+      min-width: 0;
+    }
+    .note-item-text[contenteditable="true"]:focus { color: #fff; }
+    .note-item-type {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 5px; flex-shrink: 0;
+    }
+    .note-item-type.time     { background: rgba(126,184,247,0.15); color: #7EB8F7; }
+    .note-item-type.task     { background: rgba(107,227,164,0.15); color: #6BE3A4; }
+    .note-item-type.reminder { background: rgba(255,193,7,0.15);   color: #FFC107; }
+    .note-item-type.note     { background: rgba(255,255,255,0.08);  color: #aaa; }
+    .note-item-type.school   { background: rgba(192,132,252,0.15);  color: #C084FC; }
+    .note-item-del {
+      background: none; border: none; color: var(--text-tertiary);
+      font-size: 16px; cursor: pointer; flex-shrink: 0; padding: 0 2px;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .note-item:hover .note-item-del { opacity: 1; }
+
+    /* ADD ITEM */
+    .add-item-row { display:flex; gap:8px; margin-bottom:24px; }
+    .add-item-input {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 13px; outline: none;
+      transition: border-color var(--transition);
+    }
+    .add-item-input:focus { border-color: rgba(192,132,252,0.35); }
+    .add-item-input::placeholder { color: var(--text-tertiary); }
+    .add-item-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; padding: 10px 14px; color: var(--text-primary);
+      font-size: 18px; cursor: pointer; flex-shrink:0;
+      transition: background var(--transition);
+    }
+    .add-item-btn:hover { background: rgba(255,255,255,0.12); }
+
+    /* AI INPUT AREA */
+    .ai-input-area {
+      border-top: 1px solid rgba(255,255,255,0.07); padding-top: 20px;
+    }
+    .ai-input-label {
+      font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+      margin-bottom: 10px; display:flex; align-items:center; gap:6px;
+    }
+    .ai-input-label::before { content:'✨'; font-size:12px; }
+    .ai-textarea {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 14px 16px; color: var(--text-primary);
+      font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+      resize: none; outline: none; min-height: 80px; max-height: 200px;
+      transition: border-color var(--transition);
+      field-sizing: content;
+    }
+    .ai-textarea:focus { border-color: rgba(192,132,252,0.4); }
+    .ai-textarea::placeholder { color: var(--text-tertiary); }
+    .ai-btn-row { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+    .ai-organize-btn {
+      background: linear-gradient(135deg,#C084FC,#9B5DDB); border: none; color: #fff;
+      border-radius: 11px; padding: 10px 20px; font-size: 13px; font-weight: 700;
+      cursor: pointer; display:flex; align-items:center; gap:7px;
+      transition: transform var(--transition), box-shadow var(--transition);
+      box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+    }
+    .ai-organize-btn:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(192,132,252,0.45); }
+    .ai-organize-btn:disabled { opacity:0.5; pointer-events:none; }
+    .ai-spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* AI settings */
+    .ai-settings-row {
+      display:flex; align-items:center; gap:8px; margin-top:12px;
+      padding: 10px 12px; border-radius:10px; background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.07);
+    }
+    .ai-settings-label { font-family:var(--font-mono); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); flex-shrink:0; }
+    .ai-key-input {
+      flex:1; background:none; border:none; outline:none; font-size:12px;
+      font-family:var(--font-mono); color:var(--text-primary); min-width:0;
+    }
+    .ai-key-input::placeholder { color:var(--text-tertiary); }
+    .ai-save-key-btn { background:none; border:1px solid rgba(255,255,255,0.15); color:var(--text-secondary); border-radius:7px; padding:4px 10px; font-size:11px; cursor:pointer; flex-shrink:0; }
+
+    /* Quick Launch Dock */
+    .ql-dock { display:flex;gap:10px;margin:0 0 18px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none; }
+    .ql-dock::-webkit-scrollbar { display:none; }
+    .ql-btn { flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:62px;height:62px;border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.03) 100%);border:1px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.13);box-shadow:0 4px 16px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.06) inset;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s,background 0.18s;padding:0;color:#fff;text-decoration:none;position:relative; }
+    .ql-btn:active { transform:scale(0.91); }
+    .ql-btn:hover { background:linear-gradient(145deg,rgba(255,255,255,0.11) 0%,rgba(255,255,255,0.05) 100%); }
+    .ql-btn-icon { font-size:22px;line-height:1; }
+    .ql-btn-label { font-family:var(--font-mono);font-size:8.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#888;text-align:center;line-height:1.1;max-width:56px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
+    .ql-add-btn { flex-shrink:0;width:62px;height:62px;border-radius:15px;background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:22px;color:#888;cursor:pointer;transition:background 0.15s,border-color 0.15s; }
+    .ql-add-btn:hover { background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.25); }
+    .ql-edit-mode .ql-btn { animation:ql-jiggle 0.45s ease-in-out infinite alternate; }
+    @keyframes ql-jiggle { 0%{transform:rotate(-1.5deg)} 100%{transform:rotate(1.5deg)} }
+    .ql-remove-badge { position:absolute;top:-6px;left:-6px;width:18px;height:18px;border-radius:50%;background:#FF6B6B;border:1.5px solid #000;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;color:#fff;font-weight:700;cursor:pointer;z-index:2; }
+    .ql-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(8px); }
+    .ql-modal { background:#111;border:1px solid rgba(255,255,255,0.12);border-top-color:rgba(255,255,255,0.2);border-radius:20px;padding:24px;width:min(360px,90vw);box-shadow:0 24px 80px rgba(0,0,0,0.8); }
+    .ql-modal-title { font-size:13px;font-weight:700;margin-bottom:16px;color:#fff; }
+    .ql-modal-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:55vh;overflow-y:auto;margin-bottom:16px; }
+    .ql-modal-option { display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid transparent;transition:background 0.15s,border-color 0.15s; }
+    .ql-modal-option:hover { background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12); }
+    .ql-modal-option.selected { background:rgba(126,184,247,0.12);border-color:rgba(126,184,247,0.35); }
+    .ql-modal-opt-icon { font-size:20px; }
+    .ql-modal-opt-label { font-family:var(--font-mono);font-size:8px;font-weight:700;text-transform:uppercase;color:#ccc;text-align:center; }
+    .ql-modal-btns { display:flex;gap:8px;justify-content:flex-end; }
+    .ql-modal-cancel { background:none;border:1px solid rgba(255,255,255,0.15);color:#ccc;border-radius:10px;padding:8px 16px;font-size:12px;cursor:pointer; }
+    .ql-modal-save { background:linear-gradient(135deg,#7EB8F7,#5A9ED4);border:none;color:#000;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <nav class="site-nav">
+    <a href="index.html"    class="nav-link">Dashboard</a>
+    <a href="workout.html"  class="nav-link">Workout</a>
+    <a href="calendar.html" class="nav-link">Calendar</a>
+    <a href="analytics.html" class="nav-link">Analytics</a>
+    <a href="nutrition.html" class="nav-link">Nutrition</a>
+    <a href="coach.html"    class="nav-link">Coach</a>
+    <a href="finance.html"  class="nav-link">Finance</a>
+    <a href="notes.html"    class="nav-link is-active">Notes</a>
+  </nav>
+
+  <div class="ql-dock" id="qlDock"></div>
+
+  <div class="page-hdr">
+    <h1 class="dash-title">Notes with AI</h1>
+    <button class="new-note-btn" id="newNoteBtn">✦ New note</button>
+  </div>
+
+  <!-- Collection chips -->
+  <div class="collections-row" id="collectionsRow"></div>
+
+  <!-- Main card -->
+  <div class="gm-card" id="noteCard">
+    <div class="notes-empty" id="notesEmpty">
+      <span class="notes-empty-icon">✦</span>
+      <div class="notes-empty-title">No notes yet</div>
+      Create a new note and brain-dump anything — AI will sort it out.
+    </div>
+    <div id="noteView" style="display:none">
+      <!-- Title -->
+      <div class="note-title-row">
+        <input class="note-title-input" id="noteTitleInput" placeholder="Note title…">
+        <button class="note-del-btn" id="noteDelBtn">Delete</button>
+      </div>
+      <!-- Items -->
+      <div class="note-items" id="noteItemsList"></div>
+      <!-- Manual add -->
+      <div class="add-item-row">
+        <input class="add-item-input" id="addItemInput" placeholder="Add item manually…">
+        <button class="add-item-btn" id="addItemBtn" title="Add">+</button>
+      </div>
+      <!-- AI input -->
+      <div class="ai-input-area">
+        <div class="ai-input-label">Dump it — AI will organise</div>
+        <textarea class="ai-textarea" id="aiTextarea" placeholder="Type anything… e.g. &quot;I need to wake up at 9, remember to brush my teeth and buy groceries for dinner&quot;&#10;&#10;AI will extract, clean up and sort everything into neat items."></textarea>
+        <div class="ai-btn-row">
+          <button class="ai-organize-btn" id="aiOrganizeBtn">
+            <span id="aiBtnLabel">✨ Organise with AI</span>
+            <span id="aiSpinner" class="ai-spinner" style="display:none"></span>
+          </button>
+        </div>
+        <!-- API key setting -->
+        <div class="ai-settings-row" id="aiSettingsRow">
+          <span class="ai-settings-label">Groq Key</span>
+          <input class="ai-key-input" type="password" id="aiKeyInput" placeholder="gsk_… (same as Coach)">
+          <button class="ai-save-key-btn" id="aiSaveKeyBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ── Storage ──
+function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function storeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+// ── Data ──
+const DATA_KEY = 'lifeos_notes';
+function loadData() {
+  return storeGet(DATA_KEY) || { collections: [], activeId: null };
+}
+function saveData(d) { storeSet(DATA_KEY, d); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// ── State ──
+let data = loadData();
+let dragSrcIndex = null;
+
+// ── Helpers ──
+function activeCollection() {
+  return data.collections.find(c => c.id === data.activeId) || null;
+}
+
+function setActive(id) {
+  data.activeId = id;
+  saveData(data);
+  renderAll();
+}
+
+function createCollection(title) {
+  const col = { id: uid(), title: title || 'Untitled', createdAt: new Date().toISOString(), items: [] };
+  data.collections.push(col);
+  data.activeId = col.id;
+  saveData(data);
+  renderAll();
+  setTimeout(() => document.getElementById('noteTitleInput')?.focus(), 50);
+}
+
+function deleteCollection(id) {
+  data.collections = data.collections.filter(c => c.id !== id);
+  data.activeId = data.collections[0]?.id || null;
+  saveData(data);
+  renderAll();
+}
+
+function addItem(col, text, emoji, type) {
+  col.items.push({ id: uid(), text: text || '', emoji: emoji || '•', type: type || 'task', done: false });
+  saveData(data);
+  renderItems(col);
+}
+
+// ── Render collections row ──
+function renderChips() {
+  const row = document.getElementById('collectionsRow');
+  row.innerHTML = '';
+  data.collections.forEach(col => {
+    const chip = document.createElement('button');
+    chip.className = 'coll-chip' + (col.id === data.activeId ? ' active' : '');
+    chip.innerHTML = `<span class="coll-chip-dot"></span><span>${escHtml(col.title || 'Untitled')}</span>`;
+    chip.addEventListener('click', () => setActive(col.id));
+    row.appendChild(chip);
+  });
+}
+
+// ── Render items list ──
+function renderItems(col) {
+  const list = document.getElementById('noteItemsList');
+  list.innerHTML = '';
+
+  col.items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'note-item' + (item.done ? ' done' : '');
+    row.draggable = true;
+    row.dataset.index = i;
+
+    // Drag handle
+    const drag = document.createElement('span');
+    drag.className = 'note-item-drag'; drag.textContent = '⠿'; drag.title = 'Drag to reorder';
+    // Checkbox
+    const chk = document.createElement('button');
+    chk.className = 'note-item-check' + (item.done ? ' checked' : '');
+    chk.addEventListener('click', () => { item.done = !item.done; saveData(data); renderItems(col); });
+    // Emoji
+    const emo = document.createElement('span');
+    emo.className = 'note-item-emoji'; emo.textContent = item.emoji || '•';
+    // Text
+    const txt = document.createElement('span');
+    txt.className = 'note-item-text'; txt.contentEditable = 'true';
+    txt.textContent = item.text;
+    txt.addEventListener('blur', () => { item.text = txt.textContent.trim(); saveData(data); });
+    txt.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); txt.blur(); } });
+    // Type badge
+    const badge = document.createElement('span');
+    badge.className = 'note-item-type ' + (item.type || 'task');
+    badge.textContent = item.type || 'task';
+    // Delete
+    const del = document.createElement('button');
+    del.className = 'note-item-del'; del.textContent = '×'; del.title = 'Remove';
+    del.addEventListener('click', () => { col.items.splice(i, 1); saveData(data); renderItems(col); });
+
+    row.appendChild(drag); row.appendChild(chk); row.appendChild(emo);
+    row.appendChild(txt); row.appendChild(badge); row.appendChild(del);
+
+    // Drag events
+    row.addEventListener('dragstart', e => {
+      dragSrcIndex = i; row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => { row.classList.remove('dragging'); dragSrcIndex = null; renderItems(col); });
+    row.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault(); row.classList.remove('drag-over');
+      if (dragSrcIndex === null || dragSrcIndex === i) return;
+      const moved = col.items.splice(dragSrcIndex, 1)[0];
+      col.items.splice(i, 0, moved);
+      dragSrcIndex = null; saveData(data); renderItems(col);
+    });
+
+    list.appendChild(row);
+  });
+}
+
+// ── Render note view ──
+function renderNoteView() {
+  const empty = document.getElementById('notesEmpty');
+  const view  = document.getElementById('noteView');
+  const col   = activeCollection();
+  if (!col) { empty.style.display = ''; view.style.display = 'none'; return; }
+  empty.style.display = 'none'; view.style.display = '';
+
+  const titleInput = document.getElementById('noteTitleInput');
+  titleInput.value = col.title || '';
+  titleInput.oninput = () => { col.title = titleInput.value; saveData(data); renderChips(); };
+
+  renderItems(col);
+}
+
+function renderAll() {
+  renderChips();
+  renderNoteView();
+}
+
+// ── AI Organize ──
+async function organizeWithAI(text, col) {
+  const settings = storeGet('coach_settings') || {};
+  const key = (storeGet('notes_groq_key') || settings.groqKey || '').trim();
+  if (!key) {
+    alert('Add your Groq API key below to use AI organisation.');
+    document.getElementById('aiKeyInput').focus();
+    return null;
+  }
+
+  const systemPrompt = `You are a smart note organiser. The user gives you a brain dump in any language.
+Extract individual items, clean them up (fix typos, make concise), and return them as JSON.
+Rules:
+- Sort: time-based items first (wake up, meetings), then tasks by logical order
+- Translate to English if input is not English
+- Assign emoji and type for each item
+- Types: "time" (specific time), "task" (action item), "school" (homework/study), "reminder", "note"
+- Keep items short and clear
+- Return ONLY valid JSON, no markdown, no explanation
+
+Format:
+{"title":"Short title for this note","items":[{"text":"Clean item text","emoji":"🎯","type":"task"}]}`;
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+      temperature: 0.3, max_tokens: 600
+    }),
+    signal: AbortSignal.timeout(30000)
+  });
+  if (!res.ok) throw new Error('Groq API error ' + res.status);
+  const json = await res.json();
+  const raw = json.choices?.[0]?.message?.content || '';
+  // Extract JSON from response
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('No JSON in response');
+  return JSON.parse(match[0]);
+}
+
+document.getElementById('aiOrganizeBtn').addEventListener('click', async () => {
+  const textarea = document.getElementById('aiTextarea');
+  const text = textarea.value.trim();
+  if (!text) return;
+  const col = activeCollection(); if (!col) return;
+
+  const btn = document.getElementById('aiOrganizeBtn');
+  const lbl = document.getElementById('aiBtnLabel');
+  const spinner = document.getElementById('aiSpinner');
+  btn.disabled = true; lbl.style.display = 'none'; spinner.style.display = '';
+
+  try {
+    const result = await organizeWithAI(text, col);
+    if (result) {
+      // Update title if collection is still untitled
+      if ((!col.title || col.title === 'Untitled') && result.title) {
+        col.title = result.title;
+      }
+      // Append items
+      (result.items || []).forEach(item => {
+        col.items.push({ id: uid(), text: item.text || '', emoji: item.emoji || '•', type: item.type || 'task', done: false });
+      });
+      textarea.value = '';
+      saveData(data); renderAll();
+    }
+  } catch (e) {
+    alert('AI error: ' + e.message + '\n\nCheck your Groq API key.');
+  } finally {
+    btn.disabled = false; lbl.style.display = ''; spinner.style.display = 'none';
+  }
+});
+
+// Manual add
+document.getElementById('addItemBtn').addEventListener('click', () => {
+  const input = document.getElementById('addItemInput');
+  const text = input.value.trim(); if (!text) return;
+  const col = activeCollection(); if (!col) return;
+  addItem(col, text, '•', 'task');
+  input.value = '';
+});
+document.getElementById('addItemInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('addItemBtn').click();
+});
+
+// New note
+document.getElementById('newNoteBtn').addEventListener('click', () => createCollection(''));
+
+// Delete note
+document.getElementById('noteDelBtn').addEventListener('click', () => {
+  const col = activeCollection(); if (!col) return;
+  if (!confirm(`Delete "${col.title || 'Untitled'}"?`)) return;
+  deleteCollection(col.id);
+});
+
+// API key save
+document.getElementById('aiSaveKeyBtn').addEventListener('click', () => {
+  const key = document.getElementById('aiKeyInput').value.trim();
+  if (key) { storeSet('notes_groq_key', key); document.getElementById('aiKeyInput').value = ''; alert('Key saved.'); }
+});
+// Pre-fill key hint
+(function() {
+  const settings = storeGet('coach_settings') || {};
+  const existing = storeGet('notes_groq_key') || settings.groqKey || '';
+  if (existing) {
+    document.getElementById('aiSettingsRow').style.display = 'none';
+  }
+})();
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Init
+renderAll();
+
+// ── Quick Launch Dock ──
+(function() {
+  const ALL_SHORTCUTS = [
+    { key:'page-dashboard',type:'page',href:'index.html',    icon:'🏠',label:'Dashboard' },
+    { key:'page-workout',  type:'page',href:'workout.html',  icon:'🏋️',label:'Workout' },
+    { key:'page-coach',    type:'page',href:'coach.html',    icon:'🤖',label:'Coach' },
+    { key:'page-calendar', type:'page',href:'calendar.html', icon:'📆',label:'Calendar' },
+    { key:'page-analytics',type:'page',href:'analytics.html',icon:'📊',label:'Analytics' },
+    { key:'page-nutrition',type:'page',href:'nutrition.html',icon:'🥗',label:'Nutrition' },
+    { key:'page-finance',  type:'page',href:'finance.html',  icon:'💰',label:'Finance' },
+    { key:'page-notes',    type:'page',href:'notes.html',    icon:'📝',label:'Notes' },
+    { key:'sec-recovery',  type:'section',sectionId:'sec-recovery',       icon:'💚',label:'Recovery' },
+    { key:'sec-goals',     type:'section',sectionId:'sec-goals',          icon:'🎯',label:'Goals' },
+    { key:'sec-habits',    type:'section',sectionId:'sec-habits',         icon:'✅',label:'Habits' },
+    { key:'sec-dayplan',   type:'section',sectionId:'dayPlanSection',     icon:'📅',label:'Day Plan' },
+    { key:'sec-insights',  type:'section',sectionId:'sec-insights',       icon:'🧠',label:'AI' },
+    { key:'sec-circadian', type:'section',sectionId:'circadianSection',   icon:'🌙',label:'Circadian' },
+    { key:'sec-recs',      type:'section',sectionId:'sec-recommendations',icon:'⚡',label:'Recs' },
+    { key:'sec-weight',    type:'section',sectionId:'sec-bodyweight',     icon:'⚖️',label:'Weight' },
+    { key:'sec-alarm',     type:'section',sectionId:'sleepAlarmSection',  icon:'⏰',label:'Alarm' },
+    { key:'sec-profile',   type:'section',sectionId:'sec-profile',        icon:'👤',label:'Profile' },
+  ];
+  const STORAGE_KEY = 'lifeos_ql_shortcuts';
+  const DEFAULT_KEYS = ['sec-recovery','page-workout','page-coach','sec-goals','sec-habits','sec-dayplan'];
+  let shortcuts = (function(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||DEFAULT_KEYS; }catch(e){ return DEFAULT_KEYS; } })();
+  let editMode = false; let editingIndex = null;
+  function saveShortcuts(){ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(shortcuts)); }catch(e){} }
+  function handleClick(sc){ if(sc.type==='page'){ window.location.href=sc.href; } else { const el=document.getElementById(sc.sectionId); if(el){ window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-16,behavior:'smooth'}); } else { window.location.href='index.html#'+sc.sectionId; } } }
+  function renderDock(){
+    const dock=document.getElementById('qlDock'); if(!dock) return;
+    dock.innerHTML=''; if(editMode) dock.classList.add('ql-edit-mode'); else dock.classList.remove('ql-edit-mode');
+    shortcuts.forEach((key,i)=>{
+      const sc=ALL_SHORTCUTS.find(s=>s.key===key); if(!sc) return;
+      const btn=document.createElement('button'); btn.className='ql-btn'; btn.title=sc.label;
+      btn.innerHTML=`<span class="ql-btn-icon">${sc.icon}</span><span class="ql-btn-label">${sc.label}</span>`;
+      if(editMode){
+        const rm=document.createElement('span'); rm.className='ql-remove-badge'; rm.textContent='−';
+        rm.addEventListener('click',e=>{e.stopPropagation();shortcuts.splice(i,1);saveShortcuts();renderDock();});
+        btn.appendChild(rm); btn.addEventListener('click',()=>{editingIndex=i;showModal(key);});
+      } else { btn.addEventListener('click',()=>handleClick(sc)); }
+      dock.appendChild(btn);
+    });
+    const addBtn=document.createElement('button'); addBtn.className='ql-add-btn';
+    addBtn.title=editMode?'Add shortcut':'Customise'; addBtn.textContent=editMode?'+':'✎';
+    if(!editMode) addBtn.style.fontSize='18px';
+    addBtn.addEventListener('click',()=>{ if(!editMode){editMode=true;renderDock();} else{editingIndex=null;showModal(null);} });
+    dock.appendChild(addBtn);
+    if(editMode){
+      const doneBtn=document.createElement('button'); doneBtn.className='ql-add-btn';
+      doneBtn.style.cssText='font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:#7EB8F7;border-color:rgba(126,184,247,0.35);background:rgba(126,184,247,0.07);';
+      doneBtn.textContent='Done'; doneBtn.addEventListener('click',()=>{editMode=false;renderDock();}); dock.appendChild(doneBtn);
+    }
+  }
+  function showModal(currentKey){
+    const overlay=document.createElement('div'); overlay.className='ql-modal-overlay';
+    const modal=document.createElement('div'); modal.className='ql-modal';
+    modal.innerHTML=`<div class="ql-modal-title">${editingIndex!==null?'Change shortcut':'Add shortcut'}</div><div class="ql-modal-grid" id="qlModalGrid"></div><div class="ql-modal-btns"><button class="ql-modal-cancel">Cancel</button><button class="ql-modal-save">Save</button></div>`;
+    overlay.appendChild(modal); document.body.appendChild(overlay);
+    let selected=currentKey; const grid=modal.querySelector('#qlModalGrid');
+    ALL_SHORTCUTS.forEach(sc=>{
+      const opt=document.createElement('div'); opt.className='ql-modal-option'+(sc.key===selected?' selected':'');
+      opt.innerHTML=`<span class="ql-modal-opt-icon">${sc.icon}</span><span class="ql-modal-opt-label">${sc.label}</span>`;
+      opt.addEventListener('click',()=>{grid.querySelectorAll('.ql-modal-option').forEach(o=>o.classList.remove('selected'));opt.classList.add('selected');selected=sc.key;});
+      grid.appendChild(opt);
+    });
+    modal.querySelector('.ql-modal-cancel').addEventListener('click',()=>overlay.remove());
+    modal.querySelector('.ql-modal-save').addEventListener('click',()=>{ if(!selected){overlay.remove();return;} if(editingIndex!==null) shortcuts[editingIndex]=selected; else if(!shortcuts.includes(selected)) shortcuts.push(selected); saveShortcuts();overlay.remove();renderDock(); });
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  }
+  renderDock();
+})();
+</script>
+</body>
+</html>
