@@ -1094,7 +1094,7 @@
               <div id="impRepeatToggleBtn" style="width:36px;height:20px;background:#1C1C1C;border:1px solid #333;border-radius:10px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
                 <div id="impRepeatThumb" style="width:14px;height:14px;background:#666;border-radius:50%;position:absolute;top:2px;left:2px;transition:all 0.2s"></div>
               </div>
-              <span id="impRepeatLabel" style="font-size:12px;color:var(--text-secondary)">Gentages ugentligt</span>
+              <span id="impRepeatLabel" style="font-size:12px;color:var(--text-secondary)">Repeat weekly</span>
             </label>
           </div>
         </div>
@@ -2149,8 +2149,8 @@ function impParseProgram(text) {
 // ---- Preview ----
 let _impDays = [];
 
-const DOW_DA   = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
-const DOW_SHORT = ['Søn','Man','Tir','Ons','Tor','Fre','Lør'];
+const DOW_DA   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 function detectWeekday(label) {
   const map = { 'mandag':1,'monday':1,'mon':1,'tirsdag':2,'tuesday':2,'tue':2,'onsdag':3,'wednesday':3,'wed':3,'torsdag':4,'thursday':4,'thu':4,'fredag':5,'friday':5,'fri':5,'lørdag':6,'saturday':6,'sat':6,'søndag':0,'sunday':0,'sun':0 };
@@ -2213,7 +2213,7 @@ function impRenderPreview(days, startDateStr) {
       const sel = document.createElement('select');
       sel.className = 'imp-weekday-sel';
       sel.style.cssText = 'background:#111;border:1px solid #333;border-radius:8px;padding:4px 10px;color:#7EB8F7;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;outline:none;flex-shrink:0;';
-      DOW_DA.forEach((d,i) => { const o=document.createElement('option'); o.value=i; o.textContent='Hver '+d; if(i===autoWd) o.selected=true; sel.appendChild(o); });
+      DOW_DA.forEach((d,i) => { const o=document.createElement('option'); o.value=i; o.textContent='Every '+d; if(i===autoWd) o.selected=true; sel.appendChild(o); });
       hdr.appendChild(nameIn); hdr.appendChild(sel);
     } else if (computedDateStr) {
       // Clickable date label → hidden date input
@@ -2222,7 +2222,7 @@ function impRenderPreview(days, startDateStr) {
       const dateLbl = document.createElement('span');
       dateLbl.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:#FFA500;white-space:nowrap;cursor:pointer;border-bottom:1px dashed rgba(255,165,0,0.4);padding-bottom:1px;';
       dateLbl.textContent = formatDate(computedDateStr);
-      dateLbl.title = 'Klik for at ændre dato';
+      dateLbl.title = 'Click to change date';
       const dateIn = document.createElement('input');
       dateIn.type = 'date'; dateIn.value = computedDateStr;
       dateIn.style.cssText = 'display:none;background:#111;border:1px solid #555;border-radius:7px;padding:3px 7px;color:#FFA500;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
@@ -2285,7 +2285,7 @@ function impRenderPreview(days, startDateStr) {
           const v = wIn.value.trim().toUpperCase();
           if (v === 'BW') {
             const prof = loadProfile();
-            wIn.title = prof?.weight ? `BW = ${prof.weight} kg` : 'BW (sæt din vægt i profil)';
+            wIn.title = prof?.weight ? `BW = ${prof.weight} kg` : 'BW (set your weight in profile)';
             wIn.style.color = '#7EB8F7';
           } else { wIn.title = ''; wIn.style.color = ''; }
         };
@@ -2509,7 +2509,7 @@ function impImportAndSchedule() {
   let sEl = document.getElementById('impSchedSuccess');
   if (!sEl) { sEl = document.createElement('div'); sEl.id = 'impSchedSuccess'; body.insertBefore(sEl, body.firstChild); }
   sEl.className = 'cw-success';
-  const repeatNote = _impRepeat ? ` · ↻ Gentages ugentligt (8 uger)` : ` · Starting ${formatDate(program.startDate)}`;
+  const repeatNote = _impRepeat ? ` · ↻ Repeats weekly (8 weeks)` : ` · Starting ${formatDate(program.startDate)}`;
   sEl.innerHTML = `<div class="cw-success-main">✓ ${days.length} workout${days.length!==1?'s':''} imported!</div>
     <div class="cw-success-sub">📅 ${evtCreated} orange calendar event${evtCreated!==1?'s':''} created${repeatNote}</div>`;
 }
@@ -2964,7 +2964,7 @@ function cwRenderProgram() {
       dt.style.cssText = 'display:flex;align-items:center;gap:5px;cursor:pointer;';
       const dtLabel = document.createElement('span');
       dtLabel.textContent = formatDate(displayDate);
-      dtLabel.title = 'Klik for at ændre dato';
+      dtLabel.title = 'Click to change date';
       const dtInput = document.createElement('input');
       dtInput.type = 'date'; dtInput.value = displayDate;
       dtInput.style.cssText = 'display:none;background:#111;border:1px solid #333;border-radius:7px;padding:3px 7px;color:#fff;font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;';
@@ -2995,7 +2995,7 @@ function cwRenderProgram() {
     else if (isToday)       { st.classList.add('today');   st.textContent = 'Today'; }
     else if (isRest)        { st.classList.add('rest');    st.textContent = 'Rest'; }
     else if (isPast)        { st.classList.add('missed');  st.textContent = 'Missed'; }
-    else                    { st.classList.add('planned'); st.textContent = prog.repeat ? `Hver ${DOW_SHORT[day.weekDay]}` : 'Planned'; }
+    else                    { st.classList.add('planned'); st.textContent = prog.repeat ? `Every ${DOW_SHORT[day.weekDay]}` : 'Planned'; }
     const ico = document.createElement('span'); ico.className = 'wt-expand-icon'; ico.textContent = '▾';
     hdr.appendChild(num); hdr.appendChild(lbl); hdr.appendChild(dt); hdr.appendChild(st); hdr.appendChild(ico);
 

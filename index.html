@@ -1582,12 +1582,12 @@
             </select>
           </div>
           <div class="prof-field prof-field-wide">
-            <label class="prof-label" for="profIntensityInput">Træningsintensitet</label>
+            <label class="prof-label" for="profIntensityInput">Training Intensity</label>
             <select class="prof-select" id="profIntensityInput">
-              <option value="easy">Let — 1–3 sessioner/uge, lav belastning</option>
-              <option value="moderate" selected>Moderat — 3–5 sessioner/uge, standard</option>
-              <option value="hard">Hård — 5–6 sessioner/uge, høj intensitet</option>
-              <option value="extreme">Extrem — 6+ sessioner/uge, atletisk/militær niveau</option>
+              <option value="easy">Light — 1–3 sessions/week, low load</option>
+              <option value="moderate" selected>Moderate — 3–5 sessions/week, standard</option>
+              <option value="hard">Hard — 5–6 sessions/week, high intensity</option>
+              <option value="extreme">Extreme — 6+ sessions/week, athletic/military level</option>
             </select>
           </div>
           <div class="prof-field prof-field-wide">
@@ -1888,7 +1888,7 @@
           <button class="rm-call-regen" id="rmCallRegen" title="Regenerer">↺</button>
         </div>
         <div class="rm-call-content" id="rmCallContent">
-          <span class="rm-call-placeholder">Log søvn og recovery data — AI genererer din daglige anbefaling.</span>
+          <span class="rm-call-placeholder">Log sleep and recovery data — AI will generate your daily recommendation.</span>
         </div>
       </div>
 
@@ -2013,7 +2013,7 @@
 
   <!-- Decision Fatigue Elimination -->
   <div class="section" id="dayPlanSection">
-    <div class="section-title">Din Perfekte Dag</div>
+    <div class="section-title">Your Perfect Day</div>
     <div class="gm-card" id="dayPlanCard"></div>
   </div>
 
@@ -2035,7 +2035,7 @@
   <div class="section" id="sleepAlarmSection">
     <div class="section-title">Anbefalet Sengetid</div>
     <div class="gm-card" id="sleepAlarmCard">
-      <div id="sleepAlarmContent" style="font-size:13px;color:var(--text-secondary)">Ingen kommende events — nyd en god nats søvn.</div>
+      <div id="sleepAlarmContent" style="font-size:13px;color:var(--text-secondary)">No upcoming events — enjoy a good night's sleep.</div>
     </div>
   </div>
 
@@ -2594,7 +2594,7 @@ function renderProfile() {
   if (p.height)   parts.push(`${p.height}cm`);
   if (p.activity)  parts.push(p.activity);
   if (p.focus)     parts.push(p.focus);
-  const intensityLabels = { easy:'Let intensitet', moderate:'Moderat intensitet', hard:'Hård intensitet', extreme:'Extrem intensitet' };
+  const intensityLabels = { easy:'Light intensity', moderate:'Moderate intensity', hard:'Hard intensity', extreme:'Extreme intensity' };
   if (p.intensity && p.intensity !== 'moderate') parts.push(intensityLabels[p.intensity] || p.intensity);
   document.getElementById('profViewStats').textContent = parts.join(' · ');
 
@@ -3630,21 +3630,21 @@ function buildTodayCallContext() {
   // Build load alerts
   var loadAlerts = [];
   if (todayHigh.length > 0 && (todayMed.length > 0 || todayWorkout)) {
-    loadAlerts.push('⚠ DOUBLE-DAY: Hård event + træning samme dag → reducer morgen-session, boost kost');
+    loadAlerts.push('⚠ DOUBLE-DAY: Hard event + training same day → reduce morning session, boost calories');
   }
   if (todayHigh.length > 0) {
-    loadAlerts.push('🏆 KAMP/EVENT I DAG: ' + todayHigh.map(function(e){ return e.title + (e.time ? ' kl.'+e.time : ''); }).join(', ') + ' → carb-load, hvil inden, recovery bagefter');
+    loadAlerts.push('🏆 EVENT TODAY: ' + todayHigh.map(function(e){ return e.title + (e.time ? ' at '+e.time : ''); }).join(', ') + ' → carb-load, rest beforehand, recover after');
   }
   if (tmrHigh.length > 0) {
-    loadAlerts.push('⚡ KAMP I MORGEN: ' + tmrHigh.map(function(e){ return e.title; }).join(', ') + ' → reducer intensitet i dag, høj-carb aftensmad, tidlig søvn');
+    loadAlerts.push('⚡ EVENT TOMORROW: ' + tmrHigh.map(function(e){ return e.title; }).join(', ') + ' → reduce intensity today, high-carb dinner, sleep early');
   }
   if (tmrMed.length > 0 && !tmrHigh.length) {
-    loadAlerts.push('📅 TRÆNING I MORGEN: ' + tmrMed.map(function(e){ return e.title; }).join(', ') + ' → sov godt, spis nok i aften');
+    loadAlerts.push('📅 TRAINING TOMORROW: ' + tmrMed.map(function(e){ return e.title; }).join(', ') + ' → sleep well, eat enough tonight');
   }
   var battery = gar ? gar.battery : null;
   var sleep   = rec ? parseFloat(rec.sleep) : null;
   if ((battery != null && battery < 30) || (sleep != null && sleep < 6)) {
-    loadAlerts.push('😴 LAV RECOVERY: ' + (battery != null ? 'Battery '+battery+'/100' : '') + (sleep != null ? ' Søvn '+sleep+'h' : '') + ' → reducer intensitet, prioriter restitution');
+    loadAlerts.push('😴 LOW RECOVERY: ' + (battery != null ? 'Battery '+battery+'/100' : '') + (sleep != null ? ' Sleep '+sleep+'h' : '') + ' → reduce intensity, prioritise rest');
   }
   if (nutCal > 0 && nutCal < nutGoals.cal * 0.6 && (todayHigh.length > 0 || todayMed.length > 0 || thisWk.length > 0)) {
     loadAlerts.push('🍽 UNDER-FUELED: Kun ' + nutCal + ' kcal (' + Math.round(nutCal/nutGoals.cal*100) + '% af mål) inden hård aktivitet → spis nu');
@@ -3704,11 +3704,11 @@ function buildTodayCallContext() {
   }
 
   lines.push('');
-  lines.push('TRÆNING DENNE UGE: ' + thisWk.length + ' sessioner');
+  lines.push('TRAINING THIS WEEK: ' + thisWk.length + ' sessions');
   if (wks.length > 0) {
     var daysSince = Math.floor((Date.now() - new Date(wks[0].date+'T12:00:00').getTime()) / 86400000);
-    lines.push('Sidst trænet: ' + daysSince + ' dag(e) siden — ' + (wks[0].name||'Workout'));
-    if (thisWk.length > 0) lines.push('Denne uge: ' + thisWk.slice(0,5).map(function(w){ return w.date.slice(5)+' '+(w.name||'Workout'); }).join(', '));
+    lines.push('Last trained: ' + daysSince + ' day(s) ago — ' + (wks[0].name||'Workout'));
+    if (thisWk.length > 0) lines.push('This week: ' + thisWk.slice(0,5).map(function(w){ return w.date.slice(5)+' '+(w.name||'Workout'); }).join(', '));
   }
 
   lines.push('');
@@ -3948,7 +3948,7 @@ function renderRecovery() {
     const slp = today.sleep;
     const cls = slp >= rmS.sleepGood ? 'gm-good' : slp >= rmS.sleepFair ? 'gm-mid' : 'gm-bad';
     sleepVal.textContent = slp + 'h'; sleepVal.className = 'gm-stat-value ' + cls;
-    sleepSub.textContent = slp >= rmS.sleepGood ? 'God søvn' : slp >= rmS.sleepFair ? 'Nogenlunde' : 'For lidt';
+    sleepSub.textContent = slp >= rmS.sleepGood ? 'Good sleep' : slp >= rmS.sleepFair ? 'Fair' : 'Too little';
   } else {
     sleepVal.textContent = '—'; sleepVal.className = 'gm-stat-value'; sleepSub.textContent = 'timer';
   }
@@ -4075,13 +4075,13 @@ function detectBurnout() {
   const signals = [];
 
   if (w2.workouts >= 2 && w1.workouts < w2.workouts && w0.workouts < w1.workouts)
-    signals.push('faldende træningsfrekvens');
+    signals.push('declining training frequency');
   if (w2.habitPct !== null && w1.habitPct !== null && w0.habitPct !== null
     && w1.habitPct < w2.habitPct - 10 && w0.habitPct < w1.habitPct - 10)
     signals.push('faldende habit-konsistens');
   if (w2.avgSleep !== null && w1.avgSleep !== null && w0.avgSleep !== null
     && w1.avgSleep < w2.avgSleep - 0.3 && w0.avgSleep < w1.avgSleep - 0.3)
-    signals.push('faldende søvnkvalitet');
+    signals.push('declining sleep quality');
   if (w0.avgStress !== null && w1.avgStress !== null && w0.avgStress > 70 && w1.avgStress > 70)
     signals.push('vedvarende høj stress (2 uger)');
 
@@ -4111,8 +4111,8 @@ function detectOvertraining() {
   const avgStress = rec7.length ? rec7.reduce((s,r) => s + (parseFloat(r.stress)||0), 0) / rec7.length : null;
 
   const signals = [];
-  if (weeklyRate >= 5.5) signals.push(`${Math.round(weeklyRate * 10) / 10} træninger/uge (14-dages snit)`);
-  if (avgSleep  !== null && avgSleep  < 6.5) signals.push(`kun ${Math.round(avgSleep * 10) / 10}h søvn/nat`);
+  if (weeklyRate >= 5.5) signals.push(`${Math.round(weeklyRate * 10) / 10} sessions/week (14-day avg)`);
+  if (avgSleep  !== null && avgSleep  < 6.5) signals.push(`only ${Math.round(avgSleep * 10) / 10}h sleep/night`);
   if (avgStress !== null && avgStress > 65)  signals.push(`stressniveau ${Math.round(avgStress)}/100`);
 
   if (weeklyRate >= 5 && signals.length >= 2) return { detected: true, signals };
@@ -4211,18 +4211,18 @@ function generateWeeklyReport(force) {
   const discScore = calculateDisciplineScore();
 
   const wins = [];
-  if (wkWks.length >= 4)                              wins.push(`${wkWks.length} træninger gennemført`);
+  if (wkWks.length >= 4)                              wins.push(`${wkWks.length} workouts completed`);
   if (habitPct !== null && habitPct >= 80)            wins.push(`${habitPct}% habit-adherence`);
-  if (avgSleep !== null && avgSleep >= 7.5)           wins.push(`${avgSleep}h gennemsnitlig søvn`);
+  if (avgSleep !== null && avgSleep >= 7.5)           wins.push(`${avgSleep}h average sleep`);
   if (discScore !== null && discScore >= 75)          wins.push(`Discipline Score: ${discScore}`);
   const closedGoal = goals.find(g => g.current >= g.target);
   if (closedGoal)                                     wins.push(`Mål nået: "${closedGoal.name}"`);
 
   const focus = [];
-  if (wkWks.length < 3)                              focus.push('Øg træningsfrekvensen — mål: 4/uge');
+  if (wkWks.length < 3)                              focus.push('Increase training frequency — target: 4/week');
   if (habitPct !== null && habitPct < 70)            focus.push(`Habit-adherence kun ${habitPct}% — konsistens mangler`);
   if (avgSleep !== null && avgSleep < 7)             focus.push(`Søvn ${avgSleep}h — sigt efter 7.5h`);
-  if (avgStress !== null && avgStress > 65)          focus.push('Stressniveau for højt — prioriter recovery');
+  if (avgStress !== null && avgStress > 65)          focus.push('Stress level too high — prioritise recovery');
 
   const report = { weekStr, generatedDate: dateToStr(now), workouts: wkWks.length,
     totalVol: Math.round(totalVol), habitPct, avgSleep, avgStress, discScore, wins, focus };
@@ -4243,7 +4243,7 @@ function renderAiInsights() {
   const discCard = document.createElement('div'); discCard.className = 'ai-metric-card';
   discCard.innerHTML = `<div class="ai-metric-label">Discipline Score</div>
     <div class="ai-metric-value" style="color:${discColor}">${disc !== null ? disc : '—'}</div>
-    <div class="ai-metric-sub">${discLabel} — habits, træning & søvn kombineret</div>
+    <div class="ai-metric-sub">${discLabel} — habits, training & sleep combined</div>
     ${disc !== null ? `<div class="ai-metric-bar"><div class="ai-metric-bar-fill" style="width:${disc}%;background:${discColor}"></div></div>` : ''}`;
   grid.appendChild(discCard);
 
@@ -4257,7 +4257,7 @@ function renderAiInsights() {
   } else {
     energyCard.innerHTML = `<div class="ai-metric-label">Energy Prediction — I morgen</div>
       <div class="ai-metric-value" style="color:#888">—</div>
-      <div class="ai-metric-sub">Log søvn og recovery for at aktivere forudsigelsen</div>`;
+      <div class="ai-metric-sub">Log sleep and recovery to activate prediction</div>`;
   }
   grid.appendChild(energyCard);
 
@@ -4266,8 +4266,8 @@ function renderAiInsights() {
   if (burnout.detected) {
     const card = document.createElement('div'); card.className = 'ai-alert-card burnout';
     card.innerHTML = `<div class="ai-alert-icon">${burnout.level === 'high' ? '🚨' : '⚠️'}</div>
-      <div><div class="ai-alert-title" style="color:#FF6B6B">Burnout ${burnout.level === 'high' ? 'Risk' : 'Warning'} — 3-ugers mønster detekteret</div>
-      <div class="ai-alert-body">Signaler: ${burnout.signals.join(' · ')}. Tag 1–2 dages aktiv hvile, reducer intensiteten og prioriter søvn nu.</div></div>`;
+      <div><div class="ai-alert-title" style="color:#FF6B6B">Burnout ${burnout.level === 'high' ? 'Risk' : 'Warning'} — 3-week pattern detected</div>
+      <div class="ai-alert-body">Signals: ${burnout.signals.join(' · ')}. Take 1–2 days of active rest, reduce intensity and prioritise sleep now.</div></div>`;
     grid.appendChild(card);
   }
 
@@ -4276,8 +4276,8 @@ function renderAiInsights() {
   if (over.detected) {
     const card = document.createElement('div'); card.className = 'ai-alert-card overtraining';
     card.innerHTML = `<div class="ai-alert-icon">⚡</div>
-      <div><div class="ai-alert-title" style="color:#FFC107">Overtræning detekteret</div>
-      <div class="ai-alert-body">Signaler: ${over.signals.join(' · ')}. Høj volumen + utilstrækkelig recovery sænker fremgang. Indbyg en hviledag eller deload-uge.</div></div>`;
+      <div><div class="ai-alert-title" style="color:#FFC107">Overtraining detected</div>
+      <div class="ai-alert-body">Signals: ${over.signals.join(' · ')}. High volume + insufficient recovery slows progress. Schedule a rest day or deload week.</div></div>`;
     grid.appendChild(card);
   }
 
@@ -4345,10 +4345,10 @@ function renderCircadian() {
   // --- Pre-Sleep Protocol ---
   const bedtime = selectedCycle.bedtime;
   const protocol = [
-    { icon: '💡', time: normH(bedtime - 2),   label: 'Dæmp lyset i hjemmet' },
-    { icon: '📵', time: normH(bedtime - 0.5), label: 'Skærm slukket' },
-    { icon: '💧', time: normH(bedtime - 0.25),label: 'Drik et glas vand' },
-    { icon: '🛏',  time: bedtime,              label: 'I seng' }
+    { icon: '💡', time: normH(bedtime - 2),   label: 'Dim lights at home' },
+    { icon: '📵', time: normH(bedtime - 0.5), label: 'Screens off' },
+    { icon: '💧', time: normH(bedtime - 0.25),label: 'Drink a glass of water' },
+    { icon: '🛏',  time: bedtime,              label: 'In bed' }
   ];
   const protoHtml = protocol.map(p => {
     const isPast = nowH > p.time && Math.abs(nowH - p.time) < 12;
@@ -4378,9 +4378,9 @@ function renderCircadian() {
 
   // --- Meal Timing ---
   const meals = [
-    { icon: '🌅', time: normH(wake + 1),      label: 'Morgenmad',   note: 'Kortisol peak — høj energi til stofskiftet' },
-    { icon: '☀️', time: normH(wake + 5),      label: 'Frokost',     note: 'Største måltid — max fordøjelse' },
-    { icon: '🌙', time: normH(bedtime - 3),   label: 'Aftensmad',   note: 'Stop 3h før søvn' }
+    { icon: '🌅', time: normH(wake + 1),      label: 'Breakfast',   note: 'Cortisol peak — high energy for metabolism' },
+    { icon: '☀️', time: normH(wake + 5),      label: 'Lunch',       note: 'Largest meal — peak digestion' },
+    { icon: '🌙', time: normH(bedtime - 3),   label: 'Dinner',      note: 'Stop 3h before sleep' }
   ];
   const mealHtml = meals.map(m =>
     `<div class="circ-meal-row">
@@ -4395,7 +4395,7 @@ function renderCircadian() {
   const lightEvents = [
     { icon: '☀️', time: normH(wake + 0.25),  main: 'Morgenlys',      sub: 'Naturligt lys inden for 15–30 min efter opvågning sætter din circadiane ur' },
     { icon: '🌤', time: normH(wake + 6),     main: 'Middag sollys',   sub: 'Understøtter kortisol & vitamin D — 10–15 min ude' },
-    { icon: '🔆', time: normH(bedtime - 2),  main: 'Dæmp lyset',      sub: 'Blokér blåt lys 2h før søvn for melatonin-produktion' },
+    { icon: '🔆', time: normH(bedtime - 2),  main: 'Dim lights',       sub: 'Block blue light 2h before sleep for melatonin production' },
     { icon: '🌑', time: normH(bedtime - 0.5),main: 'Mørkt miljø',     sub: 'Soveværelse mørkt og køligt (17–20°C)' }
   ];
   const lightHtml = lightEvents.map(e => {
@@ -4416,20 +4416,20 @@ function renderCircadian() {
 
       <!-- Sleep Cycles -->
       <div class="circ-card" style="grid-column:1/-1">
-        <div class="circ-card-label">🌙 Optimale Sengetider — baseret på opvågning kl. ${fmtHour(wake)}</div>
+        <div class="circ-card-label">🌙 Optimal Bedtimes — based on wake time ${fmtHour(wake)}</div>
         <div class="circ-cycles">${cyclesHtml}</div>
-        <div style="font-size:11px;color:var(--text-tertiary)">Vågn naturligt op i slutningen af et søvncyklus (90 min) — undgå dyb søvnforstyrrelse.</div>
+        <div style="font-size:11px;color:var(--text-tertiary)">Wake naturally at the end of a sleep cycle (90 min) — avoid deep sleep disruption.</div>
       </div>
 
       <!-- Pre-sleep Protocol -->
       <div class="circ-card">
-        <div class="circ-card-label">📋 Pre-søvn Protokol</div>
+        <div class="circ-card-label">📋 Pre-sleep Protocol</div>
         <div class="circ-protocol">${protoHtml}</div>
       </div>
 
       <!-- Workout Timing -->
       <div class="circ-card">
-        <div class="circ-card-label">🏋️ Bedste Træningstider</div>
+        <div class="circ-card-label">🏋️ Best Training Windows</div>
         <div class="circ-windows">${windowHtml}</div>
       </div>
 
@@ -4472,10 +4472,10 @@ function generateDayPlan() {
 
   // Consecutive day thresholds and volume limits by intensity level
   const thresholds = {
-    easy:     { consecDeload: 1, highVolume: 4,  defaultIntensity: 'Let–moderat',  defaultDuration: 40 },
-    moderate: { consecDeload: 2, highVolume: 5,  defaultIntensity: 'Moderat–høj', defaultDuration: 55 },
-    hard:     { consecDeload: 3, highVolume: 6,  defaultIntensity: 'Høj intensitet', defaultDuration: 65 },
-    extreme:  { consecDeload: 99, highVolume: 9, defaultIntensity: 'Høj intensitet', defaultDuration: 70 },
+    easy:     { consecDeload: 1, highVolume: 4,  defaultIntensity: 'Light–moderate',  defaultDuration: 40 },
+    moderate: { consecDeload: 2, highVolume: 5,  defaultIntensity: 'Moderate–high', defaultDuration: 55 },
+    hard:     { consecDeload: 3, highVolume: 6,  defaultIntensity: 'High intensity', defaultDuration: 65 },
+    extreme:  { consecDeload: 99, highVolume: 9, defaultIntensity: 'High intensity', defaultDuration: 70 },
   };
   const thr = thresholds[intensity] || thresholds.moderate;
 
@@ -4491,27 +4491,27 @@ function generateDayPlan() {
   // Workout recommendation
   let workoutIntensity, workoutDuration, workoutReason, workoutType;
   if (recovScore !== null && recovScore < 35) {
-    workoutIntensity = 'Aktiv hvile'; workoutDuration = 20; workoutType = 'recovery';
-    workoutReason = `Recovery score ${recovScore}/100 — kroppen signalerer hvile`;
+    workoutIntensity = 'Active recovery'; workoutDuration = 20; workoutType = 'recovery';
+    workoutReason = `Recovery score ${recovScore}/100 — body signalling rest`;
   } else if (battery !== null && battery < 25) {
     workoutIntensity = 'Let bevægelse'; workoutDuration = 30; workoutType = 'light';
-    workoutReason = `Body Battery ${battery}% — lav energireserve, spar overskud`;
+    workoutReason = `Body Battery ${battery}% — low energy reserve, conserve capacity`;
   } else if (trueConsec >= thr.consecDeload) {
     workoutIntensity = intensity === 'extreme' ? thr.defaultIntensity : 'Moderat — deload dag';
     workoutDuration  = intensity === 'extreme' ? thr.defaultDuration  : 40;
     workoutType      = intensity === 'extreme' ? 'hard' : 'moderate';
     workoutReason    = intensity === 'extreme'
-      ? `${trueConsec} dage i træk — du kører extrem protokol, baseline holder`
-      : `${trueConsec} dage i træk — reducer volumen for at undgå overtræning`;
+      ? `${trueConsec} days in a row — running extreme protocol, baseline holds`
+      : `${trueConsec} days in a row — reduce volume to avoid overtraining`;
   } else if (recentCount >= thr.highVolume) {
-    workoutIntensity = 'Moderat'; workoutDuration = 45; workoutType = 'moderate';
-    workoutReason = `${recentCount} træninger denne uge — hold intensiteten i skak (dit niveau: ${intensity})`;
+    workoutIntensity = 'Moderate'; workoutDuration = 45; workoutType = 'moderate';
+    workoutReason = `${recentCount} sessions this week — manage intensity (your level: ${intensity})`;
   } else if (recovScore !== null && recovScore >= 75 && (battery === null || battery >= 60)) {
-    workoutIntensity = 'Høj intensitet'; workoutDuration = thr.defaultDuration; workoutType = 'hard';
-    workoutReason = `Recovery ${recovScore}/100${battery !== null ? ` & Battery ${battery}%` : ''} — grønt lys til hård session`;
+    workoutIntensity = 'High intensity'; workoutDuration = thr.defaultDuration; workoutType = 'hard';
+    workoutReason = `Recovery ${recovScore}/100${battery !== null ? ` & Battery ${battery}%` : ''} — green light for a hard session`;
   } else {
     workoutIntensity = thr.defaultIntensity; workoutDuration = thr.defaultDuration; workoutType = 'normal';
-    workoutReason = `Baseline plan (${intensity} niveau) — tilpas ud fra dagens energiniveau`;
+    workoutReason = `Baseline plan (${intensity} level) — adjust based on today's energy`;
   }
 
   // --- Calendar events today ---
@@ -4554,33 +4554,33 @@ function generateDayPlan() {
     ? (calWorkout.description ? calWorkout.description.substring(0, 100) : workoutIntensity)
     : `${workoutDuration} min · ${workoutIntensity}`;
   const workoutReason2 = calWorkout
-    ? `Fra kalender (${calWorkout.category}) — ${workoutReason}`
+    ? `From calendar (${calWorkout.category}) — ${workoutReason}`
     : workoutReason;
 
-  const kcalSource = nutGoals.cal ? `dit nutrition mål (${totalKcal} kcal)` : `estimat baseret på din vægt (${bw} kg)`;
+  const kcalSource = nutGoals.cal ? `your nutrition goal (${totalKcal} kcal)` : `estimate based on your weight (${bw} kg)`;
   const coachNote = calWorkout
-    ? `Træning kl. ${fmtHour(workoutTime)} fra din kalender: "${evLabel(calWorkout)}". ${workoutReason}. Kaloriebudget fra ${kcalSource}.`
+    ? `Workout at ${fmtHour(workoutTime)} from your calendar: "${evLabel(calWorkout)}". ${workoutReason}. Calorie budget from ${kcalSource}.`
     : workoutType === 'recovery'
-    ? `Recovery-dag. Kroppen genopbygger muskelvæv — protein og søvn er dine vigtigste "træningsredskaber" i dag. Kaloriebudget fra ${kcalSource}.`
+    ? `Recovery day. Body is rebuilding muscle — protein and sleep are your most important "training tools" today. Calorie budget from ${kcalSource}.`
     : workoutType === 'hard'
-    ? `Optimaldag til hård træning. Peak-window kl. ${fmtHour(workoutTime)} er beregnet ud fra din opvågning (${fmtHour(wake)}). Kaloriebudget fra ${kcalSource}.`
-    : `Planens kaloriebudget er fra ${kcalSource}. Fordelt 25% morgenmad · 35% frokost · 40% aftensmad. Juster aftensmad op/ned baseret på sult.`;
+    ? `Optimal day for hard training. Peak window at ${fmtHour(workoutTime)} calculated from your wake time (${fmtHour(wake)}). Calorie budget from ${kcalSource}.`
+    : `Calorie budget from ${kcalSource}. Split 25% breakfast · 35% lunch · 40% dinner. Adjust dinner up/down based on hunger.`;
 
   const items = [
-    { type:'wake',     time: wake,        icon:'🌅', label:'Opvågning',    detail:`Naturligt lys + et glas vand inden for 15 min`,     reason:'Sætter kortisol-kurven og nulstiller dit circadiane ur' },
-    { type:'meal',     time: bfTime,      icon:'🥣', label:'Morgenmad',    detail:`${bfKcal} kcal · ${bfProt}g protein`,               reason:'1h efter opvågning — insulin følsomhed er høj, protein starter muskelopbygning' },
+    { type:'wake',     time: wake,        icon:'🌅', label:'Wake up',      detail:`Natural light + a glass of water within 15 min`,    reason:'Sets the cortisol curve and resets your circadian clock' },
+    { type:'meal',     time: bfTime,      icon:'🥣', label:'Breakfast',    detail:`${bfKcal} kcal · ${bfProt}g protein`,               reason:'1h after wake — insulin sensitivity is high, protein kickstarts muscle synthesis' },
     { type:'workout',  time: workoutTime, icon: calWorkout ? (CAL_ICON[calWorkout.category]||'🏋️') : '🏋️', label: workoutLabel, detail: workoutDetail, reason: workoutReason2 },
-    { type:'meal',     time: lunchTime,   icon:'☀️', label:'Frokost',      detail:`${lKcal} kcal · ${lProt}g protein`,                 reason:'Største måltid — peak fordøjelse og energi midt på dagen' },
-    { type:'recovery', time: recovTime,   icon:'💆', label:'Recovery',     detail:`Foam roll · mobilitet · kold bruser`,               reason:'Post-workout window — reducerer DOMS og kortisol, fremskynder restitution' },
-    { type:'meal',     time: dinnerTime,  icon:'🌙', label:'Aftensmad',    detail:`${dKcal} kcal · ${dProt}g protein`,                 reason:'3h før søvn — fordøjelse færdig inden bedtime, ingen spike i kropstemperatur' },
-    { type:'sleep',    time: sleep,       icon:'😴', label:'Søvn',         detail:`${fmtHour(sleep)} → ${fmtHour(wake)} — ${(((wake + 24 - sleep) % 24) || 24).toFixed(1)}h`, reason:'5 søvncykler (7.5h) — optimal for kognitiv funktion, hormonbalance og muskelreparation' }
+    { type:'meal',     time: lunchTime,   icon:'☀️', label:'Lunch',        detail:`${lKcal} kcal · ${lProt}g protein`,                 reason:'Largest meal — peak digestion and energy mid-day' },
+    { type:'recovery', time: recovTime,   icon:'💆', label:'Recovery',     detail:`Foam roll · mobility · cold shower`,                reason:'Post-workout window — reduces DOMS and cortisol, accelerates recovery' },
+    { type:'meal',     time: dinnerTime,  icon:'🌙', label:'Dinner',       detail:`${dKcal} kcal · ${dProt}g protein`,                 reason:'3h before sleep — digestion complete before bedtime, no core temp spike' },
+    { type:'sleep',    time: sleep,       icon:'😴', label:'Sleep',        detail:`${fmtHour(sleep)} → ${fmtHour(wake)} — ${(((wake + 24 - sleep) % 24) || 24).toFixed(1)}h`, reason:'5 sleep cycles (7.5h) — optimal for cognitive function, hormone balance and muscle repair' }
   ];
 
   // Add other calendar events (non-workout) that aren't already covered
   calEventsToday.forEach(ev => {
     if (ev === calWorkout) return;
     const [h, m] = ev.time.split(':').map(Number);
-    items.push({ type:'custom', time: h + m/60, icon: CAL_ICON[ev.category]||'📅', label: evLabel(ev), detail: ev.description ? ev.description.substring(0,80) : (ev.category||''), reason:`Fra kalender — ${ev.category||'planlagt aktivitet'}` });
+    items.push({ type:'custom', time: h + m/60, icon: CAL_ICON[ev.category]||'📅', label: evLabel(ev), detail: ev.description ? ev.description.substring(0,80) : (ev.category||''), reason:`From calendar — ${ev.category||'scheduled activity'}` });
   });
 
   // Sort by time relative to wake
@@ -4633,8 +4633,8 @@ function renderDayPlan() {
   }).join('');
 
   const actionHtml = plan.approved
-    ? `<span class="dpf-approved-badge">✓ Godkendt for i dag</span>`
-    : `<button class="dpf-approve-btn" onclick="dpfApprove()">✓ Godkend plan</button>`;
+    ? `<span class="dpf-approved-badge">✓ Approved for today</span>`
+    : `<button class="dpf-approve-btn" onclick="dpfApprove()">✓ Approve plan</button>`;
 
   card.innerHTML = `
     <div class="dpf-header">
@@ -4643,13 +4643,13 @@ function renderDayPlan() {
         <div class="dpf-totals">
           <span class="dpf-total-chip">${plan.totalKcal} kcal</span>
           <span class="dpf-total-chip">${plan.totalProtein}g protein</span>
-          <span class="dpf-total-chip">${plan.totalCarbs}g kulhydrat</span>
+          <span class="dpf-total-chip">${plan.totalCarbs}g carbs</span>
         </div>
       </div>
       <div class="dpf-actions">
         ${actionHtml}
         <button class="dpf-edit-plan-btn" onclick="dpfOpenEdit()">✎ Edit plan</button>
-        <button class="dpf-regen-btn" onclick="dpfRegenerate()">↺ Ny plan</button>
+        <button class="dpf-regen-btn" onclick="dpfRegenerate()">↺ New plan</button>
       </div>
     </div>
     <div class="dpf-timeline">${timelineHtml}</div>
@@ -4908,7 +4908,7 @@ function generateRecommendations() {
   }
   const overResult = detectOvertraining();
   if (overResult.detected) {
-    recs.push({ icon: '⚡', text: 'Overtræning detekteret — indbyg en hviledag eller deload',
+    recs.push({ icon: '⚡', text: 'Overtraining detected — schedule a rest day or deload week',
       source: 'AI Insights', type: 'warning', priority: 10 });
   }
 
@@ -5444,23 +5444,23 @@ renderProfile();
     }
 
     var steps = isToday ? [
-      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game måltid: pasta/ris + kylling (let, letfordøjeligt)' },
-      { time: addHours(gh, gm, 1, 30), text: '💧 Stop stor vandindtag — drik lidt, men ikke meget' },
-      { time: addHours(gh, gm, 0, 45), text: '🏃 Opvarmning: 10 min løb + dynamisk stræk + accelerationer' },
-      { time: addHours(gh, gm, 0, 15), text: '🧠 Mentalt fokus: visualiser, find roen' },
-      { time: gameTime,                  text: '⚡ KAMP: ' + kampEvt.title },
-      { time: addHours(gh, gm, -1,   0), text: '🍗 Recovery måltid: protein + kulhydrat inden for 30-60 min' },
-      { time: addHours(gh, gm, -2,   0), text: '😴 Anbefalet søvntid — minimum 8 timer i aften' },
+      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game meal: pasta/rice + chicken (light, easy to digest)' },
+      { time: addHours(gh, gm, 1, 30), text: '💧 Stop large fluid intake — sip only' },
+      { time: addHours(gh, gm, 0, 45), text: '🏃 Warm-up: 10 min run + dynamic stretches + accelerations' },
+      { time: addHours(gh, gm, 0, 15), text: '🧠 Mental focus: visualise, find calm' },
+      { time: gameTime,                  text: '⚡ GAME: ' + kampEvt.title },
+      { time: addHours(gh, gm, -1,   0), text: '🍗 Recovery meal: protein + carbs within 30-60 min' },
+      { time: addHours(gh, gm, -2,   0), text: '😴 Recommended bedtime — minimum 8 hours tonight' },
     ] : [
-      { time: 'I dag aften', text: '🍝 High-carb aftensmad: pasta, ris eller kartofler' },
-      { time: 'I dag aften', text: '😴 Sov inden 22:30 — minimum 8-9 timer' },
-      { time: 'I morgen morgen', text: '🥣 Let morgenmad: havregrød + banan (3h+ inden kamp)' },
-      { time: 'I morgen', text: '💧 Hydrér hele dagen — 2-3 liter vand' },
-      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game måltid: pasta/ris + kylling' },
-      { time: gameTime, text: '⚡ KAMP: ' + kampEvt.title },
+      { time: 'Tonight', text: '🍝 High-carb dinner: pasta, rice or potatoes' },
+      { time: 'Tonight', text: '😴 Asleep by 22:30 — minimum 8-9 hours' },
+      { time: 'Tomorrow morning', text: '🥣 Light breakfast: oats + banana (3h+ before game)' },
+      { time: 'Tomorrow', text: '💧 Hydrate all day — 2-3 litres of water' },
+      { time: addHours(gh, gm, 2, 30), text: '🍝 Pre-game meal: pasta/rice + chicken' },
+      { time: gameTime, text: '⚡ GAME: ' + kampEvt.title },
     ];
 
-    card.innerHTML = '<div style="font-size:11px;font-weight:700;color:#FFA500;margin-bottom:12px;font-family:var(--font-mono)">' + (isToday ? '⚡ KAMP I DAG' : '⚡ KAMP I MORGEN') + ' — ' + kampEvt.title.toUpperCase() + '</div>' +
+    card.innerHTML = '<div style="font-size:11px;font-weight:700;color:#FFA500;margin-bottom:12px;font-family:var(--font-mono)">' + (isToday ? '⚡ GAME TODAY' : '⚡ GAME TOMORROW') + ' — ' + kampEvt.title.toUpperCase() + '</div>' +
       steps.map(function(s) {
         return '<div class="pg-item"><span class="pg-time">' + s.time + '</span><span class="pg-text">' + s.text + '</span></div>';
       }).join('');

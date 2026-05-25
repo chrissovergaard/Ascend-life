@@ -807,12 +807,12 @@ function renderRecoveryMonitor() {
     const score  = rec.recoveryScore != null ? rec.recoveryScore : null;
     const temp   = rec.bodyTemp != null ? rec.bodyTemp : null;
 
-    if (sleep  != null) grid.appendChild(tile('😴', sleep+'h',   'Søvn',         sleep>=7?'God nat':'Kort søvn', cls(sleep, 5, 7)));
-    if (stress != null) grid.appendChild(tile('🧠', stress+'/100','Stress',        stress<=30?'Lav':stress<=60?'Moderat':'Høj', clsInv(stress, 70, 40)));
-    if (score  != null) grid.appendChild(tile('💚', score+'%',   'Recovery Score',score>=70?'Klar til træning':'Brug hvile', cls(score, 40, 70)));
+    if (sleep  != null) grid.appendChild(tile('😴', sleep+'h',   'Sleep',         sleep>=7?'Good sleep':'Too short', cls(sleep, 5, 7)));
+    if (stress != null) grid.appendChild(tile('🧠', stress+'/100','Stress',        stress<=30?'Low':stress<=60?'Moderate':'High', clsInv(stress, 70, 40)));
+    if (score  != null) grid.appendChild(tile('💚', score+'%',   'Recovery Score',score>=70?'Ready to train':'Needs rest', cls(score, 40, 70)));
     if (temp   != null) {
       const tc = temp >= 37.5 ? 'bad' : temp >= 37.2 ? 'mid' : 'good';
-      grid.appendChild(tile('🌡', temp+'°C', 'Kropstemperatur', temp < 37.5 ? 'Normal' : 'Forhøjet', tc));
+      grid.appendChild(tile('🌡', temp+'°C', 'Body Temp', temp < 37.5 ? 'Normal' : 'Elevated', tc));
     }
   }
 
@@ -827,8 +827,8 @@ function renderRecoveryMonitor() {
     const recovery = gar.recovery != null ? gar.recovery : null;
     const snapshot = gar.snapshot != null ? gar.snapshot : null;
 
-    if (rhr      != null) grid.appendChild(tile('❤️', rhr+'bpm',      'Resting HR',       rhr<=55?'Fremragende':rhr<=65?'God':'Høj', clsInv(rhr, 75, 65)));
-    if (battery  != null) grid.appendChild(tile('🔋', battery+'%',    'Body Battery',     battery>=70?'Høj energi':battery>=40?'Moderat':'Lav energi', cls(battery, 40, 70)));
+    if (rhr      != null) grid.appendChild(tile('❤️', rhr+'bpm',      'Resting HR',       rhr<=55?'Excellent':rhr<=65?'Good':'High', clsInv(rhr, 75, 65)));
+    if (battery  != null) grid.appendChild(tile('🔋', battery+'%',    'Body Battery',     battery>=70?'High energy':battery>=40?'Moderate':'Low energy', cls(battery, 40, 70)));
     if (hrv      != null) {
       const hrvStr = typeof hrv === 'string';
       const hrvDisp = hrvStr ? hrv : hrv+'ms';
@@ -836,15 +836,15 @@ function renderRecoveryMonitor() {
       const hrvc = hrvStr
         ? (harvGood.includes(hrv.toLowerCase()) ? 'good' : hrv.toLowerCase()==='fair'||hrv.toLowerCase()==='moderat' ? 'mid' : 'bad')
         : cls(hrv, 30, 50);
-      const hrvSub = hrvStr ? '' : hrv>=60?'Fremragende':hrv>=40?'God':'Lav';
+      const hrvSub = hrvStr ? '' : hrv>=60?'Excellent':hrv>=40?'Good':'Low';
       grid.appendChild(tile('📊', hrvDisp, 'HRV', hrvSub, hrvc));
     }
     if (steps    != null) {
       const sk = Math.round(steps/100)/10;
-      grid.appendChild(tile('👟', sk+'k',          'Skridt',           steps>=10000?'Mål nået':'Under mål', cls(steps, 5000, 10000)));
+      grid.appendChild(tile('👟', sk+'k',          'Steps',            steps>=10000?'Goal reached':'Under goal', cls(steps, 5000, 10000)));
     }
     if (resp     != null) grid.appendChild(tile('🌬', resp+' rpm',     'Respiration',      resp>=12&&resp<=20?'Normal':'Unormal', resp>=12&&resp<=20?'good':'mid'));
-    if (spo2     != null) grid.appendChild(tile('🩸', spo2+'%',       'Pulse Ox',         spo2>=97?'Fremragende':spo2>=95?'Normal':'Lav', cls(spo2, 95, 97)));
+    if (spo2     != null) grid.appendChild(tile('🩸', spo2+'%',       'Pulse Ox',         spo2>=97?'Excellent':spo2>=95?'Normal':'Low', cls(spo2, 95, 97)));
     if (health   != null) {
       const healthGood = ['excellent','good','fremragende'];
       const hc = typeof health === 'string'
@@ -945,19 +945,19 @@ function renderBody() {
   const bm = calculateBodyStats();
   const mg = document.getElementById('bd-metrics'); mg.innerHTML = '';
 
-  mg.appendChild(mkMetric('⚖️', bm.latest ? bm.latest.w+'kg' : '—', 'Nuværende Vægt',
-    bm.latest ? formatDate(bm.latest.date) : 'Ingen data', null));
-  mg.appendChild(mkMetric('🎯', bm.goal+'kg', 'Mål',
+  mg.appendChild(mkMetric('⚖️', bm.latest ? bm.latest.w+'kg' : '—', 'Current Weight',
+    bm.latest ? formatDate(bm.latest.date) : 'No data', null));
+  mg.appendChild(mkMetric('🎯', bm.goal+'kg', 'Goal',
     bm.latest ? (bm.latest.w > bm.goal
-      ? '-'+Math.round((bm.latest.w - bm.goal)*10)/10+'kg til mål'
-      : '✓ Nået!') : '—', null));
+      ? '-'+Math.round((bm.latest.w - bm.goal)*10)/10+'kg to go'
+      : '✓ Reached!') : '—', null));
   mg.appendChild(mkMetric('📊',
     bm.change !== null ? (bm.change >= 0 ? '+' : '')+bm.change+'kg' : '—',
-    '30-dages ændring', null, null));
-  mg.appendChild(mkMetric('💧', bm.todayWater+'/8', 'Vand i dag',
-    bm.waterAvg ? 'gns. '+bm.waterAvg+' glas/dag' : null, null));
+    '30-day change', null, null));
+  mg.appendChild(mkMetric('💧', bm.todayWater+'/8', 'Water today',
+    bm.waterAvg ? 'avg. '+bm.waterAvg+' glasses/day' : null, null));
   if (bm.activeInj.length > 0)
-    mg.appendChild(mkMetric('🩹', bm.activeInj.length, 'Aktive skader', null, null));
+    mg.appendChild(mkMetric('🩹', bm.activeInj.length, 'Active injuries', null, null));
 
   // Bodyweight canvas chart
   setTimeout(() => {
@@ -1039,11 +1039,11 @@ function renderBody() {
     }
     const toGoal = Math.round((bm.goal - bm.latest.w)*10)/10;
     if (toGoal <= 0) ins.push({ text:'Du har nået dit vægtemål på '+bm.goal+'kg!', type:'good' });
-    else             ins.push({ text:'Mangler '+toGoal+'kg til mål ('+bm.goal+'kg).', type:'info' });
+    else             ins.push({ text:toGoal+'kg remaining to goal ('+bm.goal+'kg).', type:'info' });
   }
   if (bm.waterAvg !== null) {
-    if (parseFloat(bm.waterAvg) >= 7) ins.push({ text:'God vandindtagelse — gns. '+bm.waterAvg+' glas/dag.', type:'good' });
-    else                               ins.push({ text:'Vandindtagelse kan forbedres — gns. '+bm.waterAvg+' glas/dag. Sigt efter 8.', type:'warn' });
+    if (parseFloat(bm.waterAvg) >= 7) ins.push({ text:'Good hydration — avg. '+bm.waterAvg+' glasses/day.', type:'good' });
+    else                               ins.push({ text:'Hydration could improve — avg. '+bm.waterAvg+' glasses/day. Target 8.', type:'warn' });
   }
   if (bm.activeInj.length > 0)
     ins.push({ text:bm.activeInj.length+' aktive skader/ømheder — tag højde for dem i træningen.', type:'warn' });
