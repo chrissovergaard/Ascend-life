@@ -2419,7 +2419,7 @@ function renderPrograms() {
   const counter  = document.getElementById('impProgCount');
   const badge    = document.getElementById('impToggleBadge');
 
-  section.style.display = programs.length === 0 ? 'none' : '';
+  section.style.display = 'none';
   empty.style.display   = programs.length === 0 ? '' : 'none';
   counter.textContent   = `${programs.length} day${programs.length !== 1 ? 's' : ''}`;
 
