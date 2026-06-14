@@ -208,6 +208,33 @@
       white-space: nowrap;
     }
     .nt-quick-btn:hover { background: #1a1a1a; color: var(--text-primary); border-color: #333333; }
+    .nt-quick-wrap { position: relative; display: inline-flex; }
+    .nt-quick-del {
+      position: absolute; top: -5px; right: -5px; width: 15px; height: 15px;
+      border-radius: 99px; background: #1a1a1a; color: #FF6B6B; font-size: 9px; font-weight: 800;
+      border: 1px solid #2a2a2a; cursor: pointer; display: none; align-items: center; justify-content: center;
+      line-height: 1; z-index: 2; padding: 0;
+    }
+    .nt-quick-wrap:hover .nt-quick-del { display: flex; }
+    .nt-quick-del:hover { background: rgba(255,107,107,0.15); border-color: rgba(255,107,107,0.3); }
+    .nt-quick-add {
+      background: transparent; border: 1px dashed #252525; color: #3a3a3a;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      padding: 7px 11px; border-radius: 10px; cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .nt-quick-add:hover { border-color: #444; color: #666; }
+    .nt-mode-toggle {
+      background: #111111; border: 1px solid #1C1C1C; color: #555;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0 13px; border-radius: 10px; cursor: pointer; white-space: nowrap; align-self: stretch;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .nt-mode-toggle.is-active { background: rgba(192,132,252,0.10); border-color: rgba(192,132,252,0.35); color: #C084FC; }
+    .nt-preset-dialog {
+      background: #0d0d0d; border: 1px solid #1e1e1e; border-radius: 12px;
+      padding: 14px 16px; margin-top: 2px;
+    }
 
     /* ── ADD FORM ── */
     .nt-add-form { display: flex; flex-direction: column; gap: 8px; }
@@ -381,7 +408,7 @@
       <!-- Form -->
       <div class="nt-add-form" id="ntAddForm">
         <div class="nt-form-row">
-          <input type="text" class="goal-input" id="ntMealName" placeholder="Meal name… (e.g. Grilled Chicken)" style="flex:2">
+          <input type="text" class="goal-input" id="ntMealName" placeholder="Navn (fx Lasagne)" style="flex:2">
           <select class="nt-select" id="ntMealType">
             <option value="Breakfast">🌅 Breakfast</option>
             <option value="Lunch" selected>☀️ Lunch</option>
@@ -389,28 +416,57 @@
             <option value="Snack">🍎 Snack</option>
           </select>
           <input type="time" class="goal-input" id="ntMealTime" style="flex:none;width:110px">
+          <button type="button" class="nt-mode-toggle" id="ntPer100Btn">Per 100g</button>
+        </div>
+        <div class="nt-form-row" id="ntGramsRow" style="display:none">
+          <div class="nt-num-group" style="max-width:140px">
+            <div class="nt-num-label">Gram spist</div>
+            <input type="number" class="goal-input" id="ntMealGrams" placeholder="fx 300" min="1">
+          </div>
+          <div style="flex:1;display:flex;align-items:flex-end;padding-bottom:10px;">
+            <span style="font-size:11px;color:var(--text-tertiary)">Makroerne nedenfor er pr 100g — beregnes automatisk</span>
+          </div>
         </div>
         <div class="nt-form-row">
           <div class="nt-num-group">
-            <div class="nt-num-label">Calories (kcal)</div>
-            <input type="number" class="goal-input" id="ntMealCal" placeholder="e.g. 450" min="0">
+            <div class="nt-num-label" id="ntCalLbl">Kalorier (kcal)</div>
+            <input type="number" class="goal-input" id="ntMealCal" placeholder="fx 450" min="0">
           </div>
           <div class="nt-num-group">
-            <div class="nt-num-label">Protein (g)</div>
-            <input type="number" class="goal-input" id="ntMealProtein" placeholder="e.g. 35" min="0">
+            <div class="nt-num-label" id="ntProtLbl">Protein (g)</div>
+            <input type="number" class="goal-input" id="ntMealProtein" placeholder="fx 35" min="0">
           </div>
           <div class="nt-num-group">
-            <div class="nt-num-label">Carbs (g)</div>
-            <input type="number" class="goal-input" id="ntMealCarbs" placeholder="e.g. 50" min="0">
+            <div class="nt-num-label" id="ntCarbLbl">Kulhydrat (g)</div>
+            <input type="number" class="goal-input" id="ntMealCarbs" placeholder="fx 50" min="0">
           </div>
           <div class="nt-num-group">
-            <div class="nt-num-label">Fat (g)</div>
-            <input type="number" class="goal-input" id="ntMealFat" placeholder="e.g. 12" min="0">
+            <div class="nt-num-label" id="ntFatLbl">Fedt (g)</div>
+            <input type="number" class="goal-input" id="ntMealFat" placeholder="fx 12" min="0">
           </div>
         </div>
         <div class="nt-form-row">
-          <button class="wt-save-btn" id="ntSaveMealBtn">+ Log Meal</button>
-          <button class="wt-cancel-btn" id="ntClearFormBtn">Clear</button>
+          <button class="wt-save-btn" id="ntSaveMealBtn">+ Log måltid</button>
+          <button class="wt-cancel-btn" id="ntGemPresetBtn">☆ Gem som preset</button>
+          <button class="wt-cancel-btn" id="ntClearFormBtn">Ryd</button>
+        </div>
+        <!-- Gem som preset dialog -->
+        <div class="nt-preset-dialog" id="ntPresetDialog" style="display:none">
+          <div style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">Gem som preset</div>
+          <div class="nt-form-row" style="margin-bottom:8px">
+            <div class="nt-num-group">
+              <div class="nt-num-label">Navn</div>
+              <input type="text" class="goal-input" id="ntPresetName" placeholder="fx Lasagne">
+            </div>
+            <div class="nt-num-group" id="ntPresetGramsWrap">
+              <div class="nt-num-label">Standard gram (valgfrit)</div>
+              <input type="number" class="goal-input" id="ntPresetGrams" placeholder="fx 500" min="1">
+            </div>
+          </div>
+          <div class="nt-form-row">
+            <button class="wt-save-btn" id="ntSavePresetBtn" style="font-size:12px;padding:9px 16px">☆ Gem</button>
+            <button class="wt-cancel-btn" id="ntCancelPresetBtn" style="font-size:12px;padding:9px 14px">Annuller</button>
+          </div>
         </div>
       </div>
     </div>
@@ -507,14 +563,16 @@ function fmtDate(ds) {
 // ==================== DATA ====================
 const DEFAULT_GOALS = { cal:2500, protein:150, carbs:250, fat:70 };
 const MEAL_ICONS = { Breakfast:'🌅', Lunch:'☀️', Dinner:'🌙', Snack:'🍎' };
-const PRESETS = [
-  { name:'Chicken + Rice', cal:520, protein:45, carbs:55, fat:8 },
-  { name:'Protein Shake',  cal:160, protein:30, carbs:8,  fat:3 },
-  { name:'Salad',          cal:180, protein:6,  carbs:18, fat:9 },
-  { name:'Pasta',          cal:420, protein:14, carbs:72, fat:8 },
-  { name:'Eggs (3)',       cal:210, protein:18, carbs:1,  fat:15 },
-  { name:'Oatmeal',        cal:310, protein:11, carbs:54, fat:6 },
+const DEFAULT_PRESETS = [
+  { id:'d1', name:'Chicken + Rice', per100g:false, cal:520, protein:45, carbs:55, fat:8 },
+  { id:'d2', name:'Protein Shake',  per100g:false, cal:160, protein:30, carbs:8,  fat:3 },
+  { id:'d3', name:'Salad',          per100g:false, cal:180, protein:6,  carbs:18, fat:9 },
+  { id:'d4', name:'Pasta',          per100g:false, cal:420, protein:14, carbs:72, fat:8 },
+  { id:'d5', name:'Eggs (3)',       per100g:false, cal:210, protein:18, carbs:1,  fat:15 },
+  { id:'d6', name:'Oatmeal',        per100g:false, cal:310, protein:11, carbs:54, fat:6 },
 ];
+function loadPresets() { const s=storeGet('lifeos_nutrition_presets'); return s!==null?s:DEFAULT_PRESETS; }
+function savePresets(p) { storeSet('lifeos_nutrition_presets', p); }
 
 function loadGoals() {
   return Object.assign({}, DEFAULT_GOALS, storeGet('lifeos_nutrition_goals') || {});
@@ -693,6 +751,9 @@ function renderMeals() {
 function logMeal() {
   const name = document.getElementById('ntMealName').value.trim();
   if (!name) { document.getElementById('ntMealName').focus(); return; }
+  const per100 = document.getElementById('ntPer100Btn').classList.contains('is-active');
+  const grams  = per100 ? (parseFloat(document.getElementById('ntMealGrams').value)||100) : 100;
+  const factor = per100 ? grams/100 : 1;
   const meals = loadMeals();
   meals.push({
     id:      Date.now(),
@@ -700,10 +761,10 @@ function logMeal() {
     name,
     type:    document.getElementById('ntMealType').value,
     time:    document.getElementById('ntMealTime').value || nowTime(),
-    cal:     parseInt(document.getElementById('ntMealCal').value)||0,
-    protein: parseInt(document.getElementById('ntMealProtein').value)||0,
-    carbs:   parseInt(document.getElementById('ntMealCarbs').value)||0,
-    fat:     parseInt(document.getElementById('ntMealFat').value)||0,
+    cal:     Math.round((parseFloat(document.getElementById('ntMealCal').value)||0)     * factor),
+    protein: Math.round((parseFloat(document.getElementById('ntMealProtein').value)||0) * factor),
+    carbs:   Math.round((parseFloat(document.getElementById('ntMealCarbs').value)||0)   * factor),
+    fat:     Math.round((parseFloat(document.getElementById('ntMealFat').value)||0)     * factor),
   });
   saveMeals(meals);
   clearForm();
@@ -723,19 +784,57 @@ function updateMeal(id, data) {
 }
 
 function clearForm() {
-  ['ntMealName','ntMealCal','ntMealProtein','ntMealCarbs','ntMealFat'].forEach(id => {
+  ['ntMealName','ntMealCal','ntMealProtein','ntMealCarbs','ntMealFat','ntMealGrams'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('ntMealTime').value = nowTime();
+  setPer100Mode(false);
+  document.getElementById('ntPresetDialog').style.display = 'none';
+}
+
+function setPer100Mode(on) {
+  const btn   = document.getElementById('ntPer100Btn');
+  const row   = document.getElementById('ntGramsRow');
+  const sfx   = on ? ' / 100g' : '';
+  btn.classList.toggle('is-active', on);
+  row.style.display = on ? '' : 'none';
+  document.getElementById('ntCalLbl').textContent  = 'Kalorier (kcal)' + sfx;
+  document.getElementById('ntProtLbl').textContent = 'Protein (g)' + sfx;
+  document.getElementById('ntCarbLbl').textContent = 'Kulhydrat (g)' + sfx;
+  document.getElementById('ntFatLbl').textContent  = 'Fedt (g)' + sfx;
 }
 
 function fillPreset(preset) {
-  document.getElementById('ntMealName').value    = preset.name;
+  document.getElementById('ntMealName').value = preset.name;
+  setPer100Mode(!!preset.per100g);
+  if (preset.per100g && preset.defaultGrams) document.getElementById('ntMealGrams').value = preset.defaultGrams;
   document.getElementById('ntMealCal').value     = preset.cal;
   document.getElementById('ntMealProtein').value = preset.protein;
   document.getElementById('ntMealCarbs').value   = preset.carbs;
   document.getElementById('ntMealFat').value     = preset.fat;
   document.getElementById('ntMealName').focus();
+}
+
+function renderPresets() {
+  const row = document.getElementById('ntQuickRow');
+  row.innerHTML = '';
+  loadPresets().forEach(p => {
+    const wrap = document.createElement('div'); wrap.className = 'nt-quick-wrap';
+    const btn  = document.createElement('button'); btn.className = 'nt-quick-btn';
+    btn.textContent = p.name + (p.per100g && p.defaultGrams ? ' ('+p.defaultGrams+'g)' : '');
+    btn.addEventListener('click', () => fillPreset(p));
+    const del  = document.createElement('button'); del.className = 'nt-quick-del'; del.textContent = '×'; del.title = 'Fjern preset';
+    del.addEventListener('click', e => { e.stopPropagation(); savePresets(loadPresets().filter(x=>x.id!==p.id)); renderPresets(); });
+    wrap.appendChild(btn); wrap.appendChild(del); row.appendChild(wrap);
+  });
+  const addBtn = document.createElement('button'); addBtn.className = 'nt-quick-add'; addBtn.textContent = '+ Tilføj';
+  addBtn.addEventListener('click', () => {
+    const dlg = document.getElementById('ntPresetDialog');
+    document.getElementById('ntPresetName').value = document.getElementById('ntMealName').value;
+    document.getElementById('ntPresetGrams').value = document.getElementById('ntMealGrams').value;
+    dlg.style.display = dlg.style.display === 'none' ? '' : 'none';
+  });
+  row.appendChild(addBtn);
 }
 
 // ==================== RENDER ALL ====================
@@ -751,13 +850,42 @@ document.getElementById('ntDate').textContent = fmtDate(getToday());
 // Time default
 document.getElementById('ntMealTime').value = nowTime();
 
-// Quick preset buttons
-const quickRow = document.getElementById('ntQuickRow');
-PRESETS.forEach(p => {
-  const btn = document.createElement('button'); btn.className='nt-quick-btn';
-  btn.textContent = p.name;
-  btn.addEventListener('click', () => fillPreset(p));
-  quickRow.appendChild(btn);
+// Preset buttons
+renderPresets();
+
+// Per-100g toggle
+document.getElementById('ntPer100Btn').addEventListener('click', () => {
+  const active = document.getElementById('ntPer100Btn').classList.contains('is-active');
+  setPer100Mode(!active);
+});
+
+// Save as preset dialog
+document.getElementById('ntGemPresetBtn').addEventListener('click', () => {
+  const dlg = document.getElementById('ntPresetDialog');
+  document.getElementById('ntPresetName').value = document.getElementById('ntMealName').value;
+  document.getElementById('ntPresetGrams').value = document.getElementById('ntMealGrams').value;
+  dlg.style.display = dlg.style.display === 'none' ? '' : 'none';
+});
+document.getElementById('ntCancelPresetBtn').addEventListener('click', () => {
+  document.getElementById('ntPresetDialog').style.display = 'none';
+});
+document.getElementById('ntSavePresetBtn').addEventListener('click', () => {
+  const n = document.getElementById('ntPresetName').value.trim();
+  if (!n) { document.getElementById('ntPresetName').focus(); return; }
+  const per100 = document.getElementById('ntPer100Btn').classList.contains('is-active');
+  const dg     = parseInt(document.getElementById('ntPresetGrams').value)||null;
+  const preset = {
+    id: Date.now().toString(36),
+    name: n, per100g: per100,
+    cal:     parseFloat(document.getElementById('ntMealCal').value)||0,
+    protein: parseFloat(document.getElementById('ntMealProtein').value)||0,
+    carbs:   parseFloat(document.getElementById('ntMealCarbs').value)||0,
+    fat:     parseFloat(document.getElementById('ntMealFat').value)||0,
+    defaultGrams: per100 ? dg : null,
+  };
+  const presets = loadPresets(); presets.push(preset); savePresets(presets);
+  document.getElementById('ntPresetDialog').style.display = 'none';
+  renderPresets();
 });
 
 // Log meal button
