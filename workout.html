@@ -1418,17 +1418,24 @@ JSON format:
     workouts.forEach(w=>{
       (w.exercises||[]).forEach(ex=>{
         const n=(ex.name||'').toLowerCase().trim();
-        (ex.sets||[]).forEach(s=>{const wt=parseFloat(s.weight);if(!isNaN(wt)&&wt>0)exMap[n]=Math.max(exMap[n]||0,wt);});
+        (ex.sets||[]).forEach(s=>{
+          const wt=parseFloat(s.weight);
+          const reps=parseInt(s.reps)||1;
+          if(!isNaN(wt)&&wt>0){
+            const e1rm=reps===1?wt:Math.round(wt*(1+reps/30)*10)/10;
+            if(e1rm>(exMap[n]?.e1rm||0))exMap[n]={e1rm,wt,reps};
+          }
+        });
       });
     });
     const results={};
     MUSCLES.forEach(m=>{
       let best=null,bestEx=null;
-      Object.entries(exMap).forEach(([n,wt])=>{
-        if(m.kw.some(k=>n.includes(k.toLowerCase()))&&(best==null||wt>best)){best=wt;bestEx=n;}
+      Object.entries(exMap).forEach(([n,v])=>{
+        if(m.kw.some(k=>n.includes(k.toLowerCase()))&&(best==null||v.e1rm>best)){best=v.e1rm;bestEx={n,wt:v.wt,reps:v.reps,e1rm:v.e1rm};}
       });
       const level=getLevel(best,bw,m.th);
-      results[m.id]={level,color:C[level],wt:best,ex:bestEx,name:m.name,th:m.th};
+      results[m.id]={level,color:C[level],e1rm:best,ex:bestEx,name:m.name,th:m.th};
       m.els.forEach(id=>{const el=document.getElementById(id);if(el)el.setAttribute('fill',C[level]);});
     });
     const known=Object.values(results).filter(r=>r.level!=='unknown').length;
@@ -1438,14 +1445,14 @@ JSON format:
     if(stats){
       stats.innerHTML=MUSCLES.map(m=>{
         const r=results[m.id];
-        const pct=r.wt?Math.min(100,Math.round((r.wt/bw/m.th[2])*100)):0;
+        const pct=r.e1rm?Math.min(100,Math.round((r.e1rm/bw/m.th[2])*100)):0;
         return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">'
           +'<div style="width:8px;height:8px;border-radius:2px;background:'+r.color+';flex-shrink:0;"></div>'
           +'<div style="font-size:12px;font-weight:600;color:#ccc;min-width:88px;flex-shrink:0;">'+r.name+'</div>'
           +'<div style="flex:1;height:4px;background:#1a1a1a;border-radius:2px;overflow:hidden;">'
           +'<div style="height:100%;width:'+pct+'%;background:'+r.color+';border-radius:2px;"></div></div>'
           +'<div style="font-family:ui-monospace,monospace;font-size:10px;color:'+r.color+';min-width:62px;text-align:right;">'+LN[r.level]+'</div>'
-          +(r.wt?'<div style="font-family:ui-monospace,monospace;font-size:10px;color:#3a3a3a;min-width:52px;text-align:right;">'+r.wt+'kg</div>':'<div style="min-width:52px;"></div>')
+          +(r.e1rm?'<div style="font-family:ui-monospace,monospace;font-size:10px;color:#3a3a3a;min-width:52px;text-align:right;" title="'+(r.ex?r.ex.wt+'kg × '+r.ex.reps+'':'')+'">'+(r.e1rm)+'kg e1RM</div>':'<div style="min-width:52px;"></div>')
           +'</div>';
       }).join('');
     }
@@ -1456,7 +1463,7 @@ JSON format:
         const tip=document.getElementById('smap-tip');if(!tip)return;
         document.getElementById('smap-tip-name').textContent=r.name;
         const lv=document.getElementById('smap-tip-level');lv.textContent=LN[r.level];lv.style.color=r.color;
-        document.getElementById('smap-tip-detail').textContent=r.ex?r.ex+' — '+r.wt+'kg':'Ingen øvelse logget';
+        document.getElementById('smap-tip-detail').textContent=r.ex?r.ex.n+' — '+r.ex.wt+'kg × '+r.ex.reps+' (e1RM: '+r.e1rm+'kg)':'Ingen øvelse logget';
         tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';
       });
       el.addEventListener('mouseleave',()=>{const tip=document.getElementById('smap-tip');if(tip)tip.style.display='none';});
