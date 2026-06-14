@@ -452,19 +452,38 @@
         </div>
         <!-- Gem som preset dialog -->
         <div class="nt-preset-dialog" id="ntPresetDialog" style="display:none">
-          <div style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">Gem som preset</div>
+          <div style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Gem som preset</div>
           <div class="nt-form-row" style="margin-bottom:8px">
-            <div class="nt-num-group">
+            <div class="nt-num-group" style="flex:2">
               <div class="nt-num-label">Navn</div>
               <input type="text" class="goal-input" id="ntPresetName" placeholder="fx Lasagne">
             </div>
-            <div class="nt-num-group" id="ntPresetGramsWrap">
+            <div class="nt-num-group">
               <div class="nt-num-label">Standard gram (valgfrit)</div>
               <input type="number" class="goal-input" id="ntPresetGrams" placeholder="fx 500" min="1">
             </div>
           </div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);margin-bottom:6px;letter-spacing:.06em;">MAKROER PR 100G</div>
+          <div class="nt-form-row" style="margin-bottom:10px">
+            <div class="nt-num-group">
+              <div class="nt-num-label">Kalorier</div>
+              <input type="number" class="goal-input" id="ntPresetCal" placeholder="fx 180" min="0">
+            </div>
+            <div class="nt-num-group">
+              <div class="nt-num-label">Protein (g)</div>
+              <input type="number" class="goal-input" id="ntPresetProtein" placeholder="fx 8" min="0">
+            </div>
+            <div class="nt-num-group">
+              <div class="nt-num-label">Kulhydrat (g)</div>
+              <input type="number" class="goal-input" id="ntPresetCarbs" placeholder="fx 22" min="0">
+            </div>
+            <div class="nt-num-group">
+              <div class="nt-num-label">Fedt (g)</div>
+              <input type="number" class="goal-input" id="ntPresetFat" placeholder="fx 6" min="0">
+            </div>
+          </div>
           <div class="nt-form-row">
-            <button class="wt-save-btn" id="ntSavePresetBtn" style="font-size:12px;padding:9px 16px">☆ Gem</button>
+            <button class="wt-save-btn" id="ntSavePresetBtn" style="font-size:12px;padding:9px 16px">☆ Gem preset</button>
             <button class="wt-cancel-btn" id="ntCancelPresetBtn" style="font-size:12px;padding:9px 14px">Annuller</button>
           </div>
         </div>
@@ -829,12 +848,20 @@ function renderPresets() {
   });
   const addBtn = document.createElement('button'); addBtn.className = 'nt-quick-add'; addBtn.textContent = '+ Tilføj';
   addBtn.addEventListener('click', () => {
-    const dlg = document.getElementById('ntPresetDialog');
-    document.getElementById('ntPresetName').value = document.getElementById('ntMealName').value;
-    document.getElementById('ntPresetGrams').value = document.getElementById('ntMealGrams').value;
-    dlg.style.display = dlg.style.display === 'none' ? '' : 'none';
+    openPresetDialog({name:'', cal:'', protein:'', carbs:'', fat:'', grams:''});
   });
   row.appendChild(addBtn);
+}
+
+function openPresetDialog({name, cal, protein, carbs, fat, grams}) {
+  document.getElementById('ntPresetName').value    = name;
+  document.getElementById('ntPresetGrams').value   = grams;
+  document.getElementById('ntPresetCal').value     = cal;
+  document.getElementById('ntPresetProtein').value = protein;
+  document.getElementById('ntPresetCarbs').value   = carbs;
+  document.getElementById('ntPresetFat').value     = fat;
+  document.getElementById('ntPresetDialog').style.display = '';
+  document.getElementById('ntPresetName').focus();
 }
 
 // ==================== RENDER ALL ====================
@@ -859,12 +886,17 @@ document.getElementById('ntPer100Btn').addEventListener('click', () => {
   setPer100Mode(!active);
 });
 
-// Save as preset dialog
+// "Gem som preset" — pre-fills dialog with current form values
 document.getElementById('ntGemPresetBtn').addEventListener('click', () => {
-  const dlg = document.getElementById('ntPresetDialog');
-  document.getElementById('ntPresetName').value = document.getElementById('ntMealName').value;
-  document.getElementById('ntPresetGrams').value = document.getElementById('ntMealGrams').value;
-  dlg.style.display = dlg.style.display === 'none' ? '' : 'none';
+  const per100 = document.getElementById('ntPer100Btn').classList.contains('is-active');
+  openPresetDialog({
+    name:    document.getElementById('ntMealName').value,
+    cal:     document.getElementById('ntMealCal').value,
+    protein: document.getElementById('ntMealProtein').value,
+    carbs:   document.getElementById('ntMealCarbs').value,
+    fat:     document.getElementById('ntMealFat').value,
+    grams:   per100 ? document.getElementById('ntMealGrams').value : '',
+  });
 });
 document.getElementById('ntCancelPresetBtn').addEventListener('click', () => {
   document.getElementById('ntPresetDialog').style.display = 'none';
@@ -872,16 +904,16 @@ document.getElementById('ntCancelPresetBtn').addEventListener('click', () => {
 document.getElementById('ntSavePresetBtn').addEventListener('click', () => {
   const n = document.getElementById('ntPresetName').value.trim();
   if (!n) { document.getElementById('ntPresetName').focus(); return; }
-  const per100 = document.getElementById('ntPer100Btn').classList.contains('is-active');
-  const dg     = parseInt(document.getElementById('ntPresetGrams').value)||null;
+  const dg = parseInt(document.getElementById('ntPresetGrams').value)||null;
   const preset = {
     id: Date.now().toString(36),
-    name: n, per100g: per100,
-    cal:     parseFloat(document.getElementById('ntMealCal').value)||0,
-    protein: parseFloat(document.getElementById('ntMealProtein').value)||0,
-    carbs:   parseFloat(document.getElementById('ntMealCarbs').value)||0,
-    fat:     parseFloat(document.getElementById('ntMealFat').value)||0,
-    defaultGrams: per100 ? dg : null,
+    name: n,
+    per100g: true,
+    cal:     parseFloat(document.getElementById('ntPresetCal').value)||0,
+    protein: parseFloat(document.getElementById('ntPresetProtein').value)||0,
+    carbs:   parseFloat(document.getElementById('ntPresetCarbs').value)||0,
+    fat:     parseFloat(document.getElementById('ntPresetFat').value)||0,
+    defaultGrams: dg,
   };
   const presets = loadPresets(); presets.push(preset); savePresets(presets);
   document.getElementById('ntPresetDialog').style.display = 'none';
